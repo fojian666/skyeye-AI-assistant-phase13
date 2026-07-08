@@ -1,0 +1,50 @@
+# Django
+Django>=3.2,<5.0
+djangorestframework>=3.14
+djangorestframework-jwt>=1.11
+django-cors-headers>=4.0
+django-filter>=23.0
+django-celery-beat>=2.5
+django-celery-results>=2.5
+
+# Database
+psycopg2-binary>=2.9
+
+# Celery + Redis
+celery>=5.3
+redis>=5.0
+
+# HTTP / API
+requests>=2.31
+
+# LangChain / AI (DeepSeek)
+langchain>=0.3
+langchain-openai>=0.2
+langgraph>=0.2
+langchain-core>=0.3
+openai>=1.0
+
+# Geospatial
+geopandas>=0.14
+shapely>=2.0
+fiona>=1.9
+GDAL>=3.6
+
+# Image Processing
+opencv-python>=4.8
+Pillow>=10.0
+
+# Data Processing
+pandas>=2.1
+numpy>=1.26
+
+# Browser Automation (PDF reports)
+playwright>=1.40
+
+# Utilities
+python-dateutil>=2.8
+
+# MQTT (drone tracking)
+paho-mqtt>=1.6
+channels>=4.0
+daphne>=4.0
