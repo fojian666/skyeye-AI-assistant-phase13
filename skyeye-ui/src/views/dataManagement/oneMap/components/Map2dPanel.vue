@@ -922,18 +922,41 @@ export default {
       this.map.flyTo([lat, lng], zoom, { duration: 1.5 })
     },
 
-    drawRegion(polygon, name, lat, lng) {
+    drawRegion(polygon, name, lat, lng, subRegions) {
       if (!this.map) return
       // 清除上一个区域
-      if (this._regionLayer) { this.map.removeLayer(this._regionLayer); this._regionLayer = null }
+      if (this._regionLayers) { this._regionLayers.forEach(l => this.map.removeLayer(l)); this._regionLayers = null }
       if (!polygon || !polygon.length) return
+
+      this._regionLayers = []
       const rings = polygon.map(ring => ring.map(p => [p.lat, p.lng]))
-      this._regionLayer = L.polygon(rings, {
-        color: '#f56c6c', weight: 2, fillColor: '#f56c6c', fillOpacity: 0.15,
+
+      // 主区域半透明
+      const mainLayer = L.polygon(rings, {
+        color: '#ccc', weight: 1.5, fillColor: '#ccc', fillOpacity: 0.05,
       }).addTo(this.map)
+      this._regionLayers.push(mainLayer)
+
+      // 子区域用不同颜色
+      if (subRegions && subRegions.length) {
+        subRegions.forEach(region => {
+          if (!region.polygon || !region.polygon.length) return
+          const rRings = region.polygon.map(ring => ring.map(p => [p.lat, p.lng]))
+          const layer = L.polygon(rRings, {
+            color: region.color || '#f56c6c', weight: 2,
+            fillColor: region.color || '#f56c6c', fillOpacity: 0.2,
+          }).addTo(this.map)
+          if (region.name) layer.bindTooltip(region.name, { permanent: false, direction: 'center' })
+          this._regionLayers.push(layer)
+        })
+      } else {
+        // 无子区域：红色
+        mainLayer.setStyle({ color: '#f56c6c', weight: 2, fillColor: '#f56c6c', fillOpacity: 0.15 })
+      }
+
       // 飞到区域中心
       if (lat != null && lng != null) this.map.flyTo([lat, lng], 14, { duration: 1.2 })
-      else if (rings[0] && rings[0].length) this.map.fitBounds(this._regionLayer.getBounds(), { padding: [30, 30], maxZoom: 16 })
+      else if (rings[0] && rings[0].length) this.map.fitBounds(mainLayer.getBounds(), { padding: [30, 30], maxZoom: 16 })
     },
 
     getZoom() {

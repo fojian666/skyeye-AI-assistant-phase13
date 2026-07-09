@@ -179,11 +179,11 @@ export default {
       }
     }
     this._onDrawRegion = (e) => {
-      const { polygon, name, lat, lng } = e.detail || {}
+      const { polygon, name, lat, lng, subRegions } = e.detail || {}
       if (!polygon || !polygon.length) return
       const panel = this.getActivePanel()
       if (!panel || !panel.drawRegion) return
-      panel.drawRegion(polygon, name, lat, lng)
+      panel.drawRegion(polygon, name, lat, lng, subRegions)
     }
     window.addEventListener('navigate-map', this._onNavigateMap)
     window.addEventListener('draw-region', this._onDrawRegion)

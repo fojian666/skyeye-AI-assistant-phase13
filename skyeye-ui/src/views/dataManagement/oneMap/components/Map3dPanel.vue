@@ -851,25 +851,56 @@ export default {
       });
     },
 
-    drawRegion(polygon, name, lat, lng) {
+    drawRegion(polygon, name, lat, lng, subRegions) {
       if (!this.viewer || !this.Cesium) return
       const Cesium = this.Cesium
       // 清除上一个区域
-      if (this._regionEntity) { this.viewer.entities.remove(this._regionEntity); this._regionEntity = null }
+      if (this._regionEntities) { this._regionEntities.forEach(e => this.viewer.entities.remove(e)); this._regionEntities = null }
       if (!polygon || !polygon.length) return
+
+      this._regionEntities = []
+
+      // 主区域半透明
       const positions = polygon[0].map(p => Cesium.Cartesian3.fromDegrees(p.lng, p.lat))
-      this._regionEntity = this.viewer.entities.add({
+      const mainEntity = this.viewer.entities.add({
         name: name || '区域',
         polygon: {
           hierarchy: new Cesium.PolygonHierarchy(positions),
-          material: Cesium.Color.RED.withAlpha(0.15),
+          material: Cesium.Color.WHITE.withAlpha(0.05),
           outline: true,
-          outlineColor: Cesium.Color.RED,
-          outlineWidth: 2,
+          outlineColor: Cesium.Color.WHITE,
+          outlineWidth: 1.5,
         },
       })
+      this._regionEntities.push(mainEntity)
+
+      // 子区域用不同颜色
+      if (subRegions && subRegions.length) {
+        subRegions.forEach(region => {
+          if (!region.polygon || !region.polygon.length) return
+          const pos = region.polygon[0].map(p => Cesium.Cartesian3.fromDegrees(p.lng, p.lat))
+          const color = Cesium.Color.fromCssColorString(region.color || '#FF6B6B')
+          const entity = this.viewer.entities.add({
+            name: region.name,
+            polygon: {
+              hierarchy: new Cesium.PolygonHierarchy(pos),
+              material: color.withAlpha(0.25),
+              outline: true,
+              outlineColor: color,
+              outlineWidth: 2,
+            },
+          })
+          this._regionEntities.push(entity)
+        })
+      } else {
+        // 无子区域：主区域用红色
+        mainEntity.polygon.material = Cesium.Color.RED.withAlpha(0.15)
+        mainEntity.polygon.outlineColor = Cesium.Color.RED
+        mainEntity.polygon.outlineWidth = 2
+      }
+
       if (lat != null && lng != null) this.flyTo3D(lat, lng, 12)
-      else this.viewer.flyTo(this._regionEntity, { duration: 1.2 })
+      else this.viewer.flyTo(mainEntity, { duration: 1.2 })
     },
 
     resizeCesiumAfterLayout() {

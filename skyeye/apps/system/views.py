@@ -5,6 +5,7 @@ import datetime
 import json
 import os
 import logging
+import time
 
 import pandas as pd
 import requests
@@ -2301,7 +2302,43 @@ def multivariate_data(request):
 
 
 def query_task(request):
-    return JsonResponse({'code': 0, 'msg': 'null', 'data': []})
+    """根据 batch_id 查询任务是否存在，供 AI 助手调用"""
+    if request.method == 'OPTIONS':
+        resp = HttpResponse()
+        resp['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+        resp['Access-Control-Allow-Credentials'] = 'false'
+        resp['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        resp['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        return resp
+
+    def _cors(resp):
+        origin = request.headers.get('Origin', '*')
+        resp['Access-Control-Allow-Origin'] = origin
+        resp['Access-Control-Allow-Credentials'] = 'false'
+        return resp
+
+    try:
+        params = json.loads(request.body.decode('utf-8'))
+        task_id = params.get('task_id', '').strip()
+        if not task_id:
+            return _cors(JsonResponse({'code': 0, 'found': False, 'msg': '请输入任务编号'}))
+        batch = Batch.objects.filter(batch_id=task_id).first()
+        if batch:
+            return _cors(JsonResponse({
+                'code': 0,
+                'found': True,
+                'data': {
+                    'batch_id': batch.batch_id,
+                    'batch_name': batch.batch_name,
+                    'status': batch.status,
+                    'region': batch.region or '',
+                    'start_date': str(batch.start_date) if batch.start_date else '',
+                    'end_date': str(batch.end_date) if batch.end_date else '',
+                }
+            }))
+        return _cors(JsonResponse({'code': 0, 'found': False, 'msg': f'未查询到任务编号为 {task_id} 的任务'}))
+    except Exception as e:
+        return _cors(JsonResponse({'code': 1, 'found': False, 'msg': str(e)}))
 
 
 def get_regions(request):
@@ -2562,12 +2599,31 @@ def _get_llm(tools=None):
 
 
 SYSTEM_PROMPT = (
-    '你是天巡系统（SkyEye）的 AI 智能助手，具备无人机巡检、全景图分析、'
-    '目标检测、航线规划、GIS 遥感等领域的专业知识。'
-    '你可以自由发挥、推理、给出建议，不受限制。'
-    '当用户想跳转到某个页面时，调用 navigate_page 工具，path 参数必须从工具描述中列出的路由列表中选择。'
-    '当用户提及任何地点/区域/行政区时，必须直接调用 map_action 工具，不要反问或确认，系统会自动匹配城市并决定是定位还是画边界。'
-    '调用工具时务必填写所有必填参数，不要留空。'
+    '你是金陵阡陌系统（SkyEye）的 AI 智能助手，具备无人机巡检、全景图分析、'
+    '目标检测、航线规划、GIS 遥感等领域的专业知识。\n'
+    '【重要规则 - 请严格遵守】\n'
+    '1. 当用户表达跳转/打开/前往某个页面的意图时，必须立即调用 navigate_page 工具，不要用文字回复代替。\n'
+    '   区分要点：\n'
+    '   - "项目管理" → /task-mgmt/verify-clue\n'
+    '   - "一张图" → /data-management/one-map\n'
+    '   - "影像管理" → /data-management/table\n'
+    '   - "航线规划"（泛指）→ /route-planning/manual-planning；明确"全景规划"→ panoramicpoint-planning；明确"算法规划"→ algorithm-planning\n'
+    '   - "地图总览" → /panoramic-detection/map-view\n'
+    '   - "范围管理" → /panoramic-detection/grid-management\n'
+    '   - "批次管理" → /panoramic-detection/task-management\n'
+    '   - "全景检测" → /panoramic-detection/main-detection\n'
+    '   - "不检测区域" → /panoramic-detection/frame-area\n'
+    '   - "全景变化" → /panoramic-detection/panorama-change-detection\n'
+    '   - "场景管理" → /panoramic-detection/scene\n'
+    '   - "线索总览" → /panoramic-detection/clue-view\n'
+    '   - "临时批次" → /panoramic-detection/main-detection-temp\n'
+    '   - "报告管理" → /panoramic-detection/report\n'
+    '   - "任务管理"（图斑核实场景）→ /pattern-verifiy/task_management\n'
+    '2. 当用户提及任何地点/区域/行政区时，必须直接调用 map_action 工具，不要反问或确认。\n'
+    '3. 当用户提供任务编号时，调用 lookup_task 工具校验。\n'
+    '4. 工具调用优先于文字回复。只有在不需要调用工具时，才进行纯文字回复。\n'
+    '【纯文字回复格式】\n'
+    '纯文字回复时，正文后附加 |||，然后给出 3 个用户可能追问的问题，每行一个，不要编号。\n'
     '用中文回答，风格灵活自然。'
 )
 
@@ -2618,64 +2674,9 @@ def _geocode_amap(address, city=''):
 
 
 def _get_district_amap(keywords, city='', subdistrict=0):
-    """高德行政区划：地名 → 边界 polygon + 中心点"""
-    import logging
-    logger = logging.getLogger(__name__)
-    config = configparser.ConfigParser()
-    conf_path = os.path.join(settings.BASE_DIR, 'config.ini')
-    config.read(conf_path, encoding='utf-8')
-    api_key = config.get('amap', 'api_key')
-    params = {
-        'key': api_key, 'keywords': keywords,
-        'subdistrict': subdistrict, 'extensions': 'all',
-    }
-    try:
-        resp = requests.get('https://restapi.amap.com/v3/config/district', params=params, timeout=5)
-        data = resp.json()
-        logger.info(f'District API keywords={keywords} status={data.get("status")} count={data.get("count")}')
-        if data.get('status') == '1' and data.get('districts'):
-            districts = data['districts']
-            # 有城市时，过滤同名异城的结果
-            if city and len(districts) > 1:
-                city_geo = _geocode_amap(city)
-                if city_geo:
-                    filtered = []
-                    for d in districts:
-                        center_str = d.get('center', '')
-                        if center_str:
-                            c = center_str.split(',')
-                            if len(c) == 2:
-                                # 粗略判断：纬度差 < 1 度视为同城
-                                if abs(float(c[1]) - city_geo['lat']) < 1.0:
-                                    filtered.append(d)
-                    if filtered:
-                        districts = filtered
-            dist = districts[0]
-            polyline = dist.get('polyline', '')
-            center_str = dist.get('center', '')
-            points = []
-            if polyline:
-                for block in polyline.split('|'):
-                    pts = []
-                    for pair in block.split(';'):
-                        parts = pair.split(',')
-                        if len(parts) == 2:
-                            pts.append({'lng': float(parts[0]), 'lat': float(parts[1])})
-                    points.append(pts)
-            center = None
-            if center_str:
-                c = center_str.split(',')
-                if len(c) == 2:
-                    center = {'lng': float(c[0]), 'lat': float(c[1])}
-            return {
-                'name': dist.get('name', keywords),
-                'polygon': points,
-                'center': center,
-            }
-        logger.error(f'District API returned: {data}')
-    except Exception as e:
-        logger.error(f'District API error: {e}')
-    return None
+    """高德行政区划查询（优先缓存，未命中则实时查询并缓存）"""
+    from utils_tools.district_cache import query_district
+    return query_district(keywords, city=city, use_cache=True)
 
 
 def _lc_to_result(msg):
@@ -2778,14 +2779,19 @@ def chat_completions(request):
                     args = {}
                 if args.get('location') and not args.get('lat') and not args.get('polygon'):
                     city = args.get('city', '南京')
-                    # 先试行政区划 API（有 polygon → 画边界）
-                    district = _get_district_amap(args['location'], city=city)
+                    # 先试行政区划 API（subdistrict=1 → 有子区域边界）
+                    district = _get_district_amap(args['location'], city=city, subdistrict=1)
                     if district and district.get('polygon'):
                         args['polygon'] = district['polygon']
-                        args['name'] = district.get('name', args['location'])
                         if district.get('center'):
                             args['lat'] = district['center']['lat']
                             args['lng'] = district['center']['lng']
+                        # 子区域
+                        if district.get('sub_regions'):
+                            args['sub_regions'] = district['sub_regions']
+                        # 再用地理编码获取完整地址名
+                        geo = _geocode_amap(args['location'], city)
+                        args['name'] = geo.get('address', args['location']) if geo else district.get('name', args['location'])
                     else:
                         # 行政区划无 polygon 或非行政区，降级地理编码
                         geo = _geocode_amap(args['location'], city)
@@ -2794,6 +2800,34 @@ def chat_completions(request):
                             args['lng'] = geo['lng']
                             args['name'] = geo.get('address', args['location'])
                     fn['arguments'] = json.dumps(args, ensure_ascii=False)
+
+            # 后处理 lookup_task: 校验 batch_id 是否存在
+            if fn.get('name') == 'lookup_task':
+                try:
+                    lookup_args = json.loads(fn['arguments']) if isinstance(fn.get('arguments'), str) else fn.get('arguments', {})
+                except (json.JSONDecodeError, TypeError):
+                    lookup_args = {}
+                task_id = lookup_args.get('task_id', '').strip()
+                if task_id:
+                    batch = Batch.objects.filter(batch_id=task_id).first()
+                    if batch:
+                        lookup_args['_lookup_found'] = True
+                        lookup_args['_batch_name'] = batch.batch_name
+                        lookup_args['_status'] = batch.status
+                        lookup_args['_region'] = batch.region or ''
+                    else:
+                        lookup_args['_lookup_found'] = False
+                        lookup_args['_msg'] = f'未查询到任务编号为 {task_id} 的任务'
+                    fn['arguments'] = json.dumps(lookup_args, ensure_ascii=False)
+
+    # 注入用户名
+    current_user = parse_jwt_token(request)
+    result['username'] = current_user.username if current_user else '用户'
+
+    # 注入模型名
+    config = configparser.ConfigParser()
+    config.read(os.path.join(settings.BASE_DIR, 'config.ini'), encoding='utf-8')
+    result['model'] = config.get('deepseek', 'model')
 
     resp = ok_data(result)
     origin = request.headers.get('Origin', '*')

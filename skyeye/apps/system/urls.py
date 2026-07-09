@@ -72,4 +72,5 @@ urlpatterns = [
 
     # AI Chat
     path('chat/completions', views.chat_completions),
+    path('chat/lookup-task', views.query_task),
 ]
