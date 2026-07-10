@@ -14,6 +14,7 @@ from django.conf import settings
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, Func
 from django.db.models.functions import TruncDate, TruncMonth
+from django.apps import apps
 from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
 from django.shortcuts import render
 from django.db import transaction
@@ -2621,11 +2622,254 @@ SYSTEM_PROMPT = (
     '   - "任务管理"（图斑核实场景）→ /pattern-verifiy/task_management\n'
     '2. 当用户提及任何地点/区域/行政区时，必须直接调用 map_action 工具，不要反问或确认。\n'
     '3. 当用户提供任务编号时，调用 lookup_task 工具校验。\n'
-    '4. 工具调用优先于文字回复。只有在不需要调用工具时，才进行纯文字回复。\n'
+    '4. 当用户询问系统内数据统计/数量/分布时，必须调用 query_data 工具。例如：\n'
+    '   - "有多少全景图数据？" → query_data(query="当前全景图总数")\n'
+    '   - "线索状态分布如何？" → query_data(query="线索按状态分组统计数量")\n'
+    '   - "南京市有哪些批次？" → query_data(query="批次数据列表")\n'
+    '   支持的数据类型：全景图、线索、图斑、图斑任务、批次、网格、航线、资源、AI模型、信息解读任务、多源任务、报告、核实任务、核实线索、飞行订单、场景。\n'
+    '5. 工具调用优先于文字回复。只有在不需要调用工具时，才进行纯文字回复。\n'
     '【纯文字回复格式】\n'
     '纯文字回复时，正文后附加 |||，然后给出 3 个用户可能追问的问题，每行一个，不要编号。\n'
     '用中文回答，风格灵活自然。'
 )
+
+
+QUERY_SCHEMA = {
+    'panorama_image': {
+        'display': '全景图',
+        'model': ('panorama', 'PanoramaImage'),
+        'desc': '全景图像数据，包含拍摄位置、状态、所属批次等信息',
+        'fields': {'status': {'type': 'int'}, 'batch_id': {'type': 'str'}},
+    },
+    'clue': {
+        'display': '线索',
+        'model': ('panorama', 'Clue'),
+        'desc': '问题线索，包含经纬度、地址、状态、评分等',
+        'fields': {'status': {'type': 'int', 'choices': {0: '待核实', 1: '已核实', 2: '已派发', 3: '已处置', 4: '已验收', 5: '已关闭'}}, 'address': {'type': 'str'}, 'position': {'type': 'str'}, 'score': {'type': 'float'}},
+    },
+    'polygon_data': {
+        'display': '图斑',
+        'model': ('panorama', 'PolygonData'),
+        'desc': '图斑多边形数据，包含名称、状态、核实结论等',
+        'fields': {'status': {'type': 'int'}, 'verify_conclusion': {'type': 'str'}, 'unit_name': {'type': 'str'}, 'name': {'type': 'str'}},
+    },
+    'polygon_task': {
+        'display': '图斑任务',
+        'model': ('panorama', 'PolygonTask'),
+        'desc': '图斑核实任务',
+        'fields': {'status': {'type': 'str'}, 'street': {'type': 'str'}, 'task_type': {'type': 'str'}},
+    },
+    'batch': {
+        'display': '批次',
+        'model': ('panorama', 'Batch'),
+        'desc': '全景检测批次，包含时间段、状态、类型等',
+        'fields': {'status': {'type': 'int', 'choices': {0: '草稿', 1: '运行中', 2: '暂停', 3: '已完成'}}, 'batch_type': {'type': 'str'}, 'year': {'type': 'int'}, 'month': {'type': 'int'}, 'region': {'type': 'str'}},
+    },
+    'grid': {
+        'display': '网格',
+        'model': ('panorama', 'Grid'),
+        'desc': '地理网格划分，包含街道、区县',
+        'fields': {'county': {'type': 'str'}, 'street': {'type': 'str'}},
+    },
+    'route': {
+        'display': '航线',
+        'model': ('panorama', 'Route'),
+        'desc': '飞行航线，包含类型、高度、起终点',
+        'fields': {'route_type': {'type': 'str'}, 'status': {'type': 'int'}},
+    },
+    'resource': {
+        'display': '资源',
+        'model': ('panorama', 'Resource'),
+        'desc': '地图资源服务，包含影像服务、矢量数据等',
+        'fields': {'source_type': {'type': 'str'}, 'data_type': {'type': 'str'}, 'county': {'type': 'str'}},
+    },
+    'model_ai': {
+        'display': 'AI模型',
+        'model': ('model', 'Models'),
+        'desc': 'AI检测模型',
+        'fields': {'framework': {'type': 'str'}, 'network': {'type': 'str'}, 'status': {'type': 'int'}},
+    },
+    'interpretation_task': {
+        'display': '解译任务',
+        'model': ('interpretation', 'InterpretationTask'),
+        'desc': 'AI解译任务',
+        'fields': {'status': {'type': 'str'}, 'task_type': {'type': 'str'}, 'county': {'type': 'str'}},
+    },
+    'multivariate_task': {
+        'display': '多元任务',
+        'model': ('resource', 'MultivariateTask'),
+        'desc': '多元数据采集任务',
+        'fields': {'task_type': {'type': 'str'}, 'collect_type': {'type': 'str'}, 'organization': {'type': 'str'}},
+    },
+    'report': {
+        'display': '报告',
+        'model': ('report', 'Report'),
+        'desc': '检测报告',
+        'fields': {},
+    },
+    'verify_task': {
+        'display': '核实任务',
+        'model': ('panorama', 'VerifyTask'),
+        'desc': '图斑核实任务',
+        'fields': {'status': {'type': 'str'}},
+    },
+    'verify_clue': {
+        'display': '核实线索',
+        'model': ('panorama', 'VerifyClue'),
+        'desc': '待核实的线索数据',
+        'fields': {'level': {'type': 'str'}, 'status': {'type': 'str'}, 'address': {'type': 'str'}},
+    },
+    'fly_order': {
+        'display': '飞行指令',
+        'model': ('panorama', 'FlyOrder'),
+        'desc': '无人机飞行指令',
+        'fields': {'data_type': {'type': 'str'}, 'organization': {'type': 'str'}, 'status': {'type': 'str'}, 'county': {'type': 'str'}},
+    },
+    'scene': {
+        'display': '场景',
+        'model': ('panorama', 'Scene'),
+        'desc': '检测场景分类',
+        'fields': {},
+    },
+}
+
+
+QUERY_PARSE_PROMPT = (
+    '你是一个数据库查询解析器。根据用户的问题和给定的数据库表结构，'
+    '输出一个 JSON 对象，包含要查询的模型、操作类型和过滤条件。\n\n'
+    '可用的表和字段：\n{schemas}\n\n'
+    '操作类型：count（总数）、filter_count（按条件过滤后计数）、group_count（按字段分组计数）\n'
+    '过滤条件用 Django ORM 格式，例如：{{"status": 1}} 或 {{"address__contains": "鼓楼"}}\n'
+    '分组用 group_field 字段指定。\n\n'
+    '重要：\n'
+    '- model 必须是上面列出的 key 之一\n'
+    '- operation 必须是 count/filter_count/group_count\n'
+    '- 如果用户只问总数（如"有多少"），用 count\n'
+    '- 如果有筛选条件（如"状态为1"、"鼓楼区的"），用 filter_count\n'
+    '- 如果问分布（如"按状态分组"、"各类型有多少"），用 group_count\n'
+    '- filters 中的字段必须在对应表的 fields 里\n'
+    '- 如果完全无法理解查询，返回 {{"error": "无法理解"}}\n\n'
+    '用户问题：{query}\n'
+    '请只输出 JSON，不要有其他文字。'
+)
+
+
+def _parse_query_via_llm(query: str) -> dict:
+    """用 LLM 将自然语言查询解析为结构化参数"""
+    schema_lines = []
+    for key, info in QUERY_SCHEMA.items():
+        fields_str = ', '.join(f'{k}({v["type"]})' for k, v in info['fields'].items())
+        schema_lines.append(f'  {key}({info["display"]}): {info["desc"]} 字段=[{fields_str}]')
+    schemas = '\n'.join(schema_lines)
+
+    prompt = QUERY_PARSE_PROMPT.format(schemas=schemas, query=query)
+
+    try:
+        config = configparser.ConfigParser()
+        config.read(os.path.join(settings.BASE_DIR, 'config.ini'), encoding='utf-8')
+        api_key = config.get('deepseek', 'api_key')
+        api_url = config.get('deepseek', 'api_url')
+        model = config.get('deepseek', 'model')
+
+        from langchain_core.messages import HumanMessage
+        llm = ChatOpenAI(api_key=api_key, base_url=api_url, model=model, temperature=0, max_tokens=512)
+        resp = llm.invoke([HumanMessage(content=prompt)])
+        text = resp.content.strip()
+        # Remove markdown code fences if present
+        if text.startswith('```'):
+            text = text.split('\n', 1)[-1]
+            if text.endswith('```'):
+                text = text[:-3]
+        return json.loads(text)
+    except Exception as e:
+        logger = logging.getLogger('skyeye')
+        logger.warning(f'query_data LLM 解析失败: {e}')
+        return {'error': str(e)}
+
+
+def _execute_query(params: dict) -> str:
+    """安全执行 ORM 查询并返回结果文本"""
+    model_key = params.get('model', '')
+    if model_key not in QUERY_SCHEMA:
+        return f'不支持的查询对象：{model_key}'
+
+    schema = QUERY_SCHEMA[model_key]
+    app_label, model_name = schema['model']
+    try:
+        model_cls = apps.get_model(app_label, model_name)
+    except LookupError:
+        return f'找不到模型：{app_label}.{model_name}'
+
+    operation = params.get('operation', 'count')
+    filters = params.get('filters', {})
+    group_field = params.get('group_field')
+
+    # 校验 filter 字段
+    allowed_fields = set(schema.get('fields', {}).keys())
+    safe_filters = {}
+    for field, value in filters.items():
+        # 支持 __contains, __gte 等 Django lookup
+        base_field = field.split('__')[0]
+        if base_field in allowed_fields:
+            safe_filters[field] = value
+
+    qs = model_cls.objects.all()
+    if safe_filters:
+        qs = qs.filter(**safe_filters)
+
+    display = schema['display']
+
+    if operation == 'count':
+        cnt = qs.count()
+        filter_desc = ''
+        if safe_filters:
+            parts = []
+            for f, v in safe_filters.items():
+                field_info = schema['fields'].get(f.split('__')[0], {})
+                choices = field_info.get('choices', {})
+                if choices and isinstance(v, int):
+                    v = choices.get(v, str(v))
+                parts.append(f'{f}={v}')
+            filter_desc = '（筛选条件：' + '，'.join(parts) + '）'
+        return f'当前共有 {cnt} 条{display}数据{filter_desc}。'
+
+    elif operation == 'group_count':
+        if group_field and group_field in allowed_fields:
+            groups = qs.values(group_field).annotate(cnt=Count('id')).order_by('-cnt')
+            lines = [f'{display}按 {group_field} 分布：']
+            for g in groups[:20]:
+                val = g[group_field] or '(空)'
+                field_info = schema['fields'].get(group_field, {})
+                choices = field_info.get('choices', {})
+                if choices and isinstance(val, int):
+                    val = choices.get(val, str(val))
+                lines.append(f'  {val}: {g["cnt"]} 条')
+            return '\n'.join(lines)
+        else:
+            return f'{display}不支持按 {group_field} 分组'
+
+    elif operation == 'filter_count':
+        cnt = qs.count()
+        return _execute_query({**params, 'operation': 'count'})
+
+    return f'不支持的操作类型：{operation}'
+
+
+def _handle_query_data(args: dict) -> dict:
+    """处理 query_data 工具调用"""
+    query = args.get('query', '')
+    if not query:
+        return {'_query_result': '请提供要查询的问题。'}
+
+    logger = logging.getLogger('skyeye')
+    logger.info(f'query_data 查询: {query}')
+
+    params = _parse_query_via_llm(query)
+    if 'error' in params:
+        return {'_query_result': f'无法解析查询：「{query}」—— {params["error"]}'}
+
+    result = _execute_query(params)
+    return {'_query_result': result, '_query_params': params}
 
 
 class ChatState(TypedDict):
@@ -2819,6 +3063,16 @@ def chat_completions(request):
                         lookup_args['_lookup_found'] = False
                         lookup_args['_msg'] = f'未查询到任务编号为 {task_id} 的任务'
                     fn['arguments'] = json.dumps(lookup_args, ensure_ascii=False)
+
+            # 后处理 query_data: 执行数据库查询
+            if fn.get('name') == 'query_data':
+                try:
+                    query_args = json.loads(fn['arguments']) if isinstance(fn.get('arguments'), str) else fn.get('arguments', {})
+                except (json.JSONDecodeError, TypeError):
+                    query_args = {}
+                query_result = _handle_query_data(query_args)
+                query_args.update(query_result)
+                fn['arguments'] = json.dumps(query_args, ensure_ascii=False)
 
     # 注入用户名
     current_user = parse_jwt_token(request)

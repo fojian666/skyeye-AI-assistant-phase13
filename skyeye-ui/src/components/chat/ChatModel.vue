@@ -8,7 +8,7 @@
 
     <!-- 聊天窗口 + 拓展槽 -->
       <div v-show="visible" class="panel-row" :class="{ docked }">
-        <div ref="panel" :class="['chat-panel', { docked }]" :style="panelStyle">
+        <div ref="panel" :class="['chat-panel', { docked, 'thinking-glow': streaming }]" :style="panelStyle">
         <!-- 头部 -->
         <div class="chat-header" @mousedown="startDrag">
           <div class="chat-header-left">
@@ -76,14 +76,17 @@
             </div>
           </div>
 
-          <!-- 打字中 -->
+          <!-- 打字中 / 思考中 -->
           <div v-if="streaming" class="chat-msg assistant">
             <span class="msg-name">{{ modelName }}</span>
             <div class="msg-row">
               <div class="msg-avatar">
                 <span class="avatar-emoji">&#x1F916;</span>
               </div>
-              <div class="msg-content streaming-cursor">{{ streamingText || '思考中...' }}</div>
+              <div class="msg-content" :class="{ 'streaming-cursor': streamingText, 'thinking-dots': !streamingText }">
+                <template v-if="streamingText">{{ streamingText }}</template>
+                <span v-else class="dots-container"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+              </div>
             </div>
           </div>
         </div>
@@ -422,8 +425,10 @@ export default {
     },
 
     sendQuick(question) {
-      this.input = question
-      this.send()
+      if (this.streaming) return
+      this.messages.push({ role: 'user', content: question })
+      this.streaming = true
+      this.chatLoop()
     },
 
     async send() {
@@ -487,6 +492,13 @@ export default {
             if (toolResult._stop) {
               // 非导航类 stop：错误消息已由 executeTool 直接推入 messages，直接退出
               this.streaming = false
+              return
+            }
+            if (toolResult._display) {
+              // 移除 LLM 的"思考中"气泡，直接展示结果
+              this.messages.pop()
+              const followUps = '查看线索数据统计\n图斑有哪些状态？\n还有什么可以帮您的？'
+              await this.typewriter(toolResult.message + '\n|||\n' + followUps)
               return
             }
             this.messages.push({
@@ -563,7 +575,8 @@ export default {
         }
       }
       if (name === 'query_data') {
-        return { message: `关于"${args.query}"的查询已收到，具体数据需要通过系统界面查看。` }
+        const result = args._query_result || `关于"${args.query}"的查询暂无结果。`
+        return { message: result, _display: true }
       }
       return { error: `未知工具: ${name}` }
     },
@@ -856,6 +869,7 @@ export default {
 
 /* 聊天面板 — 毛玻璃 */
 .chat-panel {
+  position: relative;
   box-sizing: border-box;
   border-radius: 20px;
   background: rgba(12, 20, 40, 0.72);
@@ -1187,6 +1201,84 @@ export default {
   50% { opacity: 0; }
 }
 
+/* 三点弹跳 — 思考中动画 */
+.thinking-dots {
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+}
+.dots-container {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  padding: 2px 0;
+}
+.dots-container .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand-accent, #00f3ff);
+  animation: dot-bounce 1.4s infinite ease-in-out both;
+}
+.dots-container .dot:nth-child(1) { animation-delay: 0s; }
+.dots-container .dot:nth-child(2) { animation-delay: 0.2s; }
+.dots-container .dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.3; }
+  40% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* 面板脉冲呼吸光环 */
+.chat-panel.thinking-glow {
+  border-color: rgba(0, 243, 255, 0.25);
+  animation: breathe-glow 2.2s ease-in-out infinite;
+}
+
+.chat-panel.thinking-glow::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 22px;
+  pointer-events: none;
+  z-index: -1;
+  animation: breathe-ring 2.2s ease-in-out infinite, rainbow-glow 1.5s linear infinite;
+}
+
+@keyframes breathe-glow {
+  0%, 100% {
+    box-shadow:
+      0 24px 64px rgba(0, 0, 0, 0.45),
+      0 0 20px rgba(0, 243, 255, 0.06),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+      0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  }
+  50% {
+    box-shadow:
+      0 24px 64px rgba(0, 0, 0, 0.45),
+      0 0 40px rgba(0, 243, 255, 0.18),
+      0 0 80px rgba(0, 243, 255, 0.1),
+      0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+      0 1px 0 rgba(255, 255, 255, 0.1) inset;
+  }
+}
+
+@keyframes breathe-ring {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(0, 243, 255, 0.08), 0 0 30px rgba(0, 243, 255, 0.04);
+    opacity: 0.6;
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(0, 243, 255, 0.2), 0 0 60px rgba(0, 243, 255, 0.1);
+    opacity: 1;
+  }
+}
+
+@keyframes rainbow-glow {
+  0%   { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
 /* 输入区 */
 .chat-footer {
   padding: 14px 18px;
@@ -1195,19 +1287,39 @@ export default {
 }
 
 .chat-input-wrap {
+  position: relative;
   display: flex;
   align-items: flex-end;
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.04);
+  background: linear-gradient(145deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(255, 255, 255, 0.06) 100%);
   padding: 3px 3px 3px 14px;
   transition: all 0.3s ease;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 4%;
+    right: 4%;
+    height: 35%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 100%);
+    border-radius: 24px 24px 50% 50%;
+    pointer-events: none;
+    z-index: 0;
+  }
 
   &:focus-within {
-    border-color: rgba(59, 130, 246, 0.45);
+    border-color: rgba(59, 130, 246, 0.5);
     box-shadow:
-      inset 0 1px 3px rgba(0, 0, 0, 0.2),
+      inset 0 2px 4px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
       0 0 0 4px rgba(59, 130, 246, 0.12);
   }
 }
@@ -1321,6 +1433,13 @@ export default {
   border-color: rgba(0, 0, 0, 0.06);
   box-shadow: 0 24px 64px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.4) inset;
 }
+.theme-light .chat-panel.thinking-glow {
+  border-color: rgba(37, 99, 235, 0.3);
+  animation: breathe-glow-light 2.2s ease-in-out infinite;
+}
+.theme-light .chat-panel.thinking-glow::after {
+  animation: breathe-ring-light 2.2s ease-in-out infinite, rainbow-glow 1.5s linear infinite;
+}
 .theme-light .chat-header {
   border-bottom-color: rgba(0, 0, 0, 0.05);
 }
@@ -1389,16 +1508,25 @@ export default {
   border-top-color: rgba(0, 0, 0, 0.05);
 }
 .theme-light .chat-input-wrap {
-  border-color: rgba(0, 0, 0, 0.1);
-  background: rgba(0, 0, 0, 0.03);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
+  background: linear-gradient(145deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.55) 40%,
+    rgba(240, 248, 255, 0.65) 100%);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
+  &::before {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, transparent 100%);
+  }
 
   &:focus-within {
-    border-color: rgba(37, 99, 235, 0.4);
-    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(37, 99, 235, 0.5);
     box-shadow:
-      inset 0 1px 3px rgba(0, 0, 0, 0.05),
-      0 0 0 4px rgba(37, 99, 235, 0.1);
+      inset 0 2px 4px rgba(0, 0, 0, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 0 0 4px rgba(37, 99, 235, 0.12);
   }
 }
 .theme-light .chat-input {
@@ -1413,5 +1541,36 @@ export default {
 }
 .theme-light .streaming-cursor::after {
   color: #2563eb;
+}
+.theme-light .dots-container .dot {
+  background: #2563eb;
+}
+
+/* 亮色主题脉冲呼吸光环 */
+@keyframes breathe-glow-light {
+  0%, 100% {
+    box-shadow:
+      0 24px 64px rgba(0, 0, 0, 0.12),
+      0 0 20px rgba(37, 99, 235, 0.08),
+      0 0 0 1px rgba(255, 255, 255, 0.4) inset;
+  }
+  50% {
+    box-shadow:
+      0 24px 64px rgba(0, 0, 0, 0.12),
+      0 0 40px rgba(37, 99, 235, 0.2),
+      0 0 80px rgba(37, 99, 235, 0.12),
+      0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+  }
+}
+
+@keyframes breathe-ring-light {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(37, 99, 235, 0.1), 0 0 30px rgba(37, 99, 235, 0.05);
+    opacity: 0.5;
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(37, 99, 235, 0.25), 0 0 60px rgba(37, 99, 235, 0.12);
+    opacity: 1;
+  }
 }
 </style>

@@ -191,6 +191,34 @@ api_key = your_amap_key
 
 ---
 
+## 未提交内容（.gitignore 排除清单）
+
+以下文件和目录**不会**出现在仓库中，clone 后需自行创建或生成：
+
+| 类别 | 文件/目录 | 说明 |
+|------|----------|------|
+| 密钥配置 | `skyeye/config.ini` | DeepSeek API Key、高德 API Key、数据库连接信息 |
+| Python 缓存 | `__pycache__/` `*.pyc` `*.pyo` | Python 字节码缓存 |
+| Python 包信息 | `*.egg-info/` `.eggs/` | 包安装元数据 |
+| 测试文件 | `test*.py` `*_test.py` `tests/` | Python 单元测试 |
+| 测试文件 | `*.spec.js` `*.test.js` `__tests__/` | 前端单测文件 |
+| 测试文件 | `*.spec.ts` `*.test.ts` | TypeScript 测试文件 |
+| 依赖 | `node_modules/` | npm 包（`npm install` 安装） |
+| 构建产物 | `dist/` `/build/` | 前端打包输出 |
+| SQL 文件 | `*.sql` | 数据库脚本 |
+| 影像/视频 | `*.tif` `*.mp4` | 影像和视频文件 |
+| 多媒体 | `*.swf` `*.air` `*.ipa` `*.apk` | Flash/移动应用包 |
+| Shapefile | `skyeye/static/shp/` | 地理矢量数据 |
+| 运行时产物 | `skyeye/static/route_jobs/` | 航线规划缓存 |
+| 运行时产物 | `skyeye/static/route_plan/` | 航线规划结果 |
+| 运行时产物 | `skyeye/static/layers/` | 图层缓存 |
+| 日志 | `*.log` `logs/` `dev-server.log` | 运行日志 |
+| 模型权重 | `*.bin` `*.pth` `*.th` | 二进制模型文件 |
+| IDE 配置 | `.idea/` `.vscode/` `*.suo` `*.sln` | 编辑器个人配置 |
+| 系统文件 | `.DS_Store` `Thumbs.db` | 操作系统生成文件 |
+
+---
+
 ## 许可证
 
 内部使用项目

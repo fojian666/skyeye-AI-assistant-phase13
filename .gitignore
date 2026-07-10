@@ -1,3 +1,9 @@
+# Virtual environment
+venv/
+.venv/
+env/
+.env/
+
 # Dependencies
 node_modules/
 skyeye-ui/node_modules/
@@ -52,3 +58,13 @@ skyeye/static/layers/
 *.th
 *.mp4
 *.sql
+
+# Test files
+test*.py
+*_test.py
+tests/
+*.spec.js
+*.test.js
+__tests__/
+*.spec.ts
+*.test.ts
