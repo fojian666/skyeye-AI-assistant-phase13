@@ -1,5 +1,7 @@
 # 金陵阡陌（SkyEye）— 低空遥感智能巡检平台
 
+> **Phase 4** — AI 助手设置页面 · 玻璃拟态 · 打字机幕布入场动画 · 模型参数可调配
+
 ## 项目概述
 
 金陵阡陌（SkyEye）是一个基于低空遥感与无人机技术的智能巡检平台，集成了 **GIS 地图（2D/3D）**、**全景图像分析**、**AI 目标检测**、**航线规划**、**图斑变化检测** 等核心功能。平台通过 **DeepSeek 大模型** 提供 AI 智能助手，支持自然语言驱动地图定位、区域圈定、页面跳转和数据查询。
@@ -55,7 +57,8 @@ skyeye/
     │   │   ├── routePlanning/              # 航线规划
     │   │   ├── panoramicDetection/         # 全景检测
     │   │   ├── intelligentMonitoring/      # 智能监测
-    │   │   └── pattern-verifiy/            # 图斑核实
+    │   │   ├── pattern-verifiy/            # 图斑核实
+    │   │   └── aiSettings/                 # ★ AI 助手设置页（Phase 4）
     │   ├── router/index.js
     │   ├── store/                 # Vuex
     │   ├── layout/                # 布局（Header / 侧栏 / 主题切换）
@@ -121,6 +124,28 @@ skyeye/
 | 快速提问 | 欢迎页常用问题卡片一键发送 |
 | 主题适配 | 亮色/暗色自动适配 |
 | 无障碍 | ARIA 属性全覆盖，placeholder 对比度 WCAG AA ≥4.5:1 |
+
+### AI 设置页（Phase 4 新增）
+
+路由 `/ai-settings`，从 AI 助手面板侧边栏 ⚙ 图标进入。
+
+| 设置项 | 说明 |
+|--------|------|
+| 模型选择 | DeepSeek-V3 (通用) / DeepSeek-R1 (推理) |
+| Temperature | 0 ~ 2.0，精确 ↔ 创造 |
+| 最大输出长度 | 512 ~ 8192 tokens，预览条可视化 |
+| 深色主题 | 亮色/暗色主题切换 |
+| 减少动态效果 | 关闭微交互动画 |
+| 默认模式 | 自由对话 / 数据查询 / 智能摘要 |
+| 自动摘要 | 进入页面时自动触发摘要 |
+
+**设计系统**：Ethereal Glass (玻璃拟态) + Asymmetrical Bento Grid + Double-Bezel 卡片
+
+**入场动画**：打字机逐字打出标题（眉题 → 标题 → 副标题），闪烁光标跟随；5 张卡片从不同方向幕布式滑入，交错延迟展开
+
+**微交互**：Temperature 数值呼吸色温、Token 预览条渐变填充、模式芯片图标动画、键帽悬浮按压、版本号辉光脉冲
+
+**数据流**：设置页 ↔ localStorage (`skyeye_ai_settings`) ↔ ChatModel ↔ 后端 `chat_completions` API（model / temperature / max_tokens）
 
 ### 地图导航
 
