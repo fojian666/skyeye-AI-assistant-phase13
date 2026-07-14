@@ -8,7 +8,8 @@
 
     <!-- 聊天窗口 + 拓展槽 -->
       <div v-show="visible" class="panel-row" :class="{ docked }">
-        <div ref="panel" :class="['chat-panel', { docked, 'thinking-glow': streaming }]" :style="panelStyle">
+        <div class="panel-shell">
+          <div ref="panel" :class="['chat-panel', { docked, 'thinking-glow': streaming }]" :style="panelStyle">
         <!-- 头部 -->
         <div class="chat-header" @mousedown="startDrag">
           <div class="chat-header-left">
@@ -140,13 +141,14 @@
               :disabled="!input.trim()"
               @click="send"
               title="发送">
-              <i class="el-icon-position"></i>
+              <span class="send-icon-shell"><i class="el-icon-position"></i></span>
             </button>
           </div>
         </div>
 
         <!-- 拖拽缩放把手 -->
         <div class="resize-handle" @mousedown.prevent="startResize"></div>
+        </div>
         </div>
 
         <!-- 右侧拓展槽 -->
@@ -944,7 +946,7 @@ export default {
 <style lang="scss" scoped>
 .chat-wrapper {
   position: fixed;
-  z-index: 9999;
+  z-index: 100;  /* z: 面板层 */
 }
 
 /* 悬浮按钮 — 灵动岛胶囊形 */
@@ -1031,11 +1033,11 @@ export default {
   top: 50%;
   width: 120px;
   height: 210px;
-  z-index: 9998;
+  z-index: 110;  /* z: 侧栏层 */
   opacity: 0;
   transform: translate(16px, -50%);
   pointer-events: none;
-  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.35s cubic-bezier(0.32, 0.72, 0, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 
   &.visible {
     opacity: 1;
@@ -1051,7 +1053,7 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.35s cubic-bezier(0.32, 0.72, 0, 1);
 
   /* 大圆：左中，始终可见 */
   &.large {
@@ -1067,7 +1069,7 @@ export default {
     border: 1px solid rgba(59, 130, 246, 0.35);
     color: rgba(200, 220, 255, 0.9);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-    z-index: 2;
+    z-index: 1;
 
     &:hover {
       background: rgba(59, 130, 246, 0.28);
@@ -1089,11 +1091,11 @@ export default {
     opacity: 0;
     transform: scale(0);
     transition:
-      opacity 0.3s ease,
+      opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1),
       transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-      background 0.25s ease,
-      border-color 0.25s ease,
-      color 0.25s ease;
+      background 0.25s cubic-bezier(0.32, 0.72, 0, 1),
+        border-color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
+        color 0.25s cubic-bezier(0.32, 0.72, 0, 1);
 
     &:hover {
       background: rgba(255, 255, 255, 0.22);
@@ -1149,7 +1151,18 @@ export default {
   }
 }
 
-/* 聊天面板 — 毛玻璃 */
+/* —— 外壳：铝合金托盘 + 面板内核（Double-Bezel） —— */
+.panel-shell {
+  padding: 4px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+/* 聊天面板 — 内核 */
 .chat-panel {
   position: relative;
   box-sizing: border-box;
@@ -1158,7 +1171,9 @@ export default {
   backdrop-filter: blur(20px) saturate(1);
   -webkit-backdrop-filter: blur(20px) saturate(1);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1749,21 +1764,44 @@ export default {
   background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: #fff;
   font-size: 15px;
-  transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.25s ease;
+  transition:
+    transform 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+    background 0.3s ease,
+    box-shadow 0.3s ease;
   flex-shrink: 0;
 
+  .send-icon-shell {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    transition:
+      transform 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+      background 0.25s ease;
+  }
+
   &:hover:not(:disabled) {
-    transform: scale(1.1);
+    transform: scale(1.06);
     background: linear-gradient(135deg, #4f8bf9, #3070f0);
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35);
+
+    .send-icon-shell {
+      transform: translate(2px, -2px) scale(1.1);
+      background: rgba(255, 255, 255, 0.28);
+    }
   }
 
   &:active:not(:disabled) {
-    transform: scale(0.95);
+    transform: scale(0.96);
+    transition: transform 0.12s cubic-bezier(0.32, 0.72, 0, 1);
   }
 
   &:disabled {
@@ -1874,7 +1912,7 @@ export default {
   width: 24px;
   height: 24px;
   cursor: nwse-resize;
-  z-index: 10;
+  z-index: 3;
   background:
     linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.15) 50%),
     linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.15) 50%);
