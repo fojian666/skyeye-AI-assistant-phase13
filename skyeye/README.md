@@ -1,42 +1,60 @@
-# gtus
+# SkyEye 后端
 
-#### 介绍
-无人机智能监管平台后端django服务
+无人机智能监管平台 Django 服务，集成 DeepSeek 大模型 AI 智能助手。
 
-#### 软件架构
-软件架构说明
+## AI 助手 API
 
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `chat_completions` | POST (SSE) | 流式对话，支持工具调用 |
+| `geocode` | GET | 高德地理编码 |
+| `district` | GET | 行政区划边界 |
 
-#### 安装教程
+### 三种模式
 
+| 模式 | 功能 |
+|------|------|
+| 聊天模式 | 自由对话，通用问答 |
+| 数据查询模式 | 检索系统线索、图斑、批次等数据 |
+| 智能摘要模式 | 当前页面数据分析 |
 
+### 工具列表
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+| 工具 | 功能 |
+|------|------|
+| `navigate_page` | 跳转系统页面（17 条路由映射） |
+| `map_action` | 地图定位 + 区域边界绘制 |
+| `query_data` | 查询系统数据（数量/状态/统计/列表/明细） |
+| `lookup_task` | 按任务编号查询并跳转 |
 
-#### 使用说明
+### 行政区划缓存
 
-1.  # Celery启动（必须用 gtus.celery_config，与任务注册 app 一致）
-   `celery -A gtus.celery_config worker -l info -c 1`
-   # 或（tasks.py 已导出 app）
-   `celery -A apps.panorama.tasks worker -l info -c 1`  
-2.  xxxx
-3.  xxxx
+预加载江苏省 13 市 95 区县多边形边界至 `district_cache.json`，内存缓存常驻，零磁盘 IO。
+管理命令：`python manage.py preload_districts`
 
-#### 参与贡献
+## 安装教程
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+```
+pip install -r requirements.txt
+python manage.py runserver 0.0.0.0:8000
+```
 
+## 配置
 
-#### 特技
+编辑 `config.ini`：
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+```ini
+[deepseek]
+api_key = your_deepseek_key
+api_url = https://api.deepseek.com/v1
+model = deepseek-chat
+
+[amap]
+api_key = your_amap_key
+```
+
+## Celery 启动
+
+```bash
+celery -A gtus.celery_config worker -l info -c 1
+```
