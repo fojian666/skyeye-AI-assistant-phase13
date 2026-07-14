@@ -751,6 +751,15 @@ export const subRoutes = [
             },
         ]
     },
+    {
+        path: '/ai-settings',
+        name: 'aiSettings',
+        meta: {
+            title: 'AI 助手设置',
+            requireAuth: true
+        },
+        component: () => import('@/views/aiSettings/index.vue'),
+    },
 ];
 
 const routes = [
@@ -905,7 +914,8 @@ router.beforeEach((to, from, next) => {
         } else if (hasAutoLoginRoute) {
             enterWithAutoLogin();
         } else {
-            next({ path: '/login', query: { redirect: to.fullPath } });
+            localStorage.removeItem('path');
+            next({ path: '/login' });
         }
     } else {
         next();

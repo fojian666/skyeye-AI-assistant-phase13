@@ -269,41 +269,33 @@ export default {
      * @param token(url)
      */
     async login(params) {
-      let then = this;
       try {
         const res = await getLoginCheckApi(params);
         if (res.code === 0) {
-          // 登录成功设置cookie
           localStorage.setItem('username', params["username"]);
-          // 设置登录用户角色
           localStorage.setItem('role', res.role);
-          localStorage.setItem('tokens', res.tokens); // 存储 JWT 令牌
-          then.cookieOps(params);
-          //记录点击时间
+          localStorage.setItem('tokens', res.tokens);
+          this.cookieOps(params);
           localStorage.setItem("lastClickTime", new Date().getTime());
-          const path = localStorage.getItem('path')
-          then.$message.success('登录成功！');
-          setTimeout(function () {
-            // 路由跳转
-            if (path) {
-              then.$router.push(path);
-            } else {
-              // 设置session和路由跳转不要放反
-              if (res.role === 3) {
-                then.$router.push('/data-management/one-map');
-              } else {
-                then.$router.push('/data-management/one-map');
-              }
-            }
-          }, 1000)
+          this.$message.success('登录成功！');
+
+          // 先拉取用户信息，确保路由守卫不因 user 缺失而踢回登录页
+          try {
+            await this.$store.dispatch('user/queryUserInfo');
+          } catch (e) {
+            console.warn('用户信息获取失败，继续跳转', e);
+          }
+
+          localStorage.removeItem('path');
+          this.$router.replace('/data-management/one-map');
 
         } else {
-          then.$message.warning(res.msg);
+          this.$message.warning(res.msg);
           removeCookie('username');
           removeCookie('password');
         }
       } catch (e) {
-        then.$message.warning("后台服务尚未加载完成，请稍后重试！");
+        this.$message.warning("后台服务尚未加载完成，请稍后重试！");
       }
 
     },

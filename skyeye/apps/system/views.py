@@ -2588,15 +2588,18 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, Tool
 from langchain_openai import ChatOpenAI
 
 
-def _get_llm(tools=None):
+def _get_llm(tools=None, model=None, temperature=None, max_tokens=None):
     config = configparser.ConfigParser()
     config.read(os.path.join(settings.BASE_DIR, 'config.ini'), encoding='utf-8')
     api_key = config.get('deepseek', 'api_key')
     api_url = config.get('deepseek', 'api_url')
-    model = config.get('deepseek', 'model')
+    # 优先用前端传入的参数，未传则 fallback 到 config.ini 或默认值
+    model = model or config.get('deepseek', 'model')
+    temperature = temperature if temperature is not None else 0.7
+    max_tokens = max_tokens if max_tokens is not None else 4096
     llm = ChatOpenAI(
         api_key=api_key, base_url=api_url, model=model,
-        temperature=0.7, max_tokens=4096,
+        temperature=temperature, max_tokens=max_tokens,
     )
     if tools:
         llm = llm.bind_tools(tools, tool_choice='auto')
@@ -3107,7 +3110,7 @@ def _sse_event(data):
     return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
-def _generate_sse(raw_messages, frontend_tools, request, chat_mode='chat', context=None):
+def _generate_sse(raw_messages, frontend_tools, request, chat_mode='chat', context=None, model=None, temperature=None, max_tokens=None):
     """SSE 生成器：按阶段流式返回事件"""
     try:
         has_system = any(m.get('role') == 'system' for m in raw_messages)
@@ -3182,7 +3185,7 @@ def _generate_sse(raw_messages, frontend_tools, request, chat_mode='chat', conte
             raw_messages.insert(0, {'role': 'system', 'content': prompt})
 
         lc_msgs = _raw_messages_to_lc(raw_messages)
-        llm = _get_llm(tools=frontend_tools)
+        llm = _get_llm(tools=frontend_tools, model=model, temperature=temperature, max_tokens=max_tokens)
 
         # 阶段 1: 理解问题
         yield _sse_event({"phase": "understanding", "message": "正在理解问题..."})
@@ -3347,9 +3350,12 @@ def chat_completions(request):
     frontend_tools = body.get('tools')
     chat_mode = body.get('chat_mode', 'chat')
     context = body.get('context')
+    model = body.get('model')
+    temperature = body.get('temperature')
+    max_tokens = body.get('max_tokens')
 
     response = StreamingHttpResponse(
-        _generate_sse(raw_messages, frontend_tools, request, chat_mode, context),
+        _generate_sse(raw_messages, frontend_tools, request, chat_mode, context, model, temperature, max_tokens),
         content_type='text/event-stream',
     )
     origin = request.headers.get('Origin', '*')

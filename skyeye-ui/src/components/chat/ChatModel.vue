@@ -1,7 +1,7 @@
 <template>
   <div class="chat-wrapper" :class="[`theme-${theme}`, { 'query-mode': chatMode === 'query', 'summary-mode': chatMode === 'summary', 'reduce-motion': reduceMotion }]" :style="wrapperStyle" role="complementary" aria-label="AI 助手面板">
     <!-- 悬浮按钮 -->
-    <div v-if="!visible" class="chat-fab" @click="open" @mousedown="startDrag" title="AI 助手">
+    <div v-if="!visible" class="chat-fab" @click="open" @mousedown="startDrag" title="AI 助手" aria-label="打开 AI 助手" role="button">
         <span class="fab-emoji">🤖</span>
         <span class="fab-label">AI 助手</span>
       </div>
@@ -126,6 +126,7 @@
               rows="1"
               aria-label="输入消息"
               @keydown.enter.exact.prevent="send"
+              @keydown.enter.shift.prevent="insertNewline"
               @input="autoResize"
             ></textarea>
             <button
@@ -159,7 +160,7 @@
             :title="chatMode === 'query' ? '切换到智能摘要' : chatMode === 'summary' ? '切换到聊天模式' : '切换到数据查询模式'">
             <i :class="chatMode === 'query' ? 'el-icon-data-line' : chatMode === 'summary' ? 'el-icon-document-checked' : 'el-icon-star-off'"></i>
           </div>
-          <div class="rail-item small spread-bot-1" title="系统设置"><i class="el-icon-s-tools"></i></div>
+          <div class="rail-item small spread-bot-1" title="系统设置" @click="openSettings"><i class="el-icon-s-tools"></i></div>
         </div>
       </div>
   </div>
@@ -315,6 +316,9 @@ export default {
       lastAutoSummaryKey: null,  // 防重复触发
       reduceMotion: false,       // 减少动态效果
       railHintShown: false,     // side-rail 发现性提示（首次打开展示一次）
+      model: 'deepseek-chat',   // 模型选择（从设置页同步）
+      temperature: 0.7,          // Temperature 参数
+      maxTokens: 4096,           // 最大输出 token
     }
   },
   computed: {
@@ -348,16 +352,19 @@ export default {
     },
   },
   mounted() {
+    this._loadSettings()
     this._onDragMove = this.onDragMove.bind(this)
     this._onDragEnd = this.onDragEnd.bind(this)
     this._onGlobalMouse = this.onGlobalMouse.bind(this)
     this._onResizeMove = this.onResizeMove.bind(this)
     this._onResizeEnd = this.onResizeEnd.bind(this)
+    this._onKeydown = this.onKeydown.bind(this)
     document.addEventListener('mousemove', this._onDragMove)
     document.addEventListener('mouseup', this._onDragEnd)
     document.addEventListener('mousemove', this._onGlobalMouse)
     document.addEventListener('mousemove', this._onResizeMove)
     document.addEventListener('mouseup', this._onResizeEnd)
+    document.addEventListener('keydown', this._onKeydown)
   },
   beforeDestroy() {
     document.removeEventListener('mousemove', this._onDragMove)
@@ -365,6 +372,7 @@ export default {
     document.removeEventListener('mousemove', this._onGlobalMouse)
     document.removeEventListener('mousemove', this._onResizeMove)
     document.removeEventListener('mouseup', this._onResizeEnd)
+    document.removeEventListener('keydown', this._onKeydown)
   },
   watch: {
     // 路由变化：进入新页面且有选中对象 → 自动生成摘要
@@ -375,6 +383,11 @@ export default {
     // 切换到数据查询模式或摘要模式且有选中对象 → 自动生成摘要
     chatMode(val) {
       if (val === 'query' || val === 'summary') this.maybeAutoSummary()
+      this._saveSettingsKey('defaultMode', val)
+    },
+    // 动态效果切换 → 同步到设置页
+    reduceMotion(val) {
+      this._saveSettingsKey('reduceMotion', val)
     },
   },
   methods: {
@@ -446,6 +459,25 @@ export default {
       const inVert = e.clientY > rect.top && e.clientY < rect.bottom
       this.sideRailVisible = nearRight && inVert
     },
+    onKeydown(e) {
+      // Esc 关闭面板
+      if (e.key === 'Escape' && this.visible) {
+        e.preventDefault()
+        this.closeChat()
+        return
+      }
+      // Cmd+K / Ctrl+K 唤起面板
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        if (this.visible) {
+          this.closeChat()
+        } else {
+          this.open()
+        }
+        return
+      }
+    },
+
     open() {
       // 拖拽后不触发点击打开
       if (this.hasMoved) return
@@ -469,20 +501,25 @@ export default {
 
         const panel = this.$refs.panel
         if (panel) {
-          gsap.fromTo(panel,
-            {
-              scale: 0.1, opacity: 0,
-              boxShadow: '0 0 20px rgba(100,180,255,0.3), 0 0 40px rgba(100,180,255,0.1), 0 0 0 1px rgba(255,255,255,0.05) inset',
-              borderColor: 'rgba(100,180,255,0.35)',
-            },
-            {
-              scale: 1, opacity: 1,
-              boxShadow: '0 24px 64px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05) inset, 0 1px 0 rgba(255,255,255,0.06) inset',
-              borderColor: 'rgba(255,255,255,0.1)',
-              duration: 0.5,
-              ease: 'back.out(1.7)',
-            }
-          )
+          const shell = panel.parentElement // .panel-shell 外壳
+          // requestAnimationFrame 确保 display:none 解除后浏览器完成布局
+          requestAnimationFrame(() => {
+            gsap.fromTo(panel,
+              {
+                scale: 0.1, opacity: 0,
+                boxShadow: '0 0 20px rgba(100,180,255,0.3), 0 0 40px rgba(100,180,255,0.1), 0 0 0 1px rgba(255,255,255,0.05) inset',
+                borderColor: 'rgba(100,180,255,0.35)',
+              },
+              {
+                scale: 1, opacity: 1,
+                boxShadow: '0 24px 64px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05) inset, 0 1px 0 rgba(255,255,255,0.06) inset',
+                borderColor: 'rgba(255,255,255,0.1)',
+                duration: 0.5,
+                ease: 'back.out(1.7)',
+              }
+            )
+            gsap.fromTo(shell, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'back.out(1.7)' })
+          })
         }
         this.$refs.inputArea?.focus()
         this.scrollToBottom()
@@ -496,18 +533,21 @@ export default {
     closeChat() {
       const panel = this.$refs.panel
       if (panel && this.visible) {
+        const shell = panel.parentElement // .panel-shell 外壳
         gsap.to(panel, {
           scale: 0.1, opacity: 0,
           boxShadow: '0 0 16px rgba(100,180,255,0.25), 0 0 32px rgba(100,180,255,0.08), 0 0 0 1px rgba(255,255,255,0.05) inset',
           borderColor: 'rgba(100,180,255,0.3)',
-          duration: 0.3,
+          duration: 0.15,
           ease: 'power2.in',
           onComplete: () => {
             this.visible = false
             this.docked = false
             this.dragPos = { x: null, y: null }
+            gsap.set([panel, shell], { clearProps: 'all' })
           },
         })
+        gsap.to(shell, { opacity: 0, duration: 0.15, ease: 'power2.in' })
       } else {
         this.visible = false
         this.docked = false
@@ -520,6 +560,33 @@ export default {
       this.chatMode = map[this.chatMode]
       const labels = { chat: '聊天模式 — 自由对话', query: '数据查询模式 — 检索系统数据', summary: '智能摘要 — 页面数据分析' }
       this.$message({ message: labels[this.chatMode], type: 'info', duration: 2000, showClose: false })
+    },
+
+    openSettings() {
+      this.closeChat()
+      router.push('/ai-settings').catch(() => {})
+    },
+
+    /** 从设置页 localStorage 加载参数 */
+    _loadSettings() {
+      try {
+        const prefs = JSON.parse(localStorage.getItem('skyeye_ai_settings')) || {}
+        if (prefs.model) this.model = prefs.model
+        if (prefs.temperature !== undefined && prefs.temperature !== null) this.temperature = prefs.temperature
+        if (prefs.maxTokens !== undefined && prefs.maxTokens !== null) this.maxTokens = prefs.maxTokens
+        if (prefs.reduceMotion !== undefined) this.reduceMotion = prefs.reduceMotion
+        if (prefs.defaultMode) this.chatMode = prefs.defaultMode
+        if (prefs.autoSummary !== undefined) this.autoSummary = prefs.autoSummary
+      } catch { /* 忽略解析错误 */ }
+    },
+
+    /** 将单个 key 回写到设置页 localStorage */
+    _saveSettingsKey(key, val) {
+      try {
+        const prefs = JSON.parse(localStorage.getItem('skyeye_ai_settings')) || {}
+        prefs[key] = val
+        localStorage.setItem('skyeye_ai_settings', JSON.stringify(prefs))
+      } catch { /* 忽略写入错误 */ }
     },
 
     collectContext() {
@@ -576,6 +643,17 @@ export default {
       this.chatLoop()
     },
 
+    insertNewline(e) {
+      const el = e.target
+      const start = el.selectionStart
+      const end = el.selectionEnd
+      this.input = this.input.substring(0, start) + '\n' + this.input.substring(end)
+      this.$nextTick(() => {
+        el.selectionStart = el.selectionEnd = start + 1
+        this.autoResize()
+      })
+    },
+
     async send() {
       const text = this.input.trim()
       if (!text || this.streaming) return
@@ -603,7 +681,7 @@ export default {
         const response = await fetch(`${apiBase}api/system/chat/completions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: allMessages, tools: this.activeTools, chat_mode: this.chatMode, context: this.currentContext }),
+          body: JSON.stringify({ messages: allMessages, tools: this.activeTools, chat_mode: this.chatMode, context: this.currentContext, model: this.model, temperature: this.temperature, max_tokens: this.maxTokens }),
           signal: this.abortController.signal,
         })
 
@@ -1071,6 +1149,14 @@ export default {
     animation: rail-hint-fade 2.5s ease-out forwards;
     animation-delay: 0.5s;
   }
+
+  /* hover 时强制保持可见，不受 JS sideRailVisible 影响 */
+  &:hover {
+    opacity: 1 !important;
+    transform: translate(0, -50%) !important;
+    pointer-events: auto !important;
+    animation: none !important;
+  }
 }
 
 @keyframes rail-hint-fade {
@@ -1123,11 +1209,11 @@ export default {
     opacity: 0;
     transform: scale(0);
     transition:
-      opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1),
-      transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1) 0.25s,
+      transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.25s,
       background 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-        border-color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-        color 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+      border-color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
+      color 0.25s cubic-bezier(0.32, 0.72, 0, 1);
 
     &:hover {
       background: rgba(255, 255, 255, 0.22);
