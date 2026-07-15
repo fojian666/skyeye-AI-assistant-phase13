@@ -1,6 +1,6 @@
 # 金陵阡陌（SkyEye）— 低空遥感智能巡检平台
 
-> **Phase 4** — AI 助手设置页面 · 玻璃拟态 · 打字机幕布入场动画 · 模型参数可调配
+> **Phase 5** — 视觉增强与交互优化 · 环境动画 · Tooltip 体系 · 保存确认 · 智能滚动
 
 ## 项目概述
 
@@ -144,6 +144,19 @@ skyeye/
 **入场动画**：打字机逐字打出标题（眉题 → 标题 → 副标题），闪烁光标跟随；5 张卡片从不同方向幕布式滑入，交错延迟展开
 
 **微交互**：Temperature 数值呼吸色温、Token 预览条渐变填充、模式芯片图标动画、键帽悬浮按压、版本号辉光脉冲
+
+### Phase 5 视觉增强
+
+| 效果 | 技术 | 说明 |
+|------|------|------|
+| 动态极光 | Canvas 2D radialGradient | 2 个 blob 锚定左上/右下对角，缓慢漂移 + 呼吸振荡，暗/亮色自动适配 |
+| 粒子连接网 | Canvas 2D | 30 个粒子 + 120px 近距连线，边界回弹，共享极光 RAF 循环 |
+| 噪点纹理 | SVG data URI background-image | 透明度 0.025，磨砂玻璃物理质感 |
+| 自定义 Tooltip | CSS `attr(data-tip)` + `::after` 气泡 | 模型/温度/Token/reduceMotion 4 项，暗/亮双主题适配 |
+| 保存确认 Toast | Vue `<transition>` | 修改即生效 + "设置已保存"提示 + "已恢复默认设置"反馈 |
+| 恢复默认 | 按钮 | 一键恢复所有设置项为出厂值 |
+| 返回按钮 | 毛玻璃 `←` | 左上角，`$router.back()` 返回上一页 |
+| 智能滚动 | ChatModel | 打字机输出时平滑跟随，手动上翻自动停止 + "回到底部"按钮 |
 
 **数据流**：设置页 ↔ localStorage (`skyeye_ai_settings`) ↔ ChatModel ↔ 后端 `chat_completions` API（model / temperature / max_tokens）
 
