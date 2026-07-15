@@ -103,6 +103,19 @@
   --cyber-danger: var(--status-danger);
   --cyber-radius: 4px;
   --cyber-radius-pill: 20px;
+  /* iOS 26 Liquid Glass 圆角层级 (弹性系统) */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+
+  /* App accent (indigo) — AiSettings / ChatModel 主色 */
+  --app-accent: #6366f1;
+  --app-accent-soft: rgba(99, 102, 241, 0.12);
+  --app-accent-border: rgba(99, 102, 241, 0.28);
+  --app-accent-glow: rgba(99, 102, 241, 0.2);
+  --app-accent-light: #a5b4fc;
   --cyber-header-bg: var(--bg-surface);
   --cyber-panel-bg: var(--panel-bg);
   --cyber-panel-shadow: var(--panel-shadow);

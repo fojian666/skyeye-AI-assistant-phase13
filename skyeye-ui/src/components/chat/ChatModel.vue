@@ -2,8 +2,9 @@
   <div class="chat-wrapper" :class="[`theme-${theme}`, { 'query-mode': chatMode === 'query', 'summary-mode': chatMode === 'summary', 'reduce-motion': reduceMotion }]" :style="wrapperStyle" role="complementary" aria-label="AI 助手面板">
     <!-- 悬浮按钮 -->
     <div v-if="!visible" class="chat-fab" @click="open" @mousedown="startDrag" title="AI 助手" aria-label="打开 AI 助手" role="button">
-        <span class="fab-emoji">🤖</span>
+        <span class="fab-robot-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span>
         <span class="fab-label">AI 助手</span>
+        <span v-if="messages.length > 0" class="fab-badge" aria-label="有历史对话"></span>
       </div>
 
     <!-- 聊天窗口 + 拓展槽 -->
@@ -13,7 +14,7 @@
         <!-- 头部 -->
         <div class="chat-header" @mousedown="startDrag">
           <div class="chat-header-left">
-            <span class="chat-logo-emoji">&#x1F916;</span>
+            <span class="chat-logo-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span>
             <div>
               <strong>金陵阡陌 AI 助手</strong>
               <small>
@@ -24,17 +25,22 @@
             </div>
           </div>
           <div class="chat-header-right">
-            <button class="chat-btn-icon" :title="reduceMotion ? '启用动态效果' : '减少动态效果'" @click="reduceMotion = !reduceMotion">
-              <i :class="reduceMotion ? 'el-icon-video-play' : 'el-icon-video-pause'"></i>
+            <button class="chat-btn-icon" :title="reduceMotion ? '启用动态效果' : '减少动态效果'" @click="reduceMotion = !reduceMotion" aria-label="切换动态效果">
+              <svg v-if="reduceMotion" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
             </button>
-            <button class="chat-btn-icon" :title="docked ? '取消吸附' : '吸附到右侧'" @click="docked = !docked">
-              <i :class="docked ? 'el-icon-d-arrow-left' : 'el-icon-d-arrow-right'"></i>
+            <button class="chat-btn-icon" :title="docked ? '取消吸附' : '吸附到右侧'" @click="docked = !docked" aria-label="切换吸附">
+              <svg v-if="docked" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 5 7 7-7 7"/><path d="M5 12h14"/></svg>
             </button>
-            <button class="chat-btn-icon" title="清空对话" @click="clearMessages">
-              <i class="el-icon-delete"></i>
+            <button class="chat-btn-icon" title="AI 助手设置" @click="openSettings" aria-label="AI 助手设置">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
-            <button class="chat-btn-icon" title="关闭" @click="closeChat">
-              <i class="el-icon-close"></i>
+            <button class="chat-btn-icon" title="清空对话" @click="clearMessages" aria-label="清空对话">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
+            <button class="chat-btn-icon" title="关闭" @click="closeChat" aria-label="关闭面板">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
           </div>
         </div>
@@ -42,7 +48,7 @@
         <!-- 消息列表 -->
         <div class="chat-body" ref="chatBody" role="log" aria-live="polite" aria-label="对话内容" @scroll="onChatScroll">
           <div v-if="messages.length === 0" class="chat-empty">
-            <span class="empty-emoji">&#x1F916;</span>
+            <span class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span>
             <p>你好！我是金陵阡陌 AI 助手</p>
             <span>可以问我关于无人机巡检、航线规划、全景分析等问题</span>
             <div class="quick-questions">
@@ -60,9 +66,9 @@
               <span class="msg-name">{{ msg.role === 'user' ? username : msg.role === 'tool-info' ? '系统' : modelName }}</span>
               <div class="msg-row">
                 <div class="msg-avatar">
-                  <i v-if="msg.role === 'user'" class="el-icon-user"></i>
-                  <span v-else-if="msg.role === 'tool-info'" class="avatar-emoji">&#x1F4CD;</span>
-                  <span v-else class="avatar-emoji">&#x1F916;</span>
+                  <svg v-if="msg.role === 'user'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <svg v-else-if="msg.role === 'tool-info'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
                 </div>
                 <div class="msg-content" v-if="msg.role === 'tool-info'" style="background:rgba(0,243,255,0.08);font-style:italic">
                   {{ msg.content }}
@@ -74,11 +80,12 @@
               </div>
               <div v-if="msg.role === 'assistant'" class="msg-actions">
                 <button class="msg-action-btn" @click="copyMessage(msg.content, idx)" :title="copiedMsgIdx === idx ? '已复制' : '复制回答'">
-                  <i :class="copiedMsgIdx === idx ? 'el-icon-check' : 'el-icon-document-copy'"></i>
+                  <svg v-if="copiedMsgIdx === idx" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 </button>
                 <span v-if="copiedMsgIdx === idx" class="copy-toast">已复制</span>
                 <button v-if="msg._error || msg._interrupted" class="msg-action-btn retry" @click="retry(idx)" title="重试">
-                  <i class="el-icon-refresh"></i>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
                 </button>
               </div>
             </div>
@@ -98,7 +105,7 @@
             <span class="msg-name">{{ modelName }}</span>
             <div class="msg-row">
               <div class="msg-avatar">
-                <span class="avatar-emoji">&#x1F916;</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
               </div>
               <div class="msg-content" :class="{ 'streaming-cursor': streamingText }">
                 <span v-if="streamingText" v-html="streamingText"></span>
@@ -122,7 +129,7 @@
           title="回到底部"
           aria-label="滚动到最新消息"
         >
-          <i class="el-icon-bottom"></i>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </button>
 
         <!-- 输入区 -->
@@ -154,7 +161,7 @@
               :disabled="!input.trim()"
               @click="send"
               title="发送">
-              <i class="el-icon-position"></i>
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
             </button>
           </div>
         </div>
@@ -166,12 +173,14 @@
 
         <!-- 左侧拓展槽 -->
         <div v-show="!docked" class="side-rail" :class="{ visible: sideRailVisible, 'show-hint': !railHintShown }">
-          <div class="rail-item small spread-top-1" title="搜索定位"><i class="el-icon-search"></i></div>
+          <div class="rail-item small spread-top-1" title="搜索定位" aria-label="搜索定位"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div>
           <div class="rail-item large" @click="toggleChatMode"
             :title="chatMode === 'query' ? '切换到智能摘要' : chatMode === 'summary' ? '切换到聊天模式' : '切换到数据查询模式'">
-            <i :class="chatMode === 'query' ? 'el-icon-data-line' : chatMode === 'summary' ? 'el-icon-document-checked' : 'el-icon-star-off'"></i>
+            <svg v-if="chatMode === 'query'" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <svg v-else-if="chatMode === 'summary'" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
           </div>
-          <div class="rail-item small spread-bot-1" title="系统设置" @click="openSettings"><i class="el-icon-s-tools"></i></div>
+          <div class="rail-item small spread-bot-1" title="系统设置" @click="openSettings" aria-label="系统设置"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
         </div>
       </div>
   </div>
@@ -200,6 +209,7 @@ const ROUTES = [
   { path: '/panoramic-detection/main-detection-temp',             title: '临时批次' },
   { path: '/panoramic-detection/report',                          title: '报告管理' },
   { path: '/pattern-verifiy/task_management',                     title: '任务管理' },
+  { path: '/ai-settings',                                        title: 'AI 设置' },
 ];
 
 const TOOLS = [
@@ -289,8 +299,8 @@ export default {
       dragStart: { x: 0, y: 0, elX: 0, elY: 0 },
       docked: false,
       sideRailVisible: false,
-      panelW: 400,
-      panelH: 560,
+      panelW: 480,
+      panelH: Math.min(window.innerHeight * 0.78, 640),
       resizing: false,
       resizeStart: { x: 0, y: 0, w: 0, h: 0 },
       chatQuickQuestions: [
@@ -329,6 +339,7 @@ export default {
       railHintShown: false,     // side-rail 发现性提示（首次打开展示一次）
       showScrollBtn: false,     // "回到底部"浮动按钮
       _userScrolledUp: false,   // 用户手动上翻后暂停自动滚动
+      _storageError: false,     // localStorage 读写异常标志
       model: 'deepseek-chat',   // 模型选择（从设置页同步）
       temperature: 0.7,          // Temperature 参数
       maxTokens: 4096,           // 最大输出 token
@@ -391,7 +402,14 @@ export default {
     // 路由变化：进入新页面且有选中对象 → 自动生成摘要
     $route: {
       immediate: true,
-      handler() { this.maybeAutoSummary() },
+      handler() {
+        this.$nextTick(() => { this.maybeAutoSummary() })
+        // 从设置页返回 → 恢复聊天面板（不在设置页时才触发）
+        if (this.$route.path !== '/ai-settings' && sessionStorage.getItem('skyeye_from_chat') === '1') {
+          sessionStorage.removeItem('skyeye_from_chat')
+          this.$nextTick(() => { if (!this.visible) this.openChat() })
+        }
+      },
     },
     // 切换到数据查询模式或摘要模式且有选中对象 → 自动生成摘要
     chatMode(val) {
@@ -519,19 +537,19 @@ export default {
           requestAnimationFrame(() => {
             gsap.fromTo(panel,
               {
-                scale: 0.1, opacity: 0,
+                scale: 0.95, opacity: 0, y: 20,
                 boxShadow: '0 0 20px rgba(100,180,255,0.3), 0 0 40px rgba(100,180,255,0.1), 0 0 0 1px rgba(255,255,255,0.05) inset',
                 borderColor: 'rgba(100,180,255,0.35)',
               },
               {
-                scale: 1, opacity: 1,
+                scale: 1, opacity: 1, y: 0,
                 boxShadow: '0 24px 64px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05) inset, 0 1px 0 rgba(255,255,255,0.06) inset',
                 borderColor: 'rgba(255,255,255,0.1)',
                 duration: 0.5,
-                ease: 'back.out(1.7)',
+                ease: 'power3.out',
               }
             )
-            gsap.fromTo(shell, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'back.out(1.7)' })
+            gsap.fromTo(shell, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power3.out' })
           })
         }
         this.$refs.inputArea?.focus()
@@ -548,11 +566,11 @@ export default {
       if (panel && this.visible) {
         const shell = panel.parentElement // .panel-shell 外壳
         gsap.to(panel, {
-          scale: 0.1, opacity: 0,
+          scale: 0.95, opacity: 0, y: 10,
           boxShadow: '0 0 16px rgba(100,180,255,0.25), 0 0 32px rgba(100,180,255,0.08), 0 0 0 1px rgba(255,255,255,0.05) inset',
           borderColor: 'rgba(100,180,255,0.3)',
-          duration: 0.15,
-          ease: 'power2.in',
+          duration: 0.2,
+          ease: 'power3.in',
           onComplete: () => {
             this.visible = false
             this.docked = false
@@ -560,7 +578,31 @@ export default {
             gsap.set([panel, shell], { clearProps: 'all' })
           },
         })
-        gsap.to(shell, { opacity: 0, duration: 0.15, ease: 'power2.in' })
+        gsap.to(shell, { opacity: 0, duration: 0.2, ease: 'power3.in' })
+      } else {
+        this.visible = false
+        this.docked = false
+        this.dragPos = { x: null, y: null }
+      }
+    },
+
+    /** 收起面板回到 FAB（保留对话内容，用于跳转地图等场景） */
+    collapseToFab() {
+      const panel = this.$refs.panel
+      if (panel && this.visible) {
+        const shell = panel.parentElement
+        gsap.to(panel, {
+          scale: 0.95, opacity: 0, y: 10,
+          duration: 0.15,
+          ease: 'power3.in',
+          onComplete: () => {
+            this.visible = false
+            this.docked = false
+            this.dragPos = { x: null, y: null }
+            gsap.set([panel, shell], { clearProps: 'all' })
+          },
+        })
+        gsap.to(shell, { opacity: 0, duration: 0.15, ease: 'power3.in' })
       } else {
         this.visible = false
         this.docked = false
@@ -576,6 +618,7 @@ export default {
     },
 
     openSettings() {
+      sessionStorage.setItem('skyeye_from_chat', '1')
       this.closeChat()
       router.push('/ai-settings').catch(() => {})
     },
@@ -590,7 +633,10 @@ export default {
         if (prefs.reduceMotion !== undefined) this.reduceMotion = prefs.reduceMotion
         if (prefs.defaultMode) this.chatMode = prefs.defaultMode
         if (prefs.autoSummary !== undefined) this.autoSummary = prefs.autoSummary
-      } catch { /* 忽略解析错误 */ }
+      } catch (e) {
+        console.warn('[ChatModel] localStorage 读取失败', e)
+        this._storageError = true
+      }
     },
 
     /** 将单个 key 回写到设置页 localStorage */
@@ -599,7 +645,10 @@ export default {
         const prefs = JSON.parse(localStorage.getItem('skyeye_ai_settings')) || {}
         prefs[key] = val
         localStorage.setItem('skyeye_ai_settings', JSON.stringify(prefs))
-      } catch { /* 忽略写入错误 */ }
+      } catch (e) {
+        console.warn('[ChatModel] localStorage 回写失败', e)
+        this._storageError = true
+      }
     },
 
     collectContext() {
@@ -668,6 +717,19 @@ export default {
         el.selectionStart = el.selectionEnd = start + 1
         this.autoResize()
       })
+    },
+
+    /** 将 fetch 错误映射为友好消息 */
+    _friendlyError(err) {
+      if (err.name === 'AbortError') return '已停止生成'
+      if (err.name === 'TypeError' && err.message.includes('fetch')) return '网络连接异常，请检查网络'
+      const msg = err.message || ''
+      if (msg.includes('500') || msg.includes('502') || msg.includes('503')) return '服务繁忙，请稍后再试'
+      if (msg.includes('401') || msg.includes('403')) return '访问被拒绝，请检查权限'
+      if (msg.includes('404')) return '接口不存在，请联系管理员'
+      if (msg.includes('429')) return '请求过于频繁，请稍后再试'
+      console.error('[ChatModel] 未知错误', err)
+      return '服务暂时不可用，请稍后再试'
     },
 
     async send() {
@@ -771,8 +833,7 @@ export default {
           }
           this.streamingText = ''
         } else {
-          const msg = err.message
-          this.messages.push({ role: 'assistant', content: `抱歉，请求失败：${msg}`, _error: true })
+          this.messages.push({ role: 'assistant', content: `抱歉，${this._friendlyError(err)}`, _error: true })
         }
         this.streaming = false
       }
@@ -790,16 +851,18 @@ export default {
         const assistantMsg = { role: 'assistant', content: '', tool_calls: result.tool_calls }
         if (result.content) assistantMsg.content = result.content
         this.messages.push(assistantMsg)
+        const toolCallIdx = this.messages.length // 记录工具调用消息后的位置
 
         // 执行每个工具
         for (const tc of result.tool_calls) {
           const fn = tc.function
           const args = JSON.parse(fn.arguments)
           const toolResult = await this.executeTool(fn.name, args)
-          // 导航类工具执行后直接结束，清空消息历史
+          // 导航类工具执行后折叠面板，保留对话历史供后续追问
           if (toolResult._navigate) {
-            this.messages = []
-            this.dragPos = { x: null, y: null }
+            // 清理中间消息（空白 assistant tool_call + tool-info），只留最终跳转提示
+            this.messages.splice(toolCallIdx - 1)
+            this.collapseToFab()
             let label
             if (fn.name === 'map_action') {
               label = args.name || args.location
@@ -843,9 +906,11 @@ export default {
     async executeTool(name, args) {
       if (name === 'navigate_page') {
         const path = this.resolveRoute(args.path)
+        // 跳转到 AI 设置时标记，返回后自动恢复聊天面板
+        if (path === '/ai-settings') sessionStorage.setItem('skyeye_from_chat', '1')
         this.messages.push({ role: 'tool-info', content: `正在跳转到：${args.reason}` })
         this.$nextTick(() => {
-          this.visible = false
+          this.collapseToFab()
           router.push(path).catch(() => {})
         })
         return { _navigate: true, path, reason: args.reason }
@@ -882,7 +947,7 @@ export default {
         if (args._lookup_found) {
           this.messages.push({ role: 'tool-info', content: `找到任务：${args._batch_name}` })
           this.$nextTick(() => {
-            this.visible = false
+            this.collapseToFab()
             router.push(`/panoramic-detection/verifyClue?id=${taskId}`).catch(() => {})
           })
           return { _navigate: true, task_id: taskId, batch_name: args._batch_name }
@@ -1115,13 +1180,15 @@ export default {
       0 0 0 1px rgba(255, 255, 255, 0.12) inset;
   }
 
-  .fab-emoji {
-    font-size: 22px;
+  .fab-robot-icon {
+    display: flex;
     line-height: 1;
     transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+
+    svg { display: block; }
   }
 
-  &:hover .fab-emoji {
+  &:hover .fab-robot-icon {
     transform: rotate(-12deg) scale(1.15);
   }
 
@@ -1141,6 +1208,18 @@ export default {
     max-width: 80px;
     opacity: 1;
   }
+}
+
+/* FAB 历史对话指示器 */
+.fab-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--app-accent, #6366f1);
+  box-shadow: 0 0 6px rgba(99, 102, 241, 0.5);
 }
 
 /* 面板行 — flex 并排聊天面板 + 拓展槽 */
@@ -1307,11 +1386,13 @@ export default {
 .panel-shell {
   padding: 4px;
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 24px 64px rgba(0, 0, 0, 0.55);
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 12px 48px rgba(0, 0, 0, 0.55);
 }
 
 .docked .panel-shell {
@@ -1322,10 +1403,12 @@ export default {
 .chat-panel {
   position: relative;
   box-sizing: border-box;
+  max-width: 520px;
+  max-height: 85vh;
   border-radius: 20px;
-  background: rgba(8, 14, 28, 0.82);
-  backdrop-filter: blur(20px) saturate(1);
-  -webkit-backdrop-filter: blur(20px) saturate(1);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
@@ -1337,11 +1420,28 @@ export default {
   transition: height 0.3s ease, border-radius 0.3s ease,
     border-color 0.3s ease,
     box-shadow 0.3s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 .chat-panel.docked {
-  width: 100%;
+  width: 390px;
+  max-width: none;
   height: calc(100% - 48px);
+  max-height: none;
   border-radius: 12px 0 0 12px;
   border-right: none;
   margin-top: 48px;
@@ -1350,7 +1450,10 @@ export default {
 /* 数据查询模式 */
 .chat-wrapper.query-mode .chat-panel {
   border-color: rgba(239, 68, 68, 0.3);
-  transition: border-color 0.3s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 24px rgba(239, 68, 68, 0.08);
+  transition: border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .chat-wrapper.query-mode .chat-header {
   background: rgba(239, 68, 68, 0.08);
@@ -1378,7 +1481,10 @@ export default {
 /* 智能摘要模式 — 琥珀/金色 */
 .chat-wrapper.summary-mode .chat-panel {
   border-color: rgba(245, 158, 11, 0.3);
-  transition: border-color 0.3s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 24px rgba(245, 158, 11, 0.08);
+  transition: border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .chat-wrapper.summary-mode .chat-header {
   background: rgba(245, 158, 11, 0.08);
@@ -1456,6 +1562,8 @@ export default {
   padding: 14px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   user-select: none;
   transition: background 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -1469,8 +1577,8 @@ export default {
   align-items: center;
   gap: 10px;
 
-  .chat-logo-emoji {
-    font-size: 24px;
+  .chat-logo-icon {
+    svg { display: block; }
   }
 
   strong {
@@ -1505,21 +1613,30 @@ export default {
   justify-content: center;
   transition: all 0.15s;
 
+  svg { display: block; }
+
   &:hover {
     background: rgba(255, 255, 255, 0.08);
     color: rgba(255, 255, 255, 0.9);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(99, 102, 241, 0.6);
+    outline-offset: 2px;
   }
 }
 
 /* 消息区 */
 .chat-body {
   flex: 1;
-  overflow-y: overlay;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 14px;
   scroll-behavior: smooth;
+  min-height: 0;
 
   &::-webkit-scrollbar { width: 5px; }
   &::-webkit-scrollbar-thumb {
@@ -1539,9 +1656,9 @@ export default {
   text-align: center;
   padding: 32px 10px;
 
-  .empty-emoji {
-    font-size: 52px;
+  .empty-icon {
     opacity: 0.4;
+    svg { display: block; }
   }
 
   p {
@@ -1552,7 +1669,7 @@ export default {
   }
 
   span {
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(255, 255, 255, 0.55);
     font-size: 12px;
   }
 
@@ -1582,6 +1699,11 @@ export default {
         color: #fff;
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      &:focus-visible {
+        outline: 2px solid rgba(99, 102, 241, 0.6);
+        outline-offset: 2px;
       }
     }
   }
@@ -1714,13 +1836,11 @@ export default {
   justify-content: center;
   font-size: 16px;
 
-  .avatar-emoji {
-    font-size: 16px;
-    line-height: 1;
-  }
+  svg { display: block; }
 }
 
 .msg-content {
+  max-width: 70%;
   padding: 12px 16px;
   font-size: 13px;
   line-height: 1.6;
@@ -1897,7 +2017,9 @@ export default {
 .chat-footer {
   padding: 14px 18px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   transition: border-color 0.3s 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -1912,7 +2034,9 @@ export default {
     rgba(255, 255, 255, 0.04) 40%,
     rgba(255, 255, 255, 0.06) 100%);
   padding: 3px 3px 3px 14px;
-  transition: all 0.3s ease;
+  transition: border-color 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+    background 0.35s cubic-bezier(0.32, 0.72, 0, 1);
   box-shadow:
     inset 0 2px 4px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -1932,10 +2056,14 @@ export default {
 
   &:focus-within {
     border-color: rgba(59, 130, 246, 0.5);
+    background: linear-gradient(145deg,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.06) 40%,
+      rgba(255, 255, 255, 0.08) 100%);
     box-shadow:
       inset 0 2px 4px rgba(0, 0, 0, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      0 0 0 4px rgba(59, 130, 246, 0.12);
+      0 0 0 4px rgba(59, 130, 246, 0.15);
   }
 }
 
@@ -1994,6 +2122,11 @@ export default {
   &:disabled {
     opacity: 0.3;
     cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(99, 102, 241, 0.6);
+    outline-offset: 2px;
   }
 }
 
@@ -2141,11 +2274,15 @@ export default {
   box-shadow: 0 12px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.6) inset;
 }
 .theme-light .chat-panel {
-  background: rgba(255, 255, 255, 0.62);
-  backdrop-filter: blur(28px) saturate(1.4);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
   border-color: rgba(0, 0, 0, 0.06);
-  box-shadow: 0 24px 64px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.4) inset;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.5) inset;
+
+  &::before {
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+  }
 }
 .theme-light .chat-panel.thinking-glow {
   border-color: rgba(37, 99, 235, 0.3);
@@ -2352,5 +2489,14 @@ export default {
 .reduce-motion .query-send-btn,
 .reduce-motion .quick-item {
   transition-duration: 0.1s !important;
+}
+
+/* ========================= prefers-reduced-motion ========================= */
+@media (prefers-reduced-motion: reduce) {
+  .chat-wrapper * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 </style>

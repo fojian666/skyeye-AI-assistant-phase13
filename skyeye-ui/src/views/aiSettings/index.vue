@@ -3,13 +3,18 @@
       <!-- Canvas: 动态极光 + 粒子连接网 -->
       <canvas ref="auroraCanvas" class="aurora-canvas" aria-hidden="true"></canvas>
 
+      <!-- CSS 呼吸光斑（iOS 26 风格，交错延迟） -->
+      <div class="bg-orb bg-orb-1" aria-hidden="true"></div>
+      <div class="bg-orb bg-orb-2" aria-hidden="true"></div>
+      <div class="bg-orb bg-orb-3" aria-hidden="true"></div>
+
       <!-- 噪点纹理叠加层 -->
       <div class="noise-overlay" aria-hidden="true"></div>
 
     <main class="settings-main">
       <!-- 返回按钮 -->
       <button class="back-btn" @click="$router.back()" aria-label="返回">
-        <span class="back-arrow">&#8592;</span>
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
       </button>
 
       <!-- 头部：打字机标题 -->
@@ -34,7 +39,7 @@
             <!-- 内核 -->
             <div class="pod-core">
               <div class="pod-icon-wrap">
-                <span class="pod-icon">&#x1F9E0;</span>
+                <svg class="pod-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5a2.5 2.5 0 0 0-4.96-.46 2.5 2.5 0 0 0-1.98 3 2.5 2.5 0 0 0-1.32 4.24 3 3 0 0 0 .34 5.58 2.5 2.5 0 0 0 2.96 3.08A2.5 2.5 0 0 0 12 19.5a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 12 4.5Z"/><path d="m14.5 12-4.5 4.5L8 14.5"/></svg>
               </div>
               <h3>模型与参数</h3>
               <p class="pod-desc">控制 AI 回复的创造性与精确度</p>
@@ -49,7 +54,7 @@
                     <option value="deepseek-chat">DeepSeek-V3 (通用对话)</option>
                     <option value="deepseek-reasoner">DeepSeek-R1 (深度推理)</option>
                   </select>
-                  <i class="el-icon-arrow-down select-chevron"></i>
+                  <svg class="select-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                 </div>
               </div>
 
@@ -118,7 +123,7 @@
           <div class="pod-shell">
             <div class="pod-core">
               <div class="pod-icon-wrap">
-                <span class="pod-icon">&#x1F3A8;</span>
+                <svg class="pod-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
               </div>
               <h3>外观</h3>
               <p class="pod-desc">视觉偏好与动效控制</p>
@@ -168,7 +173,7 @@
           <div class="pod-shell">
             <div class="pod-core">
               <div class="pod-icon-wrap">
-                <span class="pod-icon">&#x1F4AC;</span>
+                <svg class="pod-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               </div>
               <h3>对话默认</h3>
               <p class="pod-desc">新对话的起始模式与行为</p>
@@ -185,7 +190,7 @@
                     :title="m.tip"
                     @click="defaultMode = m.value"
                   >
-                    <span class="chip-icon">{{ m.icon }}</span>
+                    <svg class="chip-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" v-html="m.iconSvg"></svg>
                     <span class="chip-label">{{ m.label }}</span>
                   </button>
                 </div>
@@ -216,7 +221,7 @@
           <div class="pod-shell">
             <div class="pod-core">
               <div class="pod-icon-wrap">
-                <span class="pod-icon">&#x2328;</span>
+                <svg class="pod-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M18 12h.01M6 16h.01M10 16h.01M14 16h.01M18 16h.01"/></svg>
               </div>
               <h3>键盘快捷键</h3>
               <p class="pod-desc">高效操作参考</p>
@@ -238,7 +243,7 @@
           <div class="pod-shell">
             <div class="pod-core">
               <div class="pod-icon-wrap">
-                <span class="pod-icon">&#x2728;</span>
+                <svg class="pod-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
               </div>
               <h3>关于</h3>
               <p class="pod-desc">金陵阡陌 AI 助手</p>
@@ -263,8 +268,8 @@
       </div>
       <!-- 操作行 -->
       <div class="actions-bar">
-        <button class="btn-reset" @click="restoreDefaults">
-          <span class="btn-reset-icon">&#x21BA;</span>
+        <button class="btn-reset" @click="restoreDefaults" aria-label="恢复默认设置">
+          <svg class="btn-reset-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
           恢复默认
         </button>
       </div>
@@ -272,8 +277,14 @@
 
     <!-- 保存确认 Toast -->
     <transition name="toast">
-      <div v-if="toastVisible" class="save-toast">{{ toastMessage }}</div>
+      <div v-if="toastVisible" class="save-toast" :class="{ 'save-toast--error': _storageError }">{{ toastMessage }}</div>
     </transition>
+
+    <!-- localStorage 异常警告 -->
+    <div v-if="_storageError" class="storage-warning" role="alert">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      设置无法持久保存，请检查浏览器存储空间或隐私设置
+    </div>
   </div>
 </template>
 
@@ -293,9 +304,9 @@ export default {
       defaultMode: saved.defaultMode || 'chat',
       autoSummary: saved.autoSummary ?? false,
       modes: [
-        { value: 'chat',    icon: '\u{1F4AC}', label: '自由对话', tip: '通用 AI 对话，适合日常问答与讨论' },
-        { value: 'query',   icon: '\u{1F4CA}', label: '数据查询',  tip: '结构化数据检索与分析，适合图斑查询、统计报表' },
-        { value: 'summary', icon: '\u{1F4CB}', label: '智能摘要',  tip: '对当前选中要素自动生成综合摘要报告' },
+        { value: 'chat',    iconSvg: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>', label: '自由对话', tip: '通用 AI 对话，适合日常问答与讨论' },
+        { value: 'query',   iconSvg: '<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>', label: '数据查询',  tip: '结构化数据检索与分析，适合图斑查询、统计报表' },
+        { value: 'summary', iconSvg: '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>', label: '智能摘要',  tip: '对当前选中要素自动生成综合摘要报告' },
       ],
       shortcuts: [
         { label: '唤起助手',    keys: isMac() ? ['⌘', 'K'] : ['Ctrl', 'K'] },
@@ -312,6 +323,7 @@ export default {
       toastVisible: false,
       toastMessage: '设置已保存',
       _toastTimer: null,
+      _storageError: false,     // localStorage 读写异常标志
     }
   },
 
@@ -363,6 +375,15 @@ export default {
     // ==================== 打字机 + 幕布入场 ====================
 
     _startTypewriter() {
+      // reduceMotion 关闭时跳过打字机，直接展示完整内容
+      if (this.reduceMotion) {
+        this.typedEyebrow = 'AI 助手'
+        this.typedTitle = '设置'
+        this.typedSubtitle = '个性化你的智能对话体验'
+        this.typingLine = 'done'
+        this.$nextTick(() => this._revealCurtains())
+        return
+      }
       const eyebrows = 'AI 助手';
       const title = '设置';
       const subtitle = '个性化你的智能对话体验';
@@ -557,7 +578,9 @@ export default {
     _loadPrefs() {
       try {
         return JSON.parse(localStorage.getItem(this._prefKey())) || {};
-      } catch {
+      } catch (e) {
+        console.warn('[aiSettings] localStorage 读取失败', e);
+        this._storageError = true;
         return {};
       }
     },
@@ -571,8 +594,13 @@ export default {
         defaultMode: this.defaultMode,
         autoSummary: this.autoSummary,
       };
-      localStorage.setItem(this._prefKey(), JSON.stringify(prefs));
-      this._showToast('设置已保存');
+      try {
+        localStorage.setItem(this._prefKey(), JSON.stringify(prefs));
+      } catch (e) {
+        console.warn('[aiSettings] localStorage 写入失败', e);
+        this._storageError = true;
+      }
+      this._showToast(this._storageError ? '写入存储失败，请检查浏览器空间' : '设置已保存');
     },
 
     _showToast(msg) {
@@ -668,7 +696,7 @@ void main(){
   overflow-x: hidden;
   transition: background 0.5s cubic-bezier(0.32, 0.72, 0, 1);
 
-  /* 美化滚动条 */
+  /* 美化滚动条 — iOS 风格：默认隐藏，hover 显现 */
   &::-webkit-scrollbar {
     width: 5px;
   }
@@ -676,8 +704,12 @@ void main(){
     background: transparent;
   }
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
+    background: transparent;
     border-radius: 3px;
+    transition: background 0.3s;
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
   }
 }
 
@@ -704,10 +736,11 @@ void main(){
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(12px);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   color: rgba(255, 255, 255, 0.45);
   cursor: pointer;
   transition:
@@ -717,31 +750,37 @@ void main(){
     transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.15);
-    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.85);
     transform: translateX(-2px);
   }
 
   &:active {
     transform: scale(0.95);
   }
-}
 
-.back-arrow {
-  font-size: 20px;
-  line-height: 1;
+  &:focus-visible {
+    outline: 2px solid rgba(99, 102, 241, 0.6);
+    outline-offset: 2px;
+  }
+
+  .icon {
+    display: block;
+  }
 }
 
 [data-theme="light"] .back-btn {
-  background: rgba(0, 0, 0, 0.03);
-  border-color: rgba(0, 0, 0, 0.06);
-  color: rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.35);
 
   &:hover {
-    background: rgba(0, 0, 0, 0.06);
-    border-color: rgba(0, 0, 0, 0.12);
-    color: rgba(0, 0, 0, 0.55);
+    background: rgba(255, 255, 255, 0.7);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -751,6 +790,68 @@ void main(){
   inset: 0;
   z-index: 0;
   pointer-events: none;
+}
+
+/* ========================= 呼吸光斑 (iOS 26 风格) ========================= */
+.bg-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+  animation: orb-breathe 4s ease-in-out infinite;
+}
+
+.bg-orb-1 {
+  width: 384px; height: 384px;
+  top: 15%; left: 15%;
+  background: rgba(59, 130, 246, 0.06);
+  animation-delay: 0s;
+}
+
+.bg-orb-2 {
+  width: 320px; height: 320px;
+  bottom: 20%; right: 15%;
+  background: rgba(139, 92, 246, 0.06);
+  animation-delay: 1.5s;
+}
+
+.bg-orb-3 {
+  width: 280px; height: 280px;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(236, 72, 153, 0.05);
+  animation-delay: 3s;
+}
+
+@keyframes orb-breathe {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50%      { opacity: 1;   transform: translate(-50%, -50%) scale(1.15); }
+}
+
+/* orb-1 和 orb-2 不使用 translate(-50%,-50%)，需要分写 */
+.bg-orb-1 { animation-name: orb-breathe-1; }
+.bg-orb-2 { animation-name: orb-breathe-2; }
+
+@keyframes orb-breathe-1 {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.15); }
+}
+
+@keyframes orb-breathe-2 {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%      { opacity: 0.9; transform: scale(1.12); }
+}
+
+/* 浅色主题下光斑不可见（已有浅色背景） */
+[data-theme="light"] .bg-orb {
+  display: none;
+}
+
+/* 减少动效模式下光斑不呼吸 */
+.reduce-motion .bg-orb {
+  animation: none;
+  opacity: 0.3;
 }
 
 /* ========================= 主容器 ========================= */
@@ -790,7 +891,7 @@ void main(){
   }
 
   .subtitle {
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(255, 255, 255, 0.55);
     font-size: 16px;
     margin: 0;
   }
@@ -818,11 +919,13 @@ void main(){
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 18px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.35);
+  padding: 10px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: rgba(255, 255, 255, 0.4);
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
@@ -832,19 +935,23 @@ void main(){
     color 0.25s ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.14);
-    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.8);
   }
 
   &:active {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(99, 102, 241, 0.6);
+    outline-offset: 2px;
   }
 }
 
 .btn-reset-icon {
-  font-size: 15px;
-  line-height: 1;
+  display: block;
 }
 
 /* ========================= Save Toast ========================= */
@@ -856,9 +963,10 @@ void main(){
   z-index: 50;
   padding: 10px 22px;
   border-radius: 14px;
-  background: rgba(15, 23, 42, 0.92);
-  border: 1px solid rgba(99, 102, 241, 0.18);
-  backdrop-filter: blur(12px);
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
   color: rgba(255, 255, 255, 0.85);
   font-size: 13px;
   font-weight: 500;
@@ -884,52 +992,76 @@ void main(){
   transform: translateX(-50%) translateY(8px);
 }
 
-/* ========================= 卡片 Pod ========================= */
+/* ========================= 卡片 Pod — Liquid Glass ========================= */
 .card-pod {
-  /* 外壳 — 铝合金托盘 */
+  /* 外壳 — 半透明玻璃托盘 */
   .pod-shell {
-    padding: 3px;
+    padding: 4px;
     border-radius: 24px;
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.03),
-      0 8px 32px rgba(0, 0, 0, 0.45);
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 4px 24px rgba(0, 0, 0, 0.3);
     transition:
       border-color 0.6s cubic-bezier(0.32, 0.72, 0, 1),
       box-shadow 0.6s cubic-bezier(0.32, 0.72, 0, 1);
 
     &:hover {
-      border-color: rgba(255, 255, 255, 0.09);
+      border-color: rgba(255, 255, 255, 0.15);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.05),
-        0 16px 48px rgba(0, 0, 0, 0.6);
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 12px 40px rgba(0, 0, 0, 0.45);
     }
   }
 
-  /* 内核 — 玻璃面板 */
+  /* 内核 — 深层玻璃面板 */
   .pod-core {
+    position: relative;
     padding: 28px 28px 32px;
     border-radius: 21px;
-    background: rgba(10, 16, 30, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06);
+    /* overflow: visible — 确保 field-help tooltip 不被裁剪 */
+
+    /* 双层玻璃深度：伪元素叠加高光渐变 */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 21px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    > * {
+      position: relative;
+      z-index: 1;
+    }
   }
 
   .pod-icon-wrap {
     width: 44px;
     height: 44px;
     border-radius: 14px;
-    background: rgba(99, 102, 241, 0.14);
-    border: 1px solid rgba(99, 102, 241, 0.18);
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 16px;
 
     .pod-icon {
-      font-size: 20px;
-      line-height: 1;
+      display: block;
+      color: rgba(165, 180, 252, 0.9);
     }
   }
 
@@ -942,7 +1074,7 @@ void main(){
 
   .pod-desc {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(255, 255, 255, 0.5);
     margin: 0 0 24px;
     line-height: 1.5;
   }
@@ -1003,20 +1135,23 @@ void main(){
   &::after {
     content: attr(data-tip);
     position: absolute;
-    left: 50%;
     bottom: calc(100% + 10px);
+    /* 默认居中，右侧空间不足时从右边对齐 */
+    left: 50%;
+    right: auto;
     transform: translateX(-50%) translateY(4px);
     padding: 8px 14px;
     border-radius: 10px;
-    background: rgba(15, 23, 42, 0.95);
+    background: rgba(15, 23, 42, 0.97);
     border: 1px solid rgba(99, 102, 241, 0.25);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
     color: rgba(255, 255, 255, 0.85);
     font-size: 12px;
     font-weight: 400;
     line-height: 1.55;
     white-space: normal;
     width: 260px;
-    max-width: 80vw;
+    max-width: min(260px, calc(100vw - 32px));
     text-align: left;
     letter-spacing: 0;
     text-transform: none;
@@ -1026,6 +1161,13 @@ void main(){
       opacity 0.2s ease,
       transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
     z-index: 100;
+  }
+
+  /* 右侧问号：tooltip 右对齐防止出界 */
+  &.right &::after {
+    left: auto;
+    right: 0;
+    transform: translateY(4px);
   }
 
   /* 气泡三角箭头 */
@@ -1081,8 +1223,10 @@ void main(){
     width: 100%;
     padding: 11px 36px 11px 14px;
     border-radius: 14px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     color: rgba(255, 255, 255, 0.85);
     font-size: 14px;
     font-family: inherit;
@@ -1096,7 +1240,7 @@ void main(){
 
     &:focus {
       border-color: rgba(99, 102, 241, 0.45);
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.1);
       box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
     }
   }
@@ -1108,8 +1252,7 @@ void main(){
     transform: translateY(-50%);
     color: rgba(255, 255, 255, 0.3);
     pointer-events: none;
-    font-size: 12px;
-    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), color 0.35s cubic-bezier(0.32, 0.72, 0, 1);
   }
 
   &:focus-within .select-chevron {
@@ -1125,7 +1268,7 @@ void main(){
   width: 100%;
   height: 6px;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.1);
   outline: none;
   margin: 0 0 4px;
   cursor: pointer;
@@ -1169,7 +1312,7 @@ void main(){
   display: flex;
   justify-content: space-between;
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.35);
   padding-top: 2px;
 }
 
@@ -1189,7 +1332,7 @@ void main(){
 
 .toggle-hint {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .toggle-switch {
@@ -1197,20 +1340,28 @@ void main(){
   width: 48px;
   height: 28px;
   border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   cursor: pointer;
   outline: none;
   flex-shrink: 0;
+
+  &:focus-visible {
+    outline: 2px solid rgba(99, 102, 241, 0.6);
+    outline-offset: 2px;
+  }
+
   transition:
     background 0.45s cubic-bezier(0.32, 0.72, 0, 1),
     border-color 0.45s cubic-bezier(0.32, 0.72, 0, 1),
     box-shadow 0.45s cubic-bezier(0.32, 0.72, 0, 1);
 
   &.active {
-    background: rgba(99, 102, 241, 0.35);
-    border-color: rgba(99, 102, 241, 0.45);
-    box-shadow: 0 0 16px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    background: rgba(99, 102, 241, 0.4);
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
   .toggle-knob {
@@ -1248,18 +1399,25 @@ void main(){
   gap: 6px;
   padding: 12px 8px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: rgba(255, 255, 255, 0.45);
   cursor: pointer;
   outline: none;
   font-family: inherit;
+
+  &:focus-visible {
+    outline: 2px solid rgba(99, 102, 241, 0.6);
+    outline-offset: 2px;
+  }
+
   transition:
     all 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 
   .chip-icon {
-    font-size: 22px;
-    line-height: 1;
+    display: block;
     transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
   }
 
@@ -1269,9 +1427,9 @@ void main(){
   }
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.7);
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.75);
 
     .chip-icon {
       transform: scale(1.15);
@@ -1279,10 +1437,10 @@ void main(){
   }
 
   &.active {
-    border-color: rgba(99, 102, 241, 0.45);
-    background: rgba(99, 102, 241, 0.14);
+    border-color: rgba(99, 102, 241, 0.5);
+    background: rgba(99, 102, 241, 0.15);
     color: #fff;
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 24px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 
     .chip-icon {
       transform: scale(1.1);
@@ -1325,8 +1483,10 @@ void main(){
     height: 26px;
     padding: 0 8px;
     border-radius: 7px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.06),
       0 2px 0 rgba(0, 0, 0, 0.3);
@@ -1350,15 +1510,17 @@ void main(){
   align-items: center;
   padding: 10px 14px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   transition:
     border-color 0.4s cubic-bezier(0.32, 0.72, 0, 1),
     background 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.06);
   }
 
   .meta-key {
@@ -1387,44 +1549,51 @@ void main(){
   50%      { opacity: 0; }
 }
 
-/* ========================= 垂直幕布入场 ========================= */
+/* ========================= 垂直幕布入场 (iOS 26 style) ========================= */
 .curtain-item {
   opacity: 0;
-  filter: blur(4px);
+  transform: scale(0.97);
+  filter: blur(8px);
   transition:
-    opacity 0.7s cubic-bezier(0.32, 0.72, 0, 1),
-    transform 0.7s cubic-bezier(0.32, 0.72, 0, 1),
-    filter 0.7s cubic-bezier(0.32, 0.72, 0, 1);
+    opacity 0.5s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.5s cubic-bezier(0.32, 0.72, 0, 1),
+    filter 0.5s cubic-bezier(0.32, 0.72, 0, 1);
 
   &.curtain-revealed {
     opacity: 1;
+    transform: translate(0, 0) scale(1) !important;
     filter: blur(0);
-    transform: translate(0, 0) !important;
   }
 }
 
-/* 方向偏移量 */
-.curtain-top    { transform: translateY(-40px); }
-.curtain-left   { transform: translateX(-80px); }
-.curtain-right  { transform: translateX(80px);  }
-.curtain-bottom { transform: translateY(60px);  }
+/* 方向偏移量（更克制） */
+.curtain-top    { transform: translateY(-20px) scale(0.97); }
+.curtain-left   { transform: translateX(-40px) scale(0.97); }
+.curtain-right  { transform: translateX(40px)  scale(0.97); }
+.curtain-bottom { transform: translateY(30px)  scale(0.97); }
 
 /* 交错过场延迟 */
 .bento-grid .curtain-item:nth-child(1) { transition-delay: 0s;    }
-.bento-grid .curtain-item:nth-child(2) { transition-delay: 0.06s; }
-.bento-grid .curtain-item:nth-child(3) { transition-delay: 0.10s; }
-.bento-grid .curtain-item:nth-child(4) { transition-delay: 0.14s; }
-.bento-grid .curtain-item:nth-child(5) { transition-delay: 0.18s; }
-
-/* 亮色主题光标 */
-[data-theme="light"] .typing-cursor {
-  color: rgba(99, 102, 241, 0.6);
-}
+.bento-grid .curtain-item:nth-child(2) { transition-delay: 0.08s; }
+.bento-grid .curtain-item:nth-child(3) { transition-delay: 0.14s; }
+.bento-grid .curtain-item:nth-child(4) { transition-delay: 0.20s; }
+.bento-grid .curtain-item:nth-child(5) { transition-delay: 0.26s; }
 
 /* ========================= 亮色主题覆盖 ========================= */
 [data-theme="light"] .settings-root {
-  background: #f8f9fc;
+  background: #f4f5f9;
   transition: background 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+
+  &::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.12);
+  }
+}
+
+[data-theme="light"] .typing-cursor {
+  color: rgba(99, 102, 241, 0.6);
 }
 
 [data-theme="light"] .field-help {
@@ -1462,14 +1631,31 @@ void main(){
 [data-theme="light"] .card-pod {
   .pod-shell {
     background: rgba(0, 0, 0, 0.03);
-    border-color: rgba(0, 0, 0, 0.05);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 4px 24px rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      0 4px 20px rgba(0, 0, 0, 0.06);
+  }
+
+  &:hover .pod-shell {
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      0 8px 32px rgba(0, 0, 0, 0.1);
   }
 
   .pod-core {
-    background: rgba(255, 255, 255, 0.5);
-    border-color: rgba(0, 0, 0, 0.05);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.45);
+    border-color: rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7);
+
+    &::before {
+      background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%);
+    }
   }
 
   h3 { color: #1e293b; }
@@ -1477,6 +1663,12 @@ void main(){
   .pod-icon-wrap {
     background: rgba(99, 102, 241, 0.08);
     border-color: rgba(99, 102, 241, 0.12);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    .pod-icon {
+      color: rgba(99, 102, 241, 0.7);
+    }
   }
 }
 
@@ -1489,31 +1681,41 @@ void main(){
 }
 
 [data-theme="light"] .select-wrap .field-select {
-  background: rgba(0, 0, 0, 0.03);
-  border-color: rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: rgba(0, 0, 0, 0.1);
   color: #334155;
   &:focus {
     border-color: rgba(99, 102, 241, 0.4);
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.7);
   }
 }
 
+[data-theme="light"] .select-chevron { color: #94a3b8; }
+
 [data-theme="light"] .toggle-switch {
-  background: rgba(0, 0, 0, 0.06);
-  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 [data-theme="light"] .mode-chip {
   background: rgba(0, 0, 0, 0.03);
-  border-color: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: #64748b;
-  &:hover { background: rgba(0, 0, 0, 0.05); color: #334155; }
+  &:hover { background: rgba(0, 0, 0, 0.06); color: #334155; }
   &.active { color: #1e293b; }
 }
 
 [data-theme="light"] .kbd-row kbd {
   background: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 0 rgba(0, 0, 0, 0.08);
   color: #475569;
 }
@@ -1524,71 +1726,54 @@ void main(){
 
 [data-theme="light"] .meta-row {
   background: rgba(0, 0, 0, 0.02);
-  border-color: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   .meta-key { color: #94a3b8; }
   .meta-val { color: #475569; }
 }
 
-[data-theme="light"] .select-chevron { color: #94a3b8; }
-
 [data-theme="light"] .btn-reset {
   background: rgba(0, 0, 0, 0.03);
-  border-color: rgba(0, 0, 0, 0.06);
-  color: rgba(0, 0, 0, 0.25);
+  border-color: rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: rgba(0, 0, 0, 0.3);
 
   &:hover {
     background: rgba(0, 0, 0, 0.06);
-    border-color: rgba(0, 0, 0, 0.1);
-    color: rgba(0, 0, 0, 0.5);
+    border-color: rgba(0, 0, 0, 0.14);
+    color: rgba(0, 0, 0, 0.55);
   }
 }
 
 [data-theme="light"] .save-toast {
-  background: rgba(255, 255, 255, 0.94);
-  border-color: rgba(99, 102, 241, 0.15);
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
   color: #1e293b;
 }
 
-/* ========================= 可视化动画 ========================= */
-
-/* ---- Temperature 数值呼吸 + 色温 ---- */
-.temp-val {
-  display: inline-block;
-  animation: temp-breathe 0.45s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-@keyframes temp-breathe {
-  0%   { transform: scale(1); }
-  30%  { transform: scale(1.14); }
-  100% { transform: scale(1); }
-}
-
-.temp-cool  { color: #818cf8; }  /* 靛蓝: 精确 */
-.temp-warm  { color: #a78bfa; }  /* 淡紫: 平衡 */
-.temp-hot   { color: #e879a0; }  /* 玫瑰: 创造 */
-.temp-blaze { color: #f87171; }  /* 暖红: 极高创造性 */
-
-/* ---- Token 预览条 ---- */
+/* ========================= Token 预览条 ========================= */
 .token-preview-bar {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 .token-label {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.2);
   white-space: nowrap;
-  flex-shrink: 0;
-  transition: color 0.35s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .token-track {
   flex: 1;
   height: 4px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 
@@ -1596,123 +1781,38 @@ void main(){
   display: block;
   height: 100%;
   border-radius: 4px;
-  background: linear-gradient(90deg,
-    rgba(99, 102, 241, 0.4),
-    rgba(139, 92, 246, 0.7),
-    rgba(236, 72, 153, 0.8)
-  );
-  transition: width 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-  min-width: 4px;
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.5), rgba(129, 140, 248, 0.7));
+  transition: width 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* ---- 模式芯片图标分化动画 ---- */
-.mode-chip {
-  &:active {
-    transform: scale(0.97);
-  }
-
-  /* chat: 气泡呼吸 */
-  &.active[data-mode="chat"] .chip-icon {
-    animation: chip-chat 0.5s cubic-bezier(0.32, 0.72, 0, 1);
-  }
-  /* query: 放大镜旋转 */
-  &.active[data-mode="query"] .chip-icon {
-    animation: chip-query 0.55s cubic-bezier(0.32, 0.72, 0, 1);
-  }
-  /* summary: 纵向弹跳 */
-  &.active[data-mode="summary"] .chip-icon {
-    animation: chip-summary 0.45s cubic-bezier(0.32, 0.72, 0, 1);
-  }
+[data-theme="light"] .token-label {
+  color: rgba(0, 0, 0, 0.25);
 }
 
-@keyframes chip-chat {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(1.25); }
-  70%  { transform: scale(0.95); }
-  100% { transform: scale(1.05); }
+[data-theme="light"] .token-track {
+  background: rgba(0, 0, 0, 0.06);
 }
 
-@keyframes chip-query {
-  0%   { transform: rotate(0deg) scale(1); }
-  25%  { transform: rotate(-18deg) scale(1.15); }
-  55%  { transform: rotate(8deg) scale(1.05); }
-  100% { transform: rotate(0deg) scale(1.1); }
-}
+/* ========================= Temperature 颜色 ========================= */
+.temp-cool  { color: #60a5fa !important; }
+.temp-warm  { color: #facc15 !important; }
+.temp-hot   { color: #f97316 !important; }
+.temp-blaze { color: #ef4444 !important; }
 
-@keyframes chip-summary {
-  0%   { transform: translateY(0) scale(1); }
-  30%  { transform: translateY(-6px) scale(1.12); }
-  55%  { transform: translateY(2px) scale(0.98); }
-  100% { transform: translateY(0) scale(1.05); }
-}
-
-/* ---- 键盘快捷键键帽按压 ---- */
-.kbd-row {
-  transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
-
-  &:hover {
-    transform: translateX(4px);
-
-    kbd {
-      transform: translateY(-1px) scale(1.06);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.1),
-        0 3px 0 rgba(0, 0, 0, 0.25);
-      transition:
-        transform 0.2s cubic-bezier(0.32, 0.72, 0, 1),
-        box-shadow 0.2s cubic-bezier(0.32, 0.72, 0, 1);
-    }
-  }
-}
-
-.kbd-keys kbd {
-  transition:
-    transform 0.2s cubic-bezier(0.32, 0.72, 0, 1),
-    box-shadow 0.2s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-/* ---- 版本号辉光脉冲 ---- */
-.version-glow {
-  animation: version-shimmer 4s ease-in-out infinite;
-}
-
-@keyframes version-shimmer {
-  0%, 100% {
-    text-shadow: 0 0 0 rgba(99, 102, 241, 0);
-  }
-  50% {
-    text-shadow: 0 0 12px rgba(99, 102, 241, 0.3), 0 0 24px rgba(99, 102, 241, 0.1);
-  }
-}
-
-/* ---- 滑块 thumb 磁吸 + 拖拽增强 ---- */
-.field-slider {
-  &::-webkit-slider-thumb {
-    transition:
-      transform 0.2s cubic-bezier(0.32, 0.72, 0, 1),
-      box-shadow 0.2s cubic-bezier(0.32, 0.72, 0, 1);
-  }
-
-  &::-webkit-slider-thumb:hover {
-    transform: scale(1.25);
-    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.5), 0 0 24px rgba(99, 102, 241, 0.5);
-  }
-
-  &::-webkit-slider-thumb:active {
-    transform: scale(1.1);
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.55), 0 0 32px rgba(99, 102, 241, 0.6);
-    cursor: grabbing;
-  }
-}
+[data-theme="light"] .temp-cool  { color: #3b82f6 !important; }
+[data-theme="light"] .temp-warm  { color: #eab308 !important; }
+[data-theme="light"] .temp-hot   { color: #ea580c !important; }
+[data-theme="light"] .temp-blaze { color: #dc2626 !important; }
 
 /* ========================= 响应式 ========================= */
 @media (max-width: 768px) {
   .settings-main {
-    padding: 48px 16px 72px;
+    padding: 40px 16px 64px;
   }
 
-  .page-header {
-    margin-bottom: 36px;
+  .back-btn {
+    top: 12px;
+    left: 8px;
   }
 
   .bento-grid {
@@ -1724,10 +1824,39 @@ void main(){
     }
   }
 
-  .card-pod {
-    .pod-core {
-      padding: 22px 20px 24px;
-    }
+  .pod-core {
+    padding: 20px 18px 24px;
+  }
+}
+
+/* ========================= localStorage 异常警告 ========================= */
+.storage-warning {
+  margin: 16px auto 0;
+  max-width: 520px;
+  padding: 10px 16px;
+  border-radius: var(--radius-md, 12px);
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: rgba(252, 165, 165, 0.9);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+[data-theme="light"] .storage-warning {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #b91c1c;
+}
+
+/* ========================= prefers-reduced-motion ========================= */
+@media (prefers-reduced-motion: reduce) {
+  .settings-root * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 </style>
