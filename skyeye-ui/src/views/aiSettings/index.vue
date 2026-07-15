@@ -408,37 +408,48 @@ export default {
       });
     },
 
-    // ==================== Canvas: 动态极光 + 粒子连接网 ====================
+    // ==================== WebGL: Ether Shader 背景 ====================
 
     _initAuroraCanvas() {
       const canvas = this.$refs.auroraCanvas;
       if (!canvas) return;
-      this._auroraCtx = canvas.getContext('2d');
-      this._auroraRaf = null;
 
-      // Blob 定义：{ cx, cy, r, color: [r,g,b], speedX, speedY, phase }
-      this._blobs = [
-        { cx: 0.75, cy: 0.15, r: 0.38, color: [99, 102, 241],  speedX: 0.00008, speedY: 0.00006, phase: 0 },
-        { cx: 0.20, cy: 0.72, r: 0.32, color: [6, 182, 212],   speedX: 0.00006, speedY: -0.00007, phase: 2.1 },
-        { cx: 0.88, cy: 0.60, r: 0.28, color: [139, 92, 246], speedX: -0.00007, speedY: 0.00005, phase: 4.3 },
-      ];
+      const gl = canvas.getContext('webgl', { alpha: true });
+      if (!gl) { console.warn('WebGL not supported'); return; }
 
-      // 粒子定义
-      this._particles = [];
-      const PARTICLE_COUNT = 30;
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        this._particles.push({
-          x: Math.random(),
-          y: Math.random(),
-          vx: (Math.random() - 0.5) * 0.0003,
-          vy: (Math.random() - 0.5) * 0.0003,
-          r: 1.0 + Math.random() * 1.5,
-        });
-      }
+      this._gl = gl;
+      this._glProgram = null;
+      this._glRaf = null;
+      this._glUniforms = null;
+      this._glStartTime = performance.now();
+      this._glMouse = [0.5, 0.5];
+      this._glCanvas = canvas;
 
-      this._onAuroraResize = this._resizeAurora.bind(this);
-      window.addEventListener('resize', this._onAuroraResize);
-      // 用 nextTick 确保 DOM 布局完成后再取尺寸
+      // 编译 shader program
+      const prog = this._compileShaderProgram(gl, VERTEX_SHADER, ETHER_FRAGMENT_SHADER);
+      if (!prog) return;
+      this._glProgram = prog;
+
+      this._glUniforms = {
+        iResolution: gl.getUniformLocation(prog, 'iResolution'),
+        iTime: gl.getUniformLocation(prog, 'iTime'),
+        iMouse: gl.getUniformLocation(prog, 'iMouse'),
+      };
+
+      // 鼠标追踪（mousemove 回调写入 ref，不触发 Vue 重渲染）
+      this._onGlMouseMove = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        this._glMouse = [
+          (e.clientX - rect.left) / rect.width,
+          1.0 - (e.clientY - rect.top) / rect.height, // WebGL Y 轴反向
+        ];
+      };
+      canvas.addEventListener('mousemove', this._onGlMouseMove);
+
+      // resize
+      this._onGlResize = () => this._resizeAurora();
+      window.addEventListener('resize', this._onGlResize);
+
       this.$nextTick(() => {
         this._resizeAurora();
         this._tickAurora();
@@ -446,106 +457,95 @@ export default {
     },
 
     _resizeAurora() {
-      const canvas = this.$refs.auroraCanvas;
+      const canvas = this._glCanvas;
       if (!canvas) return;
-      const dpr = window.devicePixelRatio || 1;
       const rect = canvas.parentElement.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
       canvas.style.width = rect.width + 'px';
       canvas.style.height = rect.height + 'px';
-      this._auroraW = rect.width;
-      this._auroraH = rect.height;
-      this._auroraDpr = dpr;
+      if (this._gl) {
+        this._gl.viewport(0, 0, canvas.width, canvas.height);
+      }
     },
 
     _tickAurora() {
-      const canvas = this.$refs.auroraCanvas;
-      const ctx = this._auroraCtx;
-      if (!canvas || !ctx) return;
+      const gl = this._gl;
+      const prog = this._glProgram;
+      const canvas = this._glCanvas;
+      const u = this._glUniforms;
+      if (!gl || !prog || !u || !canvas) return;
 
-      const W = this._auroraW;
-      const H = this._auroraH;
-      const dpr = this._auroraDpr;
-      const t = performance.now() * 0.001; // seconds
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // ---- 绘制极光 blobs ----
-      const isLight = this.theme === 'light';
-      for (const blob of this._blobs) {
-        const bx = blob.cx * W + Math.sin(t * blob.speedX * 60 + blob.phase) * W * 0.08;
-        const by = blob.cy * H + Math.cos(t * blob.speedY * 60 + blob.phase * 1.3) * H * 0.07;
-        const br = blob.r * Math.max(W, H);
-
-        const grad = ctx.createRadialGradient(bx, by, 0, bx, by, br);
-        const [rr, gg, bb] = blob.color;
-        const alpha = isLight ? 0.06 : 0.12;
-        grad.addColorStop(0, `rgba(${rr},${gg},${bb},${alpha})`);
-        grad.addColorStop(0.5, `rgba(${rr},${gg},${bb},${alpha * 0.4})`);
-        grad.addColorStop(1, 'rgba(0,0,0,0)');
-
-        ctx.save();
-        ctx.scale(dpr, dpr);
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-        ctx.restore();
+      // 浅色模式不绘制 WebGL，保持纯 CSS 背景
+      if (this.theme === 'light') {
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        this._glRaf = requestAnimationFrame(() => this._tickAurora());
+        return;
       }
 
-      // ---- 绘制粒子 ----
-      const CONNECT_DIST = 120;
-      for (let i = 0; i < this._particles.length; i++) {
-        const p = this._particles[i];
-        // 更新位置
-        p.x += p.vx;
-        p.y += p.vy;
-        // 回弹边界
-        if (p.x < 0 || p.x > 1) p.vx *= -1;
-        if (p.y < 0 || p.y > 1) p.vy *= -1;
-        // 绘制粒子
-        const px = p.x * W;
-        const py = p.y * H;
-        ctx.save();
-        ctx.scale(dpr, dpr);
-        ctx.beginPath();
-        ctx.arc(px, py, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = isLight ? 'rgba(99,102,241,0.18)' : 'rgba(255,255,255,0.12)';
-        ctx.fill();
-        ctx.restore();
+      const t = (performance.now() - this._glStartTime) / 1000;
 
-        // 绘制连线
-        for (let j = i + 1; j < this._particles.length; j++) {
-          const q = this._particles[j];
-          const dx = (q.x - p.x) * W;
-          const dy = (q.y - p.y) * H;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < CONNECT_DIST) {
-            const lineAlpha = (1 - dist / CONNECT_DIST) * (isLight ? 0.08 : 0.06);
-            ctx.save();
-            ctx.scale(dpr, dpr);
-            ctx.beginPath();
-            ctx.moveTo(p.x * W, p.y * H);
-            ctx.lineTo(q.x * W, q.y * H);
-            ctx.strokeStyle = isLight
-              ? `rgba(99,102,241,${lineAlpha})`
-              : `rgba(255,255,255,${lineAlpha})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-            ctx.restore();
-          }
-        }
-      }
+      gl.useProgram(prog);
+      gl.uniform2f(u.iResolution, canvas.width, canvas.height);
+      gl.uniform1f(u.iTime, t);
+      gl.uniform2f(u.iMouse, this._glMouse[0], this._glMouse[1]);
 
-      this._auroraRaf = requestAnimationFrame(() => this._tickAurora());
+      // 全屏 quad（顶点数据在 shader 编译时已绑定）
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+      this._glRaf = requestAnimationFrame(() => this._tickAurora());
     },
 
     _destroyAurora() {
-      if (this._auroraRaf) cancelAnimationFrame(this._auroraRaf);
-      window.removeEventListener('resize', this._onAuroraResize);
-      this._auroraRaf = null;
-      this._auroraCtx = null;
-      this._blobs = [];
-      this._particles = [];
+      if (this._glRaf) cancelAnimationFrame(this._glRaf);
+      if (this._glProgram && this._gl) this._gl.deleteProgram(this._glProgram);
+      window.removeEventListener('resize', this._onGlResize);
+      if (this._glCanvas) {
+        this._glCanvas.removeEventListener('mousemove', this._onGlMouseMove);
+      }
+      this._glRaf = null;
+      this._gl = null;
+      this._glProgram = null;
+      this._glCanvas = null;
+      this._glUniforms = null;
+    },
+
+    _compileShaderProgram(gl, vsSource, fsSource) {
+      const compile = (type, source) => {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          console.warn('Shader compile error:', gl.getShaderInfoLog(shader));
+          gl.deleteShader(shader);
+          return null;
+        }
+        return shader;
+      };
+      const vs = compile(gl.VERTEX_SHADER, vsSource);
+      const fs = compile(gl.FRAGMENT_SHADER, fsSource);
+      if (!vs || !fs) return null;
+
+      const prog = gl.createProgram();
+      gl.attachShader(prog, vs);
+      gl.attachShader(prog, fs);
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+        console.warn('Program link error:', gl.getProgramInfoLog(prog));
+        return null;
+      }
+      // 绑定全屏 quad 顶点（无需 VBO，用顶点 id 推导）
+      gl.useProgram(prog);
+      const posAttr = gl.getAttribLocation(prog, 'aVertexPosition');
+      if (posAttr >= 0) {
+        const buf = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(posAttr);
+        gl.vertexAttribPointer(posAttr, 2, gl.FLOAT, false, 0, 0);
+      }
+      return prog;
     },
 
     // ==================== 偏好持久化 ====================
@@ -608,6 +608,54 @@ export default {
 function isMac() {
   return /Mac|iPod|iPhone|iPad/.test(navigator.platform || '');
 }
+
+// ==================== GLSL Shaders (WebGL Ether 背景) ====================
+
+// Vertex shader — 全屏 quad
+const VERTEX_SHADER = `
+attribute vec4 aVertexPosition;
+void main() {
+  gl_Position = aVertexPosition;
+}
+`;
+
+// Fragment shader — Ether by nimitz (Shadertoy)
+// 深色主题专用（浅色模式 WebGL 不渲染）
+const ETHER_FRAGMENT_SHADER = `
+precision mediump float;
+uniform vec2 iResolution;
+uniform float iTime;
+uniform vec2 iMouse;
+
+mat2 m(float a){float c=cos(a),s=sin(a);return mat2(c,-s,s,c);}
+float map(vec3 p){
+    p.xz*=m(iTime*0.4);p.xy*=m(iTime*0.3);
+    vec3 q=p*2.+iTime;
+    return length(p+vec3(sin(iTime*0.7)))*log(length(p)+1.)+sin(q.x+sin(q.z+sin(q.y)))*0.5-1.;
+}
+
+void main(){
+    vec2 uv=(gl_FragCoord.xy/iResolution.xy)*2.-1.;
+    uv.x*=iResolution.x/iResolution.y;
+
+    vec3 cl=vec3(0.);
+    float d=2.5;
+    for(int i=0;i<=5;i++){
+        vec3 p3d=vec3(0,0,5.)+normalize(vec3(uv,-1.))*d;
+        float rz=map(p3d);
+        float f=clamp((rz-map(p3d+.1))*0.5,-.1,1.);
+        vec3 base=vec3(0.08,0.22,0.38)+vec3(4.0,2.0,5.5)*f;
+        cl=cl*base+smoothstep(2.5,.0,rz)*.7*base;
+        d+=min(rz,1.);
+    }
+
+    // 鼠标微光影响
+    float mx=smoothstep(0.5,0.0,length(uv-iMouse*2.+1.));
+    cl+=vec3(0.15,0.3,0.6)*mx*0.2;
+
+    gl_FragColor=vec4(cl,1.0);
+}
+`;
 </script>
 
 <style lang="scss" scoped>

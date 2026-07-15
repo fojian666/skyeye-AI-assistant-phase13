@@ -215,8 +215,7 @@ skyeye/
 
 | 效果 | 技术 | 说明 |
 |------|------|------|
-| 动态极光 | Canvas 2D radialGradient | 2 个 blob 锚定左上/右下对角，缓慢漂移 + 呼吸振荡，暗/亮色自动适配 |
-| 粒子连接网 | Canvas 2D | 30 个粒子 + 120px 近距连线，边界回弹，共享极光 RAF 循环 |
+| 动态极光 | WebGL Ether Shader (光线步进) | 3D 有机流体雕塑，GPU 并行渲染，鼠标位置影响光晕，暗色主题专用 |
 | 噪点纹理 | SVG data URI background-image | 透明度 0.025，磨砂玻璃物理质感 |
 | 自定义 Tooltip | CSS `attr(data-tip)` + `::after` 气泡 | 模型/温度/Token/reduceMotion 4 项，暗/亮双主题适配 |
 | 保存确认 Toast | Vue `<transition>` | 修改即生效 + "设置已保存"提示 + "已恢复默认设置"反馈 |
