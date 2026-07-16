@@ -91,7 +91,7 @@ export default {
     width: 100%;
     height: 100%;
     overflow: hidden;
-  position: relative;
-  display: flex;
+    position: relative;
+    display: flex;
 }
 </style>

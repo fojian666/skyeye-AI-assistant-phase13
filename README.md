@@ -1,6 +1,6 @@
 # 金陵阡陌（SkyEye）— 低空遥感智能巡检平台
 
-> **Phase 6** — 鲁棒性加固 · 工具调用反冲突 · 多模式气泡 · 并发锁三层防护
+> **Phase 6.5** — 多会话管理 · 提示词模板 · 响应式缩放 · 微交互动画 · 鲁棒性加固
 
 ## 项目概述
 
@@ -16,9 +16,10 @@
 | 2D 地图 | Leaflet | 开源轻量 GIS |
 | 3D 地图 | Cesium | 三维地球引擎 |
 | 全景图 | Pannellum | 浏览器全景渲染 |
-| 动效 | GSAP + WebGL Shader + CSS Animation | 面板动画 / 极光背景 / 呼吸光斑 |
+| 动效 | GSAP + WebGL Shader + CSS Animation | 面板动画 / 极光背景 / 呼吸光斑 / 消息交错入场 |
 | 图表 | ECharts | 数据可视化 |
-| 设计 Token | CSS 自定义属性 (cyber-tokens) | `--app-accent` / 六级圆角 / 等宽字体栈 |
+| 设计 Token | CSS 自定义属性 (clamp 响应式缩放) | `--rail-width` / `--conv-list-width` / 百分比布局 |
+| 持久化 | localStorage | AI 设置项 + 会话历史 + 提示词模板 |
 | 后端框架 | Django | Python Web 框架 |
 | 大模型 | DeepSeek (LangChain + LangGraph) | AI 对话与工具调用 |
 | 流式输出 | SSE (Server-Sent Events) | real-time 阶段反馈 |
@@ -187,15 +188,18 @@ skyeye/
 | 清空对话 | 确认弹窗防误操作，不可撤销 |
 | 保留会话 | 关闭窗口不丢失历史 |
 | 拖拽 | FAB / 面板头部均可拖拽，边界碰撞检测 |
-| 缩放 | 右下角拖拽把手，宽 320–520px，高 400–85vh |
-| 吸附 | 点 → 吸附为全高右栏 400px，← 恢复浮动 |
+| 缩放 | 右下角拖拽把手，宽 360–35vw，高 400–85vh（全部 clamp 响应式） |
+| 吸附 | 点 → 吸附为全高右栏，← 恢复浮动 |
 | Double-Bezel | 外层托盘壳 (panel-shell) + 内核 (chat-panel) 同心圆角，硬件质感 |
-| 侧边栏 | 左侧 hover 展开：搜索定位 / 模式切换 / 系统设置 |
-| 快速提问 | 欢迎页常用问题卡片一键发送 |
-| 主题适配 | 亮色/暗色自动适配 |
+| 侧边栏 | 左侧 hover 展开：会话列表 / 模式切换 / 系统设置 |
+| 会话列表 | 点击侧边栏顶部按钮滑出，新建/切换/删除会话，首条消息自动标题，localStorage 持久化 |
+| 删除确认 | 清空对话 + 删除会话均弹 $confirm 防误操作 |
+| 快速提问 | 欢迎页常用问题卡片一键发送（可从设置页自定义模板） |
+| 主题适配 | 亮色/暗色自动适配（同步 data-theme 属性） |
 | 无障碍 | focus-visible 键盘导航、aria-label 全覆盖、prefers-reduced-motion 系统级兜底 |
-| 并发锁 | 三层防护：动画锁(模式切换/dock 400ms) + 发送锁(防重复提交) + streaming watcher 自动释放 |
+| 并发锁 | 三层防护：动画锁(模式切换/dock 300ms) + 发送锁(防重复提交) + streaming watcher 自动释放 |
 | 多模式气泡 | 用户消息气泡随 chat(蓝)/query(红)/summary(琥珀) 模式变色，亮暗双主题适配 |
+| 消息入场 | msgSlideIn 交错 60ms 滑入 + dot-pulse 呼吸替代 bounce |
 
 ### AI 设置页
 
@@ -210,8 +214,22 @@ skyeye/
 | 减少动态效果 | 关闭 CSS 光斑 + WebGL + 打字机动画 |
 | 默认模式 | 自由对话 / 数据查询 / 智能摘要 |
 | 自动摘要 | 进入页面时自动触发摘要 |
+| 提示词模板 | 三模式独立 3-5 条可编辑模板，localStorage 持久化，自由对话/数据查询/智能摘要各一套默认 |
 
 **数据流**：设置页 ↔ localStorage (`skyeye_ai_settings`) ↔ ChatModel ↔ 后端 `chat_completions` API
+
+### 多会话管理
+
+| 特性 | 说明 |
+|------|------|
+| 会话列表 | 侧边栏顶部按钮滑出面板，吸附在 side-rail 左侧，与 chat-panel 等高三栏布局 |
+| 新建会话 | 蓝色虚线按钮，最多 20 个会话，超出上限禁用新建 |
+| 切换会话 | 点击切换，自动保存当前会话 → 加载目标会话 messages（含流式 abort 保护） |
+| 删除会话 | 红色 × 按钮 + $confirm 确认弹窗，删除活跃会话自动切到前一个 |
+| 标题自动生成 | 取首条用户消息截断 20 字，空会话显示"新对话" |
+| 数据迁移 | 向前兼容旧的单会话 key `skyeye_chat_history` → 自动转 `skyeye_conversations` |
+| 持久化 | conversations deep watch → 1s 防抖 → localStorage，恢复时优先读新 key |
+| 列表动画 | convItemIn 交错 40ms 淡入 + translateX，打开面板时 staggered reveal |
 
 ### Phase 5 视觉增强
 
@@ -224,7 +242,7 @@ skyeye/
 | 自定义 Tooltip | CSS `attr(data-tip)` + `::after` 气泡 | 防裁剪、防出界右对齐 |
 | 智能滚动 | `_userScrolledUp` 检测 | 打字机跟随，手动上翻停止 + 回到底部按钮 |
 
-### Phase 6 鲁棒性与交互增强
+### Phase 6 鲁棒性 & 交互增强
 
 | 改进 | 类型 | 说明 |
 |------|------|------|
@@ -232,13 +250,19 @@ skyeye/
 | fetch 60s 硬超时 | 鲁棒性 | setTimeout + AbortController，防止请求永久挂起 |
 | 打字机生命周期保护 | 鲁棒性 | `_typewriterCancelled` 标志防止对已销毁组件赋值 |
 | JSON.parse 保护 | 鲁棒性 | LLM 畸形参数 → 捕获并显示友好错误气泡，不死锁 streaming |
-| `_storageError` 可重置 | 鲁棒性 | 存储恢复后警告横幅自动消失 |
+| `_friendlyError` | 鲁棒性 | 8 种错误 → 8 条中文友好文案（AbortError / 网络异常 / 500/502/503 / 401/403 / 404 / 429 / 兜底）|
+| `_storageError` 可重置 | 鲁棒性 | 存储恢复后警告横幅自动消失；双通道独立标记（设置项 + 对话） |
 | `savePrefs` 300ms 防抖 | 鲁棒性 | 快速拖 slider 只写一次 localStorage |
+| SSE 流边界保护 | 鲁棒性 | 非 JSON 行静默跳过 / phase=error 不中断流 / buffer 截断保留 / done 未收到兜底消息 |
 | 工具冲突裁决 | 交互 | 四工具互相引反例 + 后端 5 条裁决规则；消除"数据概览→跳页"歧义 |
-| 三层并发锁 | 交互 | 动画锁(400ms) + 发送锁 + streaming watcher 自动释放；防止快速切换/重复提交 |
+| 三层并发锁 | 交互 | 动画锁(300ms) + 发送锁 + streaming watcher 自动释放；防止快速切换/重复提交 |
 | 多模式用户气泡 | 视觉 | chat(蓝) / query(红) / summary(琥珀) 用户消息气泡变色，亮暗双主题 |
 | 输入防护 | 鲁棒性 | textarea maxlength 5000 + 提示、trim 空消息拦截 |
 | eyeType 修复 | UI | eyebrow 去 uppercase + 字号 11→12px + letter-spacing 收紧 |
+| 消息入场动画 | 视觉 | msgSlideIn 交错 60ms 滑入 + dot-pulse 呼吸替代 bounce；convItemIn 交错 40ms 淡入 |
+| 面板 GSAP 优化 | 性能 | duration 0.5s → 0.3s，符合 product register 150-300ms 范围 |
+| clamp 响应式缩放 | 适配 | 全部尺寸 (panel/side-rail/conv-list/font/input/button/chat-fab) 使用 clamp() + CSS 变量联动 |
+| 主题同步修复 | 修复 | App.vue `data-theme` setAttribute + ChatModel 主题 class 双路径同步 |
 
 ### 地图导航
 
