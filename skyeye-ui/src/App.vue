@@ -42,23 +42,17 @@ export default {
             const theme = this.$store.state.theme;
             document.documentElement.setAttribute('data-theme', theme);
             const head = document.head;
-            // 遍历页面所有的link节点
-            const links = document.getElementsByTagName('link');
-            for (let i in links) {
-                // 如果已有引入主题样式则删除
-                if (links[i].href) {
-                    if (links[i].href.indexOf('dark.css') !== -1 || links[i].href.indexOf('light.css') !== -1) {
-                        head.removeChild(links[i]);
-                    }
-                }
-            }
-            // 创建新的主题节点插入head
+            // 移除旧主题 link（通过自定义属性精确定位，避免 for...in 遍历 live collection）
+            const oldLink = document.querySelector('link[data-theme-link]');
+            if (oldLink) head.removeChild(oldLink);
+            // 创建新主题 link 并标记属性
             var link = document.createElement('link');
             link = Object.assign(link, {
                 href: '/theme/' + theme + '.css',
                 type: 'text/css',
                 rel: 'stylesheet'
             });
+            link.setAttribute('data-theme-link', theme);
             head.appendChild(link);
         }
     },

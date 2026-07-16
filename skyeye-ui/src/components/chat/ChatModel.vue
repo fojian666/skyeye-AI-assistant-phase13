@@ -358,9 +358,12 @@ export default {
       showScrollBtn: false,     // "回到底部"浮动按钮
       _userScrolledUp: false,   // 用户手动上翻后暂停自动滚动
       _storageError: false,     // localStorage 读写异常标志
+      _convStorageError: false, // 对话持久化独立异常标志（不与设置项共享）
+      _restoring: false,        // 对话恢复中标记（防止 watcher 写回同一份数据）
       _typewriterCancelled: false, // 组件销毁时取消打字机
       _mapDispatchTimer: null,     // map_action 延迟 dispatch 定时器
       _copyTimer: null,             // 复制成功提示恢复定时器
+      _saveDebounceTimer: null,     // 对话持久化防抖定时器
       _animLockTimer: null,         // 并发动画锁定时器
       _animating: false,            // 并发动画锁（模式切换/dock/开合）
       _sending: false,              // 并发发送锁（send/sendQuick）
@@ -400,6 +403,7 @@ export default {
     },
   },
   mounted() {
+    this._restoreMessages()
     this._loadSettings()
     this._onDragMove = this.onDragMove.bind(this)
     this._onDragEnd = this.onDragEnd.bind(this)
@@ -428,6 +432,7 @@ export default {
     // 清理栅栏定时器
     clearTimeout(this._mapDispatchTimer);
     clearTimeout(this._copyTimer);
+    clearTimeout(this._saveDebounceTimer);
     clearTimeout(this._animLockTimer);
     document.removeEventListener('mousemove', this._onDragMove)
     document.removeEventListener('mouseup', this._onDragEnd)
@@ -461,6 +466,23 @@ export default {
     // 动态效果切换 → 同步到设置页
     reduceMotion(val) {
       this._saveSettingsKey('reduceMotion', val)
+    },
+    // 对话历史 → localStorage 持久化（deep watch + 1s 防抖，独立异常标志，跳过恢复中赋值）
+    messages: {
+      deep: true,
+      handler() {
+        if (this._restoring || this._convStorageError) return
+        clearTimeout(this._saveDebounceTimer)
+        this._saveDebounceTimer = setTimeout(() => {
+          try {
+            localStorage.setItem('skyeye_chat_history', JSON.stringify(this.messages))
+            this._convStorageError = false
+          } catch (e) {
+            console.warn('[ChatModel] 对话持久化写入失败', e)
+            this._convStorageError = true
+          }
+        }, 1000)
+      },
     },
   },
   methods: {
@@ -674,6 +696,24 @@ export default {
       sessionStorage.setItem('skyeye_from_chat', '1')
       this.closeChat()
       router.push('/ai-settings').catch(() => {})
+    },
+
+    /** 从 localStorage 恢复对话历史 */
+    _restoreMessages() {
+      this._restoring = true
+      try {
+        const raw = localStorage.getItem('skyeye_chat_history')
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed) && parsed.length) {
+            this.messages = parsed
+          }
+        }
+      } catch (e) {
+        console.warn('[ChatModel] 对话持久化恢复失败', e)
+      } finally {
+        this.$nextTick(() => { this._restoring = false })
+      }
     },
 
     /** 从设置页 localStorage 加载参数 */
