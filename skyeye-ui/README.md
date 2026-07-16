@@ -1,4 +1,4 @@
-# 金陵阡陌 — AI 助手 (Phase 5)
+# 金陵阡陌 — AI 助手 (Phase 6)
 
 无人机巡检智能平台前端，集成 AI 对话面板与可视化参数设置。
 
@@ -59,11 +59,29 @@ skyeye-ui/src/
 
 ### 修复记录
 
+#### Phase 5
 - Dock 模式下滚动条出现导致右侧缩进 → 锁定 `.chat-panel.docked` 宽度
 - tooltip 被 `.pod-core` overflow:hidden 裁剪 → 移除 overflow 限制 + 右侧防出界对齐
 - 导航清空对话历史 → 改为保留历史 + FAB badge 指示
 - 打字机动画在 reduceMotion 下仍播放 → 跳过动画直接渲染
 - 工具调用空白 assistant 消息残留 → 导航分支清理中间消息
+
+#### Phase 6 鲁棒性加固
+
+- **13 项生命周期清理**: `beforeDestroy` 中 AbortController.abort() / GSAP killTweensOf / 定时器清理 / WebGL rAF 取消 / copyTimer / mapDispatchTimer
+- **fetch 60s 硬超时**: setTimeout + AbortController，防止请求永久挂起
+- **打字机生命周期保护**: `_typewriterCancelled` 标志，路由跳转后立即停止
+- **JSON.parse 保护**: LLM 畸形参数 → 捕获并显示友好错误气泡，不死锁 streaming
+- **`_storageError` 可重置**: 存储恢复后警告横幅自动消失
+- **`savePrefs` 300ms 防抖**: 快速拖 slider 只写一次 localStorage
+- **输入防护**: textarea `maxlength=5000` + 字符计数提示 + trim 空消息拦截
+
+#### Phase 6 交互增强
+
+- **工具冲突裁决**: 四个工具 (`navigate_page`/`map_action`/`lookup_task`/`query_data`) 互相引反例 + 后端 5 条裁决规则；消除"数据概览"→误跳页面的歧义
+- **三层并发锁**: 动画锁 (模式切换/dock 400ms) + 发送锁 (防重复提交) + streaming watcher 自动释放
+- **多模式用户气泡**: 用户消息随 chat(蓝)/query(红)/summary(琥珀) 模式变色，亮暗双主题适配
+- **eyebrow 排版修复**: 去 uppercase + 字号 11→12px + letter-spacing 收紧
 
 ## 快速开始
 

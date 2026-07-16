@@ -1,6 +1,6 @@
 # 金陵阡陌（SkyEye）— 低空遥感智能巡检平台
 
-> **Phase 5** — Liquid Glass 视觉升级 · AI 设置闭环 · 导航意图推理 · 无障碍全面覆盖
+> **Phase 6** — 鲁棒性加固 · 工具调用反冲突 · 多模式气泡 · 并发锁三层防护
 
 ## 项目概述
 
@@ -168,10 +168,12 @@ skyeye/
 
 | 工具 | 功能 | 触发条件 |
 |------|------|------|
-| `navigate_page` | 跳转系统页面（含 AI 设置页） | 用户要求打开/前往/进入某个页面 |
-| `map_action` | 地图定位 + 区域边界绘制 | 用户提及任何地点/区域/行政区 |
-| `query_data` | 查询系统数据（数量/状态/统计/列表/明细） | 用户询问数据量、统计、状态、列表 |
+| `navigate_page` | 跳转系统页面（含 AI 设置页） | 用户说出具体页面名称（"一张图""全景检测""航线规划"） |
+| `map_action` | 地图定位 + 区域边界绘制 | 用户提及任何地点/区域/行政区名称 |
+| `query_data` | 查询系统数据（数量/状态/统计/列表/明细） | 用户询问数据量、统计、状态、列表；"数据概览""当前页面" |
 | `lookup_task` | 按任务编号查询并跳转 | 用户提供 batch_id 格式编号 |
+
+> 四个工具互相引用 **禁止调用场景**（反例），消除歧义。后端 SYSTEM_PROMPT 新增 **工具冲突裁决规则**：`navigate_page` 不处理"数据概览""统计汇总""当前页面数据"；`map_action` 不处理页面名和统计类用语；`query_data` 不处理页面名和地名。
 
 ### 面板交互
 
@@ -192,6 +194,8 @@ skyeye/
 | 快速提问 | 欢迎页常用问题卡片一键发送 |
 | 主题适配 | 亮色/暗色自动适配 |
 | 无障碍 | focus-visible 键盘导航、aria-label 全覆盖、prefers-reduced-motion 系统级兜底 |
+| 并发锁 | 三层防护：动画锁(模式切换/dock 400ms) + 发送锁(防重复提交) + streaming watcher 自动释放 |
+| 多模式气泡 | 用户消息气泡随 chat(蓝)/query(红)/summary(琥珀) 模式变色，亮暗双主题适配 |
 
 ### AI 设置页
 
@@ -219,6 +223,22 @@ skyeye/
 | Liquid Glass | Double-Bezel + backdrop-filter blur | panel-shell(20px) + chat-panel(40px) / pod-shell(12px) + pod-core(40px) |
 | 自定义 Tooltip | CSS `attr(data-tip)` + `::after` 气泡 | 防裁剪、防出界右对齐 |
 | 智能滚动 | `_userScrolledUp` 检测 | 打字机跟随，手动上翻停止 + 回到底部按钮 |
+
+### Phase 6 鲁棒性与交互增强
+
+| 改进 | 类型 | 说明 |
+|------|------|------|
+| 组件销毁清理 | 鲁棒性 | `beforeDestroy` 中 AbortController.abort() / GSAP killTweensOf / 定时器清理 / WebGL rAF 取消 |
+| fetch 60s 硬超时 | 鲁棒性 | setTimeout + AbortController，防止请求永久挂起 |
+| 打字机生命周期保护 | 鲁棒性 | `_typewriterCancelled` 标志防止对已销毁组件赋值 |
+| JSON.parse 保护 | 鲁棒性 | LLM 畸形参数 → 捕获并显示友好错误气泡，不死锁 streaming |
+| `_storageError` 可重置 | 鲁棒性 | 存储恢复后警告横幅自动消失 |
+| `savePrefs` 300ms 防抖 | 鲁棒性 | 快速拖 slider 只写一次 localStorage |
+| 工具冲突裁决 | 交互 | 四工具互相引反例 + 后端 5 条裁决规则；消除"数据概览→跳页"歧义 |
+| 三层并发锁 | 交互 | 动画锁(400ms) + 发送锁 + streaming watcher 自动释放；防止快速切换/重复提交 |
+| 多模式用户气泡 | 视觉 | chat(蓝) / query(红) / summary(琥珀) 用户消息气泡变色，亮暗双主题 |
+| 输入防护 | 鲁棒性 | textarea maxlength 5000 + 提示、trim 空消息拦截 |
+| eyeType 修复 | UI | eyebrow 去 uppercase + 字号 11→12px + letter-spacing 收紧 |
 
 ### 地图导航
 
