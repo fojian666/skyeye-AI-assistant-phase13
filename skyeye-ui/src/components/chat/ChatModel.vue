@@ -2136,11 +2136,11 @@ export default {
         width: clamp(30px, 2vw, 38px);
         height: clamp(30px, 2vw, 38px);
         font-size: clamp(12px, 0.8vw, 15px);
-        background: rgba(255, 255, 255, 0.12);
+        background: rgba(8, 25, 52, 0.75);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        color: rgba(255, 255, 255, 0.65);
+        border: 1px solid rgba(0, 180, 240, 0.14);
+        color: rgba(200, 220, 255, 0.65);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
         opacity: 0;
         transform: scale(0);
@@ -2149,8 +2149,8 @@ export default {
             color 0.25s cubic-bezier(0.32, 0.72, 0, 1);
 
         &:hover {
-            background: rgba(255, 255, 255, 0.22);
-            border-color: rgba(255, 255, 255, 0.35);
+            background: rgba(12, 35, 70, 0.88);
+            border-color: rgba(0, 200, 255, 0.35);
             color: #fff;
         }
     }
@@ -2197,11 +2197,11 @@ export default {
     height: 100%;
     padding: 4px;
     border-radius: 24px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(5, 18, 42, 0.78);
+    border: 1px solid rgba(0, 180, 240, 0.1);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 48px rgba(0, 0, 0, 0.55);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 12px 48px rgba(0, 0, 0, 0.55);
     transition: border-color 0.6s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.6s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -2213,11 +2213,11 @@ export default {
     height: 100%;
     padding: 20px 18px 18px;
     border-radius: 21px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(4, 14, 34, 0.85);
+    border: 1px solid rgba(0, 180, 240, 0.08);
     backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.04);
     overflow: hidden;
 
     &::before {
@@ -2225,7 +2225,7 @@ export default {
         position: absolute;
         inset: 0;
         border-radius: 21px;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, transparent 50%);
+        background: linear-gradient(135deg, rgba(0, 180, 240, 0.05) 0%, transparent 50%);
         pointer-events: none;
         z-index: 0;
     }
@@ -2277,8 +2277,8 @@ export default {
 }
 
 .conv-panel-close:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.8);
+    background: rgba(8, 24, 48, 0.55);
+    color: rgba(200, 220, 255, 0.8);
 }
 
 .conv-new-btn {
@@ -2324,7 +2324,7 @@ export default {
 }
 
 .conv-list::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 180, 240, 0.12);
     border-radius: 2px;
 }
 
@@ -2342,7 +2342,7 @@ export default {
 }
 
 .conv-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(8, 22, 46, 0.5);
 }
 
 .conv-item.active {
@@ -2519,11 +2519,11 @@ export default {
 .panel-shell {
     padding: 4px;
     border-radius: 24px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(5, 18, 42, 0.78);
+    border: 1px solid rgba(0, 180, 240, 0.1);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 48px rgba(0, 0, 0, 0.55);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 12px 48px rgba(0, 0, 0, 0.55);
 }
 
 .docked .panel-shell {
@@ -2537,11 +2537,11 @@ export default {
     max-width: clamp(400px, 27vw, 560px);
     max-height: clamp(480px, 85vh, 900px);
     border-radius: 20px;
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(4, 16, 36, 0.88);
     backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 12px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(0, 200, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 12px rgba(0, 0, 0, 0.35);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -2553,7 +2553,7 @@ export default {
         position: absolute;
         inset: 0;
         border-radius: 20px;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, transparent 50%);
+        background: linear-gradient(135deg, rgba(0, 180, 240, 0.05) 0%, transparent 50%);
         pointer-events: none;
         z-index: 0;
     }
@@ -2713,8 +2713,8 @@ export default {
     justify-content: space-between;
     align-items: center;
     padding: 14px 18px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(0, 180, 240, 0.08);
+    background: rgba(3, 12, 28, 0.85);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     user-select: none;
@@ -2773,7 +2773,7 @@ export default {
     }
 
     &:hover {
-        background: rgba(255, 255, 255, 0.08);
+        background: rgba(8, 25, 50, 0.6);
         color: rgba(255, 255, 255, 0.9);
     }
 
@@ -2808,7 +2808,7 @@ export default {
     }
 
     &:hover::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(0, 200, 255, 0.15);
     }
 }
 
@@ -2845,10 +2845,10 @@ export default {
 
         button {
             padding: 8px 16px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(0, 180, 240, 0.12);
             border-radius: 20px;
-            background: rgba(255, 255, 255, 0.06);
-            color: rgba(255, 255, 255, 0.75);
+            background: rgba(8, 22, 46, 0.55);
+            color: rgba(200, 220, 255, 0.75);
             font-size: 12px;
             cursor: pointer;
             white-space: nowrap;
@@ -2857,8 +2857,8 @@ export default {
             -webkit-backdrop-filter: blur(8px);
 
             &:hover {
-                background: rgba(255, 255, 255, 0.12);
-                border-color: rgba(255, 255, 255, 0.25);
+                background: rgba(12, 32, 65, 0.72);
+                border-color: rgba(0, 200, 255, 0.25);
                 color: #fff;
                 transform: translateY(-1px);
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -2972,14 +2972,14 @@ export default {
         }
 
         .msg-avatar {
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.7);
+            background: rgba(0, 180, 240, 0.08);
+            color: rgba(200, 220, 255, 0.7);
             border-radius: 50%;
         }
 
         .msg-content {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(8, 22, 46, 0.75);
+            border: 1px solid rgba(0, 180, 240, 0.08);
             border-radius: 4px 18px 18px 18px;
             color: rgba(255, 255, 255, 0.9);
         }
@@ -3224,8 +3224,8 @@ export default {
 /* 输入区 */
 .chat-footer {
     padding: 14px 18px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.03);
+    border-top: 1px solid rgba(0, 180, 240, 0.08);
+    background: rgba(3, 12, 28, 0.85);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     transition: border-color 0.3s 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -3235,13 +3235,13 @@ export default {
     position: relative;
     display: flex;
     align-items: flex-end;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(0, 180, 240, 0.12);
     border-radius: 24px;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.04) 40%, rgba(255, 255, 255, 0.06) 100%);
+    background: linear-gradient(145deg, rgba(6, 22, 46, 0.75) 0%, rgba(4, 14, 34, 0.7) 40%, rgba(4, 16, 36, 0.72) 100%);
     padding: 3px 3px 3px 14px;
     transition: border-color 0.35s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.35s cubic-bezier(0.32, 0.72, 0, 1),
         background 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 
     &::before {
         content: '';
@@ -3250,7 +3250,7 @@ export default {
         left: 4%;
         right: 4%;
         height: 35%;
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 100%);
+        background: linear-gradient(180deg, rgba(0, 180, 240, 0.06) 0%, transparent 100%);
         border-radius: 24px 24px 50% 50%;
         pointer-events: none;
         z-index: 0;
@@ -3258,7 +3258,7 @@ export default {
 
     &:focus-within {
         border-color: rgba(59, 130, 246, 0.5);
-        background: linear-gradient(145deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.06) 40%, rgba(255, 255, 255, 0.08) 100%);
+        background: linear-gradient(145deg, rgba(8, 28, 56, 0.8) 0%, rgba(4, 16, 36, 0.75) 40%, rgba(4, 16, 36, 0.78) 100%);
         box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 4px rgba(59, 130, 246, 0.15);
     }
 }
@@ -3387,8 +3387,8 @@ export default {
     height: 26px;
     border-radius: 50%;
     border: none;
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.4);
+    background: rgba(8, 24, 48, 0.55);
+    color: rgba(200, 220, 255, 0.4);
     font-size: 12px;
     cursor: pointer;
     display: flex;
@@ -3397,7 +3397,7 @@ export default {
     transition: all 0.2s;
 
     &:hover {
-        background: rgba(255, 255, 255, 0.16);
+        background: rgba(12, 35, 65, 0.75);
         color: rgba(255, 255, 255, 0.85);
     }
 
@@ -3493,7 +3493,31 @@ export default {
     animation: breathe-ring-light 3s ease-in-out infinite;
 }
 .theme-light .chat-header {
+    background: rgba(255, 255, 255, 0.03);
     border-bottom-color: rgba(0, 0, 0, 0.05);
+}
+.theme-light .chat-footer {
+    background: rgba(255, 255, 255, 0.03);
+    border-top-color: rgba(0, 0, 0, 0.05);
+}
+.theme-light .chat-input-wrap {
+    border-color: rgba(0, 0, 0, 0.10);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.04) 40%, rgba(255, 255, 255, 0.06) 100%);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.theme-light .chat-input-wrap::before {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 100%);
+}
+.theme-light .chat-input-wrap:focus-within {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.06) 40%, rgba(255, 255, 255, 0.08) 100%);
+}
+.theme-light .panel-shell {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(0, 0, 0, 0.06);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 12px 48px rgba(0, 0, 0, 0.12);
+}
+.theme-light .conv-list::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.10);
 }
 .theme-light .chat-header h3 {
     color: #1e293b;
@@ -3546,6 +3570,14 @@ export default {
 .theme-light .chat-msg.assistant .msg-avatar {
     background: rgba(0, 0, 0, 0.06);
     color: #64748b;
+}
+.theme-light .msg-action-btn {
+    background: rgba(0, 0, 0, 0.05);
+    color: #94a3b8;
+}
+.theme-light .msg-action-btn:hover {
+    background: rgba(0, 0, 0, 0.10);
+    color: #475569;
 }
 .theme-light .chat-msg.user .msg-name {
     color: #2563eb;
