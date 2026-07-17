@@ -1,6 +1,6 @@
 # 金陵阡陌（SkyEye）— 低空遥感智能巡检平台
 
-> **Phase 6.5** — 多会话管理 · 提示词模板 · 响应式缩放 · 微交互动画 · 鲁棒性加固
+> **Phase 7** — 液玻璃视觉重塑 · 侧栏渐进引导 · 欢迎区重构 · 响应式硬约束
 
 ## 项目概述
 
@@ -231,7 +231,25 @@ skyeye/
 | 持久化 | conversations deep watch → 1s 防抖 → localStorage，恢复时优先读新 key |
 | 列表动画 | convItemIn 交错 40ms 淡入 + translateX，打开面板时 staggered reveal |
 
-### Phase 5 视觉增强
+### Phase 7 液玻璃视觉重塑 & 引导式 Onboarding
+
+| 改进 | 类型 | 说明 |
+|------|------|------|
+| 侧栏渐进式引导 | 交互 | 前 3 次打开面板展示圆点 + 文字标签（会话/对话/设置），大圆呼吸脉冲，localStorage 持久化计数，3 次后回归 hover-only |
+| 引导重置入口 | 交互 | 设置页 actions-bar 新增"重新展示侧栏引导"按钮，`storage` 事件跨标签页实时同步 |
+| 欢迎区重构 | 视觉 | 机器人图标居中 → 能力列表（3 条业务说明）→ 分割线 → 操作提示，双主题适配 |
+| 深色模式液玻璃 | 视觉 | `panel-shell`/`chat-panel` 用径向光球 `::before`/`::after` 替代 `linear-gradient` 渐变，降低不透明度至 0.38–0.42 增强背景穿透感 |
+| 亮色模式液玻璃 | 视觉 | 微渐变底色 `linear-gradient(135deg, 蓝→紫→粉)` + 淡光晕伪元素，解决"白上叠白"虚无感 |
+| 定向光叠加层 | 视觉 | `panel-shell`/`chat-header`/`chat-footer`/`.assistant .msg-content` 各加 `::before` 线性光伪元素，模拟左上光线打在玻璃上的折射 |
+| 玻璃折射高光线 | 视觉 | `box-shadow` 从单条 `inset` 改为双层（顶部高光 + 底部暗边），物理边缘感 |
+| 输入框聚焦光环 | 视觉 | `chat-input-wrap:focus-within` 扩散光晕 + `scale(1.008)` 微缩放 |
+| 消息气泡尺寸 | 视觉 | `max-width` 70%→85%，输入框 `font-size` 13→14px，`padding` 7→9px |
+| 响应式硬约束 | 修复 | `max-width: calc(100vw - 64px)` 硬截断防止面板被挤出视口；resize 时重夹持 x/y 百分比 |
+| fab badge 修复 | 修复 | 用 `lastReadMsgCount` 替代 `visible` 判断，关闭面板后不立即重亮；`watch.visible` 标记已读 |
+| conv-list 动画对齐 | 修复 | `transition` 0.28s→0.02s 瞬关对齐面板动画；关闭面板时顺手 `convListVisible = false` |
+| 参考项目借鉴 | 设计 | 借鉴 iOS 26 Liquid Glass Chatbot 的定向光渐变、玻璃折射边缘、聚焦光环等 4 个设计模式 |
+
+### Phase 6.5 多会话 & 提示词模板 & 响应式缩放
 
 | 效果 | 技术 | 说明 |
 |------|------|------|
