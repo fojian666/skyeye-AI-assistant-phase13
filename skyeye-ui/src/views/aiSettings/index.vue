@@ -1,5 +1,5 @@
-<template>
-    <div class="settings-root">
+    <template>
+    <div class="settings-root" :class="[`theme-${theme}`]">
         <!-- Canvas: 动态极光 + 粒子连接网 -->
         <canvas ref="auroraCanvas" class="aurora-canvas" aria-hidden="true"></canvas>
 
@@ -455,6 +455,23 @@
             </div>
             <!-- 操作行 -->
             <div class="actions-bar">
+                <button class="btn-reset btn-reset--secondary" @click="resetRailOnboard" aria-label="重新展示侧栏引导">
+                    <svg
+                        class="btn-reset-icon"
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 8v4l2 2" />
+                    </svg>
+                    重新展示侧栏引导
+                </button>
                 <button class="btn-reset" @click="restoreDefaults" aria-label="恢复默认设置">
                     <svg
                         class="btn-reset-icon"
@@ -909,6 +926,12 @@ export default {
             this._showToast('已恢复默认设置');
         },
 
+        /** 重置侧栏引导计数：下次打开面板重新展示引导动画 */
+        resetRailOnboard() {
+            try { localStorage.setItem('skyeye_rail_onboard', '0'); } catch (_) {}
+            this._showToast('下次打开 AI 助手时将重新展示侧栏引导');
+        },
+
         // ==================== 提示词模板 ====================
 
         _defaultTemplates() {
@@ -1239,6 +1262,7 @@ void main(){
 .actions-bar {
     display: flex;
     justify-content: center;
+    gap: 12px;
     margin-top: 28px;
 }
 
@@ -1446,17 +1470,18 @@ void main(){
     &::after {
         content: attr(data-tip);
         position: absolute;
-        bottom: calc(100% + 10px);
-        /* 默认居中，右侧空间不足时从右边对齐 */
+        bottom: calc(100% + 8px);
         left: 50%;
         right: auto;
-        transform: translateX(-50%) translateY(4px);
-        padding: 8px 14px;
-        border-radius: 10px;
-        background: rgba(15, 23, 42, 0.97);
-        border: 1px solid rgba(99, 102, 241, 0.25);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-        color: rgba(255, 255, 255, 0.85);
+        transform: translateX(-50%);
+        padding: 10px 14px;
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.92);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border: 1px solid rgba(99, 102, 241, 0.18);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.40), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+        color: rgba(220, 225, 240, 0.92);
         font-size: 12px;
         font-weight: 400;
         line-height: 1.55;
@@ -1468,7 +1493,7 @@ void main(){
         text-transform: none;
         pointer-events: none;
         opacity: 0;
-        transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+        transition: opacity 0.12s ease, transform 0.12s cubic-bezier(0.32, 0.72, 0, 1);
         z-index: 100;
     }
 
@@ -1476,23 +1501,23 @@ void main(){
     &.right &::after {
         left: auto;
         right: 0;
-        transform: translateY(4px);
+        transform: translateY(0);
     }
 
-    /* 气泡三角箭头 */
+    /* 气泡三角箭头 —— 简化版 */
     &::before {
         content: '';
         position: absolute;
         left: 50%;
-        bottom: calc(100% + 4px);
-        transform: translateX(-50%) translateY(4px);
+        bottom: calc(100% + 2px);
+        transform: translateX(-50%);
         width: 0;
         height: 0;
-        border-left: 6px solid transparent;
-        border-right: 6px solid transparent;
-        border-top: 6px solid rgba(15, 23, 42, 0.95);
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 5px solid rgba(15, 23, 42, 0.88);
         opacity: 0;
-        transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+        transition: opacity 0.12s ease, transform 0.12s cubic-bezier(0.32, 0.72, 0, 1);
         z-index: 100;
         pointer-events: none;
     }
@@ -1500,7 +1525,36 @@ void main(){
     &:hover::after,
     &:hover::before {
         opacity: 1;
-        transform: translateX(-50%) translateY(0);
+        transform: translateX(-50%) translateY(-2px);
+    }
+    &.right:hover::after {
+        transform: translateY(-2px);
+    }
+}
+
+/* 亮色模式 — tooltip */
+.theme-light .field-help {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.10);
+    color: rgba(0, 0, 0, 0.30);
+
+    &:hover {
+        background: rgba(99, 102, 241, 0.12);
+        border-color: rgba(99, 102, 241, 0.25);
+        color: rgba(37, 99, 235, 0.7);
+    }
+
+    &::after {
+        background: rgba(255, 255, 255, 0.90);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border-color: rgba(0, 0, 0, 0.10);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+        color: #334155;
+    }
+
+    &::before {
+        border-top-color: rgba(255, 255, 255, 0.85);
     }
 }
 

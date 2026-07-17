@@ -1,7 +1,7 @@
 <template>  
     <div
         class="chat-wrapper"
-        :class="[`theme-${theme}`, { 'query-mode': chatMode === 'query', 'summary-mode': chatMode === 'summary', 'reduce-motion': reduceMotion }]"
+        :class="[`theme-${theme}`, { 'query-mode': chatMode === 'query', 'summary-mode': chatMode === 'summary', 'reduce-motion': reduceMotion, 'drawer-open': convListVisible && visible }]"
         :style="wrapperStyle"
         role="complementary"
         aria-label="AI 助手面板">
@@ -26,11 +26,89 @@
                     <path d="M9 13v2" /></svg
             ></span>
             <span class="fab-label">AI 助手</span>
-            <span v-if="messages.length > 0" class="fab-badge" aria-label="有历史对话"></span>
+            <span v-if="messages.length > lastReadMsgCount" class="fab-badge" aria-label="有新消息"></span>
         </div>
 
         <!-- 聊天窗口 + 拓展槽 -->
         <div v-show="visible" class="panel-row" :class="{ docked }">
+            <!-- 会话列表 — 从面板左侧滑出的抽屉 -->
+            <div ref="convListPanel" v-if="!docked" class="conv-list-panel" :class="{ open: convListVisible }" @click.stop>
+                <div class="conv-drawer-inner">
+                    <div class="conv-panel-header">
+                        <span>会话列表</span>
+                        <button class="conv-panel-close" @click="convListVisible = false" aria-label="关闭会话列表">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <button v-if="conversations.length < 20" class="conv-new-btn" @click="newConversation">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="13"
+                            height="13"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        新建会话
+                    </button>
+                    <p v-else class="conv-limit-hint">已达上限（20 个）</p>
+
+                    <div class="conv-list">
+                        <div
+                            v-for="(conv, ci) in sortedConversations"
+                            :key="conv.id"
+                            class="conv-item"
+                            :class="{ active: conv.id === activeConversationId }"
+                            :style="{ '--conv-i': ci }"
+                            @click="switchConversation(conv.id)">
+                            <div class="conv-item-main">
+                                <span class="conv-title">{{ conv.title || '新会话' }}</span>
+                                <span class="conv-meta">{{ conv.messages.length || 0 }} 条消息 · {{ timeAgo(conv.updatedAt) }}</span>
+                            </div>
+                            <button
+                                v-if="conversations.length > 1"
+                                class="conv-del-btn"
+                                @click.stop="deleteConversation(conv.id)"
+                                title="删除会话"
+                                aria-label="删除会话">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div v-if="conversations.length <= 1" class="conv-empty">暂无其他会话，点击上方按钮创建</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="panel-shell">
                 <div
                     ref="panel"
@@ -206,8 +284,34 @@
                                     <path d="M15 13v2" />
                                     <path d="M9 13v2" /></svg
                             ></span>
+                            <div class="welcome-robot-icon">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="40"
+                                    height="40"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.5"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M12 8V4H8" />
+                                    <rect width="16" height="12" x="4" y="8" rx="2" />
+                                    <path d="M2 14h2" />
+                                    <path d="M20 14h2" />
+                                    <path d="M15 13v2" />
+                                    <path d="M9 13v2" />
+                                </svg>
+                            </div>
                             <p>你好！我是金陵阡陌 AI 助手</p>
-                            <span>可以问我关于无人机巡检、航线规划、全景分析等问题</span>
+                            <span class="welcome-intro">我可以帮你：</span>
+                            <ul class="welcome-capabilities">
+                                <li>回答巡检场景中的业务问题</li>
+                                <li>查询和统计分析航线、任务、异常数据</li>
+                                <li>对选中要素自动生成综合摘要报告</li>
+                            </ul>
+                            <hr class="welcome-sep" />
+                            <span class="welcome-tips">💡 试试下方快捷提问，或直接输入你的需求；左侧圆点可切换模式和会话</span>
                             <div class="quick-questions">
                                 <button v-for="q in quickQuestions" :key="q" @click="sendQuick(q)">{{ q }}</button>
                             </div>
@@ -445,7 +549,7 @@
                 ref="sideRail"
                 v-show="!docked"
                 class="side-rail"
-                :class="{ visible: sideRailVisible, 'show-hint': !railHintShown }"
+                :class="{ visible: sideRailVisible, [onboardPhase]: onboardPhase }"
                 @mouseenter="onSideRailEnter"
                 @mouseleave="onSideRailLeave">
                 <div class="rail-item small spread-top-1" title="会话列表" aria-label="会话列表" @click="toggleConvList">
@@ -466,6 +570,7 @@
                         <path d="M3 12h.01" />
                         <path d="M3 18h.01" />
                     </svg>
+                    <span class="rail-label">会话</span>
                 </div>
                 <div
                     class="rail-item large"
@@ -516,6 +621,7 @@
                         <path
                             d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
                     </svg>
+                    <span class="rail-label rail-label--left" v-text="chatMode === 'query' ? '查询模式' : chatMode === 'summary' ? '摘要模式' : '对话模式'"></span>
                 </div>
                 <div class="rail-item small spread-bot-1" title="系统设置" @click="openSettings" aria-label="系统设置">
                     <svg
@@ -532,90 +638,9 @@
                             d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
                         <circle cx="12" cy="12" r="3" />
                     </svg>
+                    <span class="rail-label">设置</span>
                 </div>
             </div>
-
-            <!-- 会话列表侧栏（吸附在面板左侧） -->
-            <transition name="conv-panel-slide">
-                <div ref="convListPanel" v-if="convListVisible && !docked" class="conv-list-panel" @click.stop>
-                    <div class="conv-pod-shell">
-                        <div class="conv-pod-core">
-                            <div class="conv-panel-header">
-                                <span>会话列表</span>
-                                <button class="conv-panel-close" @click="convListVisible = false" aria-label="关闭会话列表">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="14"
-                                        height="14"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <line x1="18" y1="6" x2="6" y2="18" />
-                                        <line x1="6" y1="6" x2="18" y2="18" />
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <button v-if="conversations.length < 20" class="conv-new-btn" @click="newConversation">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="13"
-                                    height="13"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <line x1="12" y1="5" x2="12" y2="19" />
-                                    <line x1="5" y1="12" x2="19" y2="12" />
-                                </svg>
-                                新建会话
-                            </button>
-                            <p v-else class="conv-limit-hint">已达上限（20 个）</p>
-
-                            <div class="conv-list">
-                                <div
-                                    v-for="(conv, ci) in sortedConversations"
-                                    :key="conv.id"
-                                    class="conv-item"
-                                    :class="{ active: conv.id === activeConversationId }"
-                                    :style="{ '--conv-i': ci }"
-                                    @click="switchConversation(conv.id)">
-                                    <div class="conv-item-main">
-                                        <span class="conv-title">{{ conv.title || '新会话' }}</span>
-                                        <span class="conv-meta">{{ conv.messages.length || 0 }} 条消息 · {{ timeAgo(conv.updatedAt) }}</span>
-                                    </div>
-                                    <button
-                                        v-if="conversations.length > 1"
-                                        class="conv-del-btn"
-                                        @click.stop="deleteConversation(conv.id)"
-                                        title="删除会话"
-                                        aria-label="删除会话">
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            width="12"
-                                            height="12"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="2"
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <line x1="18" y1="6" x2="6" y2="18" />
-                                            <line x1="6" y1="6" x2="18" y2="18" />
-                                        </svg>
-                                    </button>
-                                </div>
-                                <div v-if="conversations.length <= 1" class="conv-empty">暂无其他会话，点击上方按钮创建</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </transition>
         </div>
     </div>
 </template>
@@ -784,12 +809,13 @@ export default {
             currentContext: null,
             lastAutoSummaryKey: null, // 防重复触发
             reduceMotion: false, // 减少动态效果
-            railHintShown: false, // side-rail 发现性提示（首次打开展示一次）
+            railOnboardCount: 0, // side-rail 渐进式引导计数（持久化到 localStorage，≥3 后不再展示）
             showScrollBtn: false, // "回到底部"浮动按钮
             _userScrolledUp: false, // 用户手动上翻后暂停自动滚动
             _storageError: false, // localStorage 读写异常标志
             _convStorageError: false, // 对话持久化独立异常标志（不与设置项共享）
             _restoring: false, // 对话恢复中标记（防止 watcher 写回同一份数据）
+            lastReadMsgCount: 0, // 已读消息数，fab badge 只在有新消息时显示
             _typewriterCancelled: false, // 组件销毁时取消打字机
             _mapDispatchTimer: null, // map_action 延迟 dispatch 定时器
             _copyTimer: null, // 复制成功提示恢复定时器
@@ -804,25 +830,41 @@ export default {
     },
     computed: {
         ...mapState({ theme: (state) => state.theme }),
+        /** side-rail 渐进引导阶段：前 3 次打开面板展示标签，之后永久隐藏 */
+        onboardPhase() {
+            return this.railOnboardCount < 3 ? 'onboard' : '';
+        },
         panelStyle() {
             if (this.docked) return {};
             return { width: this.panelW + 'px', height: this.panelH + 'px' };
         },
         wrapperStyle() {
             if (this.docked) {
-                // docked 模式：宽度跟随 CSS clamp(340,22vw,460) + 8px shell padding
                 const dockedW = Math.min(460, Math.max(340, Math.round(window.innerWidth * 0.22)));
                 return { right: '0', top: '0', bottom: '0', left: 'auto', width: (dockedW + 8) + 'px', height: '100%' };
             }
             if (this.dragPos.xPct != null) {
+                // 拖拽时：右边界必须限制在视口内，补偿 drawer 宽度
+                const drawerW = this.convListVisible ? this._convListW : 0;
+                const totalW = this.visible ? (this.panelW + drawerW) : 52; // FAB ~52px
+                const maxLeft = Math.round(window.innerWidth - totalW);
+                const left = Math.min(Math.round(this.dragPos.xPct * window.innerWidth), maxLeft);
                 return {
                     right: 'auto',
                     bottom: 'auto',
-                    left: Math.round(this.dragPos.xPct * window.innerWidth) + 'px',
+                    left: left + 'px',
                     top: Math.round(this.dragPos.yPct * window.innerHeight) + 'px'
                 };
             }
-            return { right: '32px', bottom: '32px' };
+            // 默认位置：drawer 打开时向左偏移 drawer 宽度，保证面板不溢出
+            const right = this.convListVisible
+                ? 'calc(32px + var(--conv-list-width))'
+                : '32px';
+            return { right, bottom: '32px' };
+        },
+        /** JS 侧 drawer 宽度 — 与 CSS var(--conv-list-width) 同步 */
+        _convListW() {
+            return Math.min(250, Math.max(195, Math.round(window.innerWidth * 0.12)));
         },
         activeTools() {
             if (this.chatMode === 'query' || this.chatMode === 'summary') return TOOLS;
@@ -852,6 +894,9 @@ export default {
         this._loadSettings();
         this._initConversations();
         this._restoreMessages();
+        try {
+            this.railOnboardCount = parseInt(localStorage.getItem('skyeye_rail_onboard') || '0', 10);
+        } catch (_) { /* 忽略 */ }
         this._onDragMove = this.onDragMove.bind(this);
         this._onDragEnd = this.onDragEnd.bind(this);
         this._onGlobalMouse = this.onGlobalMouse.bind(this);
@@ -864,6 +909,13 @@ export default {
         document.addEventListener('mousemove', this._onResizeMove);
         document.addEventListener('mouseup', this._onResizeEnd);
         document.addEventListener('keydown', this._onKeydown);
+        window.addEventListener('resize', this._onWindowResize);
+        this._onStorage = (e) => {
+            if (e.key === 'skyeye_rail_onboard') {
+                try { this.railOnboardCount = parseInt(e.newValue || '0', 10); } catch (_) {}
+            }
+        };
+        window.addEventListener('storage', this._onStorage);
     },
     beforeDestroy() {
         // 中止正在进行的流式请求
@@ -887,8 +939,14 @@ export default {
         document.removeEventListener('mousemove', this._onResizeMove);
         document.removeEventListener('mouseup', this._onResizeEnd);
         document.removeEventListener('keydown', this._onKeydown);
+        window.removeEventListener('resize', this._onWindowResize);
+        window.removeEventListener('storage', this._onStorage);
     },
     watch: {
+        // 打开面板时将当前消息标记为已读
+        visible(val) {
+            if (val) this.lastReadMsgCount = this.messages.length;
+        },
         // streaming 结束时释放发送锁
         streaming(val) {
             if (!val) this._sending = false;
@@ -960,9 +1018,10 @@ export default {
             // 超过 4px 才算拖拽，防止误判
             if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
             this.hasMoved = true;
-            // 面板关闭时用 FAB 实际尺寸，打开时用面板尺寸
+            // 面板关闭时用 FAB 实际尺寸，打开时用面板尺寸（含 drawer）
             const fabRect = this.$el.getBoundingClientRect();
-            const w = this.visible ? this.panelW : fabRect.width;
+            const drawerW = this.convListVisible ? this._convListW : 0;
+            const w = this.visible ? (this.panelW + drawerW) : fabRect.width;
             const h = this.visible ? this.panelH : fabRect.height;
             let nx = this.dragStart.elX + (e.clientX - this.dragStart.x);
             let ny = this.dragStart.elY + (e.clientY - this.dragStart.y);
@@ -1009,6 +1068,20 @@ export default {
         },
         onResizeEnd() {
             this.resizing = false;
+        },
+        _onWindowResize() {
+            // 窗口缩小时重夹持拖拽位置，防止面板溢出视口
+            if (this.dragPos.xPct == null) return;
+            const drawerW = this.convListVisible && this.visible ? this._convListW : 0;
+            const totalW = this.visible ? (this.panelW + drawerW) : 52;
+            const maxX = Math.max(0, window.innerWidth - totalW);
+            const maxY = Math.max(0, window.innerHeight - (this.visible ? this.panelH : 52));
+            const clampedX = Math.min(Math.round(this.dragPos.xPct * window.innerWidth), maxX);
+            const clampedY = Math.min(Math.round(this.dragPos.yPct * window.innerHeight), maxY);
+            this.dragPos = {
+                xPct: maxX > 0 ? clampedX / window.innerWidth : 0,
+                yPct: maxY > 0 ? clampedY / window.innerHeight : 0
+            };
         },
         onGlobalMouse(e) {
             // 面板打开时，鼠标靠近面板左侧边缘浮现拓展槽
@@ -1079,7 +1152,11 @@ export default {
         open() {
             // 拖拽后不触发点击打开
             if (this.hasMoved) return;
-            this.railHintShown = true; // 首次打开即标记提示已展示
+            // 渐进式引导：前 3 次打开面板展示侧栏标签
+            if (this.railOnboardCount < 3) {
+                this.railOnboardCount++;
+                try { localStorage.setItem('skyeye_rail_onboard', String(this.railOnboardCount)); } catch (_) {}
+            }
             // 跳转后的残留消息，重置为欢迎界面
             if (this.messages.length === 1 && this.messages[0].content.startsWith('已为您跳转到')) {
                 this.messages = [];
@@ -1158,6 +1235,7 @@ export default {
                     onComplete: () => {
                         this.visible = false;
                         this.docked = false;
+                        this.convListVisible = false;
                         this.dragPos = { xPct: null, yPct: null };
                         gsap.set([panel, shell], { clearProps: 'all' });
                     }
@@ -1166,6 +1244,7 @@ export default {
             } else {
                 this.visible = false;
                 this.docked = false;
+                this.convListVisible = false;
                 this.dragPos = { xPct: null, yPct: null };
             }
         },
@@ -1184,6 +1263,7 @@ export default {
                     onComplete: () => {
                         this.visible = false;
                         this.docked = false;
+                        this.convListVisible = false;
                         this.dragPos = { xPct: null, yPct: null };
                         gsap.set([panel, shell], { clearProps: 'all' });
                     }
@@ -1192,6 +1272,7 @@ export default {
             } else {
                 this.visible = false;
                 this.docked = false;
+                this.convListVisible = false;
                 this.dragPos = { xPct: null, yPct: null };
             }
         },
@@ -1956,6 +2037,15 @@ export default {
 .chat-wrapper {
     position: fixed;
     z-index: 1000; /* z: 面板层，高于普通页面元素 */
+    max-width: calc(100dvw - 64px); /* 视口缩小时不溢出左边界 */
+
+    /* 尺寸令牌 — conv-list 需在 wrapper 层定义供 inline style var() 引用 */
+    --conv-list-width: clamp(195px, 12vw, 250px);
+}
+
+/* drawer 打开时：right 偏移了 drawer 宽度，可用空间减少相同量 */
+.chat-wrapper.drawer-open {
+    max-width: calc(100dvw - 64px - var(--conv-list-width));
 }
 
 /* 悬浮按钮 — 灵动岛胶囊形 */
@@ -2039,7 +2129,6 @@ export default {
   /* 尺寸令牌 — 等比缩放基准 */
   --rail-width: clamp(100px, 6.25vw, 135px);
   --rail-height: clamp(180px, 12vw, 235px);
-  --conv-list-width: clamp(195px, 12vw, 250px);
 
   &.docked {
     height: 100%;
@@ -2069,13 +2158,26 @@ export default {
         pointer-events: auto;
     }
 
-    /* 首次展示提示：短暂可见后消退 */
-    &.show-hint {
-        opacity: 0.45;
+    /* 渐进式引导阶段：小圆始终可见并显示文字标签 */
+    &.onboard {
+        opacity: 1;
         transform: translate(0, -50%);
         pointer-events: auto;
-        animation: rail-hint-fade 2.5s ease-out forwards;
-        animation-delay: 0.5s;
+
+        .rail-item.small {
+            opacity: 0.55;
+            transform: scale(1);
+            transition-delay: 0s;
+        }
+
+        .rail-label {
+            opacity: 1;
+            max-width: 50px;
+        }
+
+        .rail-item.large {
+            animation: rail-pulse 2.4s ease-in-out infinite;
+        }
     }
 
     /* hover 时强制保持可见，不受 JS sideRailVisible 影响 */
@@ -2087,15 +2189,10 @@ export default {
     }
 }
 
-@keyframes rail-hint-fade {
-    0%,
-    30% {
-        opacity: 0.45;
-    }
-    100% {
-        opacity: 0;
-        pointer-events: none;
-    }
+/* 引导阶段大圆呼吸脉冲 */
+@keyframes rail-pulse {
+    0%, 100% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 0 rgba(59, 130, 246, 0.35); }
+    50%      { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 8px rgba(59, 130, 246, 0); }
 }
 
 .rail-item {
@@ -2156,6 +2253,39 @@ export default {
     }
 }
 
+/* 引导标签：从圆点右侧滑出，仅在引导阶段可见 */
+
+.rail-label {
+    position: absolute;
+    left: calc(100% + 8px);
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(200, 220, 255, 0.8);
+    opacity: 0;
+    max-width: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, max-width 0.35s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s ease;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.theme-light .rail-label {
+    color: rgba(30, 40, 60, 0.8);
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+/* 亮色主题下标签 hover 加深 */
+.theme-light .rail-item:hover .rail-label {
+    color: #1e293b;
+}
+
+/* 大圆标签向左展开，与上方小圆右标签交错 */
+.rail-label--left {
+    left: auto;
+    right: calc(100% + 2px);
+}
+
 /* 小圆半圆弧位置 — 百分比（随 rail 等比缩放） */
 .spread-top-2 { left: 30%; top: 4%; }
 .spread-top-1 { left: 7%;  top: 26%; }
@@ -2167,6 +2297,18 @@ export default {
     opacity: 1;
     transform: scale(1);
 }
+
+/* hover 时展开所有标签，与引导期一致 */
+.side-rail:hover .rail-label {
+    opacity: 1;
+    max-width: 50px;
+}
+
+/* 悬浮对应圆点时标签高亮 */
+.rail-item:hover .rail-label {
+    color: #fff;
+}
+
 .side-rail:hover .spread-top-2 {
     transition-delay: 0s;
 }
@@ -2180,75 +2322,55 @@ export default {
     transition-delay: 0.12s;
 }
 
-/* ======================== 会话列表面板 ======================== */
+/* ======================== 会话列表 — 面板左侧抽屉 ======================== */
 
 .conv-list-panel {
-  position: absolute;
-  right: calc(100% + var(--rail-width) + 12px); /* rail 宽 + 间距, 联动缩放 */
-  top: 0;
-  bottom: 0;
+  /* 弹性抽屉：flex 子元素，打开时 panel 等比收缩 */
+  max-width: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+  border-radius: 20px;
+  background: rgba(5, 18, 42, 0.78);
+  border: 1px solid rgba(0, 180, 240, 0.1);
+  border-right-color: rgba(0, 180, 240, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  opacity: 0;
+  transition: max-width 0.02s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.02s ease;
+  align-self: stretch;
+
+  &.open {
+    max-width: var(--conv-list-width);
+    opacity: 1;
+    z-index: 1015; /* 高于 side-rail(1010) */
+  }
+}
+
+/* 内层 — 固定宽度防回流 */
+.conv-drawer-inner {
   width: var(--conv-list-width);
-  z-index: 1009;
-}
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 18px 18px;
+  position: relative;
 
-/* 外壳 — 半透明玻璃托盘，与 panel-shell 同款 */
-.conv-pod-shell {
-    width: 100%;
-    height: 100%;
-    padding: 4px;
-    border-radius: 24px;
-    background: rgba(5, 18, 42, 0.78);
-    border: 1px solid rgba(0, 180, 240, 0.1);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 12px 48px rgba(0, 0, 0, 0.55);
-    transition: border-color 0.6s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.6s cubic-bezier(0.32, 0.72, 0, 1);
-}
+  /* 装饰光晕 */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(0, 180, 240, 0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
 
-/* 内核 — 深层玻璃面板 */
-.conv-pod-core {
+  > * {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    padding: 20px 18px 18px;
-    border-radius: 21px;
-    background: rgba(4, 14, 34, 0.85);
-    border: 1px solid rgba(0, 180, 240, 0.08);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.04);
-    overflow: hidden;
-
-    &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: 21px;
-        background: linear-gradient(135deg, rgba(0, 180, 240, 0.05) 0%, transparent 50%);
-        pointer-events: none;
-        z-index: 0;
-    }
-
-    > * {
-        position: relative;
-        z-index: 1;
-    }
-}
-
-/* 滑入/滑出过渡 */
-.conv-panel-slide-enter-active {
-    transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.conv-panel-slide-leave-active {
-    transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.conv-panel-slide-enter,
-.conv-panel-slide-leave-to {
-    opacity: 0;
-    transform: translateX(-12px);
+    z-index: 1;
+  }
 }
 
 .conv-panel-header {
@@ -2411,17 +2533,14 @@ export default {
 }
 
 /* 亮色主题 — conv */
-.theme-light .conv-pod-shell {
+.theme-light .conv-list-panel {
     background: rgba(255, 255, 255, 0.7);
     border-color: rgba(0, 0, 0, 0.12);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 8px 32px rgba(0, 0, 0, 0.1);
+    border-right-color: rgba(0, 0, 0, 0.06);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-.theme-light .conv-pod-core {
-    background: rgba(255, 255, 255, 0.5);
-    border-color: rgba(0, 0, 0, 0.06);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6);
-
+.theme-light .conv-drawer-inner {
     &::before {
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, transparent 50%);
     }
@@ -2517,13 +2636,33 @@ export default {
 
 /* —— 外壳：铝合金托盘 + 面板内核（Double-Bezel） —— */
 .panel-shell {
+    position: relative;
+    flex: 1 1 auto; /* 抽屉打开时等比收缩，不被挤出 */
+    min-width: clamp(260px, 16vw, 360px); /* 最小面板宽，防止被压扁 */
     padding: 4px;
     border-radius: 24px;
-    background: rgba(5, 18, 42, 0.78);
-    border: 1px solid rgba(0, 180, 240, 0.1);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 12px 48px rgba(0, 0, 0, 0.55);
+    background: rgba(5, 18, 42, 0.38);
+    border: 1px solid rgba(0, 180, 240, 0.12);
+    backdrop-filter: blur(22px) saturate(115%);
+    -webkit-backdrop-filter: blur(22px) saturate(115%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        /* 顶部折射高光 */
+        inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+        /* 底部暗边 */
+        0 16px 56px rgba(0, 0, 0, 0.6);
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background:
+            radial-gradient(ellipse at 25% 15%, rgba(96, 165, 250, 0.12) 0%, transparent 50%),
+            radial-gradient(ellipse at 75% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 45%);
+        pointer-events: none;
+        z-index: 0;
+    }
 }
 
 .docked .panel-shell {
@@ -2537,25 +2676,54 @@ export default {
     max-width: clamp(400px, 27vw, 560px);
     max-height: clamp(480px, 85vh, 900px);
     border-radius: 20px;
-    background: rgba(4, 16, 36, 0.88);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    border: 1px solid rgba(0, 200, 255, 0.12);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 12px rgba(0, 0, 0, 0.35);
+    background: rgba(4, 16, 36, 0.42);
+    backdrop-filter: blur(44px) saturate(125%);
+    -webkit-backdrop-filter: blur(44px) saturate(125%);
+    border: 1px solid rgba(0, 200, 255, 0.14);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.14),
+        0 4px 12px rgba(0, 0, 0, 0.35);
     display: flex;
     flex-direction: column;
     overflow: hidden;
     transform-origin: bottom right;
     transition: height 0.3s ease, border-radius 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 
+    /* 左上角蓝紫光球 — 模拟玻璃后极光穿透 */
     &::before {
         content: '';
         position: absolute;
-        inset: 0;
-        border-radius: 20px;
-        background: linear-gradient(135deg, rgba(0, 180, 240, 0.05) 0%, transparent 50%);
+        top: -60px;
+        left: -40px;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: radial-gradient(circle,
+            rgba(59, 130, 246, 0.18) 0%,
+            rgba(99, 102, 241, 0.1) 30%,
+            transparent 60%);
         pointer-events: none;
         z-index: 0;
+        filter: blur(28px);
+    }
+
+    /* 右下角紫色光球 — 第二光源 */
+    &::after {
+        content: '';
+        position: absolute;
+        right: -40px;
+        bottom: -60px;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: radial-gradient(circle,
+            rgba(139, 92, 246, 0.14) 0%,
+            rgba(168, 85, 247, 0.08) 35%,
+            transparent 65%);
+        pointer-events: none;
+        z-index: 0;
+        filter: blur(24px);
     }
 
     > * {
@@ -2709,6 +2877,7 @@ export default {
 
 /* 头部 — 毛玻璃顶栏 */
 .chat-header {
+    position: relative;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -2719,6 +2888,14 @@ export default {
     -webkit-backdrop-filter: blur(24px);
     user-select: none;
     transition: background 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, transparent 60%);
+        pointer-events: none;
+    }
 
     &:active {
         cursor: grabbing;
@@ -2834,6 +3011,56 @@ export default {
     span {
         color: rgba(255, 255, 255, 0.55);
         font-size: 12px;
+    }
+
+    .welcome-intro {
+        display: block;
+        color: rgba(200, 220, 255, 0.65);
+        font-size: 13px;
+        margin: 6px 0 8px;
+    }
+
+    .welcome-robot-icon {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 16px;
+        color: rgba(0, 180, 240, 0.45);
+    }
+
+    .welcome-capabilities {
+        list-style: none;
+        margin: 0 0 12px;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        li {
+            color: rgba(180, 200, 230, 0.6);
+            font-size: 12px;
+            padding-left: 14px;
+            position: relative;
+
+            &::before {
+                content: '·';
+                position: absolute;
+                left: 4px;
+                color: rgba(0, 180, 240, 0.5);
+            }
+        }
+    }
+
+    .welcome-sep {
+        border: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.04);
+        margin: 0 0 10px;
+    }
+
+    .welcome-tips {
+        display: block;
+        color: rgba(200, 220, 255, 0.35);
+        font-size: 11px;
+        line-height: 1.5;
     }
 
     .quick-questions {
@@ -2978,10 +3205,20 @@ export default {
         }
 
         .msg-content {
+            position: relative;
             background: rgba(8, 22, 46, 0.75);
             border: 1px solid rgba(0, 180, 240, 0.08);
             border-radius: 4px 18px 18px 18px;
             color: rgba(255, 255, 255, 0.9);
+
+            &::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border-radius: inherit;
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 55%);
+                pointer-events: none;
+            }
         }
     }
 }
@@ -3013,7 +3250,7 @@ export default {
 }
 
 .msg-content {
-    max-width: 70%;
+    max-width: 85%;
     padding: clamp(10px, 0.8vw, 16px);
     font-size: clamp(12px, 0.75vw, 14px);
     line-height: 1.6;
@@ -3223,12 +3460,21 @@ export default {
 
 /* 输入区 */
 .chat-footer {
+    position: relative;
     padding: 14px 18px;
     border-top: 1px solid rgba(0, 180, 240, 0.08);
     background: rgba(3, 12, 28, 0.85);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     transition: border-color 0.3s 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, transparent 60%);
+        pointer-events: none;
+    }
 }
 
 .chat-input-wrap {
@@ -3240,7 +3486,7 @@ export default {
     background: linear-gradient(145deg, rgba(6, 22, 46, 0.75) 0%, rgba(4, 14, 34, 0.7) 40%, rgba(4, 16, 36, 0.72) 100%);
     padding: 3px 3px 3px 14px;
     transition: border-color 0.35s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.35s cubic-bezier(0.32, 0.72, 0, 1),
-        background 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+        background 0.35s cubic-bezier(0.32, 0.72, 0, 1), transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 
     &::before {
@@ -3259,7 +3505,12 @@ export default {
     &:focus-within {
         border-color: rgba(59, 130, 246, 0.5);
         background: linear-gradient(145deg, rgba(8, 28, 56, 0.8) 0%, rgba(4, 16, 36, 0.75) 40%, rgba(4, 16, 36, 0.78) 100%);
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 4px rgba(59, 130, 246, 0.15);
+        box-shadow:
+            inset 0 2px 4px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1),
+            0 0 0 4px rgba(59, 130, 246, 0.18),
+            0 0 16px rgba(59, 130, 246, 0.06);
+        transform: scale(1.008);
     }
 }
 
@@ -3267,10 +3518,10 @@ export default {
     flex: 1;
     resize: none;
     border: none;
-    padding: 7px 0;
+    padding: 9px 0;
     background: transparent;
     color: rgba(255, 255, 255, 0.9);
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.5;
     font-family: inherit;
     outline: none;
@@ -3475,14 +3726,23 @@ export default {
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
 }
 .theme-light .chat-panel {
-    background: rgba(255, 255, 255, 0.45);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    border-color: rgba(0, 0, 0, 0.06);
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    background: linear-gradient(160deg,
+        rgba(255, 255, 255, 0.65) 0%,
+        rgba(242, 247, 255, 0.6) 40%,
+        rgba(248, 243, 255, 0.55) 100%);
+    backdrop-filter: blur(40px) saturate(120%);
+    -webkit-backdrop-filter: blur(40px) saturate(120%);
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.04),
+        0 16px 48px rgba(0, 0, 0, 0.1);
 
     &::before {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+        background: linear-gradient(160deg,
+            rgba(135, 180, 250, 0.08) 0%,
+            rgba(175, 155, 230, 0.05) 50%,
+            transparent 100%);
     }
 }
 .theme-light .chat-panel.thinking-glow {
@@ -3493,12 +3753,20 @@ export default {
     animation: breathe-ring-light 3s ease-in-out infinite;
 }
 .theme-light .chat-header {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.5);
     border-bottom-color: rgba(0, 0, 0, 0.05);
+
+    &::before {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, transparent 60%);
+    }
 }
 .theme-light .chat-footer {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.5);
     border-top-color: rgba(0, 0, 0, 0.05);
+
+    &::before {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, transparent 60%);
+    }
 }
 .theme-light .chat-input-wrap {
     border-color: rgba(0, 0, 0, 0.10);
@@ -3512,9 +3780,23 @@ export default {
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.06) 40%, rgba(255, 255, 255, 0.08) 100%);
 }
 .theme-light .panel-shell {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(0, 0, 0, 0.06);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 12px 48px rgba(0, 0, 0, 0.12);
+    background: linear-gradient(150deg,
+        rgba(235, 245, 255, 0.88) 0%,
+        rgba(245, 240, 255, 0.82) 50%,
+        rgba(255, 240, 245, 0.78) 100%);
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.45),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.04),
+        0 12px 48px rgba(0, 0, 0, 0.12);
+
+    &::before {
+        background: radial-gradient(
+            ellipse at 30% 20%,
+            rgba(120, 170, 255, 0.1) 0%,
+            transparent 60%
+        );
+    }
 }
 .theme-light .conv-list::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.10);
@@ -3545,6 +3827,24 @@ export default {
     color: #1e293b;
 }
 .theme-light .chat-empty span {
+    color: #94a3b8;
+}
+.theme-light .welcome-intro {
+    color: #64748b;
+}
+.theme-light .welcome-robot-icon {
+    color: rgba(37, 99, 235, 0.3);
+}
+.theme-light .welcome-capabilities li {
+    color: #64748b;
+}
+.theme-light .welcome-capabilities li::before {
+    color: rgba(37, 99, 235, 0.4);
+}
+.theme-light .welcome-sep {
+    border-top-color: rgba(0, 0, 0, 0.06);
+}
+.theme-light .welcome-tips {
     color: #94a3b8;
 }
 .theme-light .quick-questions button {
