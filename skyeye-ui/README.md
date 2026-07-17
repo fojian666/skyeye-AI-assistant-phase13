@@ -1,4 +1,4 @@
-# 金陵阡陌 — AI 助手 (Phase 6)
+# 金陵阡陌 — AI 助手 (Phase 8)
 
 无人机巡检智能平台前端，集成 AI 对话面板与可视化参数设置。
 
@@ -10,7 +10,7 @@
 | UI 库 | Element UI |
 | 动效 | GSAP + WebGL Shader + CSS Animation |
 | 地图 | 天地图 (TMap) |
-| 样式 | SCSS + CSS 自定义属性 (cyber-tokens) |
+| 样式 | SCSS + CSS 自定义属性 (cyber-tokens, ai-tokens) |
 
 ## 项目结构
 
@@ -82,6 +82,26 @@ skyeye-ui/src/
 - **三层并发锁**: 动画锁 (模式切换/dock 400ms) + 发送锁 (防重复提交) + streaming watcher 自动释放
 - **多模式用户气泡**: 用户消息随 chat(蓝)/query(红)/summary(琥珀) 模式变色，亮暗双主题适配
 - **eyebrow 排版修复**: 去 uppercase + 字号 11→12px + letter-spacing 收紧
+
+#### Phase 7 液玻璃视觉重塑 & 引导式 Onboarding
+
+- **侧栏渐进式引导**: 前 3 次打开面板展示圆点 + 文字标签（会话/对话/设置），大圆呼吸脉冲，localStorage 持久化计数，3 次后回归 hover-only
+- **欢迎区重构**: 机器人图标居中 → 能力列表（3 条业务说明）→ 分割线 → 操作提示
+- **液玻璃背景**: 深色模式用径向光球替代 linear-gradient，亮色模式用微渐变底色解决"白上叠白"
+- **定向光叠加层**: panel-shell/chat-header/chat-footer/消息气泡各加 `::before` 线性光伪元素
+- **玻璃折射高光线**: `box-shadow` 双层 inset（顶部高光 + 底部暗边）
+- **输入框聚焦光环**: `focus-within` 扩散光晕 + `scale(1.008)`
+- **响应式硬约束**: `max-width: calc(100vw - 64px)` 防止面板被挤出
+- **fab badge 修复**: `lastReadMsgCount` 替代 `visible` 判断
+
+#### Phase 8 设计 Token 体系化 & Surface 深度层次
+
+- **AI 语义 Token 体系**: 92 个 Token 8 大类（文本/玻璃/边框/模式色/光晕/模糊/交互态/组件级+投影），亮暗双主题自动切换
+- **硬编码值 Token 化**: ChatModel 16 处 + aiSettings 51 处硬编码值替换为语义 Token
+- **WCAG AA 对比度**: aiSettings 暗色模式 16 处文本颜色提升至 ≥4.5:1 (正文) / ≥3:1 (辅助)
+- **Surface 深度层次**: 卡片 hover 抬升 (translateY -2px)、bg-orb 滚动视差、消息区景深渐变 (.chat-body)
+- **气泡顶部高光条**: `.msg-content::after` 1px 光线掠射
+- **发送按钮居中**: `.chat-send-btn` 添加 `align-self: center`
 
 ## 快速开始
 

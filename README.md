@@ -1,6 +1,6 @@
 # 金陵阡陌（SkyEye）— 低空遥感智能巡检平台
 
-> **Phase 7** — 液玻璃视觉重塑 · 侧栏渐进引导 · 欢迎区重构 · 响应式硬约束
+> **Phase 8** — 设计 Token 体系化 · Surface 深度层次 · WCAG AA 无障碍
 
 ## 项目概述
 
@@ -18,7 +18,7 @@
 | 全景图 | Pannellum | 浏览器全景渲染 |
 | 动效 | GSAP + WebGL Shader + CSS Animation | 面板动画 / 极光背景 / 呼吸光斑 / 消息交错入场 |
 | 图表 | ECharts | 数据可视化 |
-| 设计 Token | CSS 自定义属性 (clamp 响应式缩放) | `--rail-width` / `--conv-list-width` / 百分比布局 |
+| 设计 Token | CSS 自定义属性 (cyber-tokens + ai-tokens) | `--ai-text-*` / `--ai-glass-*` / `--ai-mode-*` 语义体系 |
 | 持久化 | localStorage | AI 设置项 + 会话历史 + 提示词模板 |
 | 后端框架 | Django | Python Web 框架 |
 | 大模型 | DeepSeek (LangChain + LangGraph) | AI 对话与工具调用 |
@@ -231,35 +231,6 @@ skyeye/
 | 持久化 | conversations deep watch → 1s 防抖 → localStorage，恢复时优先读新 key |
 | 列表动画 | convItemIn 交错 40ms 淡入 + translateX，打开面板时 staggered reveal |
 
-### Phase 7 液玻璃视觉重塑 & 引导式 Onboarding
-
-| 改进 | 类型 | 说明 |
-|------|------|------|
-| 侧栏渐进式引导 | 交互 | 前 3 次打开面板展示圆点 + 文字标签（会话/对话/设置），大圆呼吸脉冲，localStorage 持久化计数，3 次后回归 hover-only |
-| 引导重置入口 | 交互 | 设置页 actions-bar 新增"重新展示侧栏引导"按钮，`storage` 事件跨标签页实时同步 |
-| 欢迎区重构 | 视觉 | 机器人图标居中 → 能力列表（3 条业务说明）→ 分割线 → 操作提示，双主题适配 |
-| 深色模式液玻璃 | 视觉 | `panel-shell`/`chat-panel` 用径向光球 `::before`/`::after` 替代 `linear-gradient` 渐变，降低不透明度至 0.38–0.42 增强背景穿透感 |
-| 亮色模式液玻璃 | 视觉 | 微渐变底色 `linear-gradient(135deg, 蓝→紫→粉)` + 淡光晕伪元素，解决"白上叠白"虚无感 |
-| 定向光叠加层 | 视觉 | `panel-shell`/`chat-header`/`chat-footer`/`.assistant .msg-content` 各加 `::before` 线性光伪元素，模拟左上光线打在玻璃上的折射 |
-| 玻璃折射高光线 | 视觉 | `box-shadow` 从单条 `inset` 改为双层（顶部高光 + 底部暗边），物理边缘感 |
-| 输入框聚焦光环 | 视觉 | `chat-input-wrap:focus-within` 扩散光晕 + `scale(1.008)` 微缩放 |
-| 消息气泡尺寸 | 视觉 | `max-width` 70%→85%，输入框 `font-size` 13→14px，`padding` 7→9px |
-| 响应式硬约束 | 修复 | `max-width: calc(100vw - 64px)` 硬截断防止面板被挤出视口；resize 时重夹持 x/y 百分比 |
-| fab badge 修复 | 修复 | 用 `lastReadMsgCount` 替代 `visible` 判断，关闭面板后不立即重亮；`watch.visible` 标记已读 |
-| conv-list 动画对齐 | 修复 | `transition` 0.28s→0.02s 瞬关对齐面板动画；关闭面板时顺手 `convListVisible = false` |
-| 参考项目借鉴 | 设计 | 借鉴 iOS 26 Liquid Glass Chatbot 的定向光渐变、玻璃折射边缘、聚焦光环等 4 个设计模式 |
-
-### Phase 6.5 多会话 & 提示词模板 & 响应式缩放
-
-| 效果 | 技术 | 说明 |
-|------|------|------|
-| 动态极光 | WebGL Ether Shader | GPU 并行渲染，暗色主题专用 |
-| 呼吸光斑 | CSS `@keyframes pulse` × 3 | 蓝/紫/粉交错 4s 周期，blur(80px) |
-| 噪点纹理 | CSS `background-image` SVG data URI | 透明度 0.025，磨砂质感 |
-| Liquid Glass | Double-Bezel + backdrop-filter blur | panel-shell(20px) + chat-panel(40px) / pod-shell(12px) + pod-core(40px) |
-| 自定义 Tooltip | CSS `attr(data-tip)` + `::after` 气泡 | 防裁剪、防出界右对齐 |
-| 智能滚动 | `_userScrolledUp` 检测 | 打字机跟随，手动上翻停止 + 回到底部按钮 |
-
 ### Phase 6 鲁棒性 & 交互增强
 
 | 改进 | 类型 | 说明 |
@@ -281,6 +252,48 @@ skyeye/
 | 面板 GSAP 优化 | 性能 | duration 0.5s → 0.3s，符合 product register 150-300ms 范围 |
 | clamp 响应式缩放 | 适配 | 全部尺寸 (panel/side-rail/conv-list/font/input/button/chat-fab) 使用 clamp() + CSS 变量联动 |
 | 主题同步修复 | 修复 | App.vue `data-theme` setAttribute + ChatModel 主题 class 双路径同步 |
+
+### Phase 6.5 多会话 & 提示词模板 & 响应式缩放
+
+| 效果 | 技术 | 说明 |
+|------|------|------|
+| 动态极光 | WebGL Ether Shader | GPU 并行渲染，暗色主题专用 |
+| 呼吸光斑 | CSS `@keyframes pulse` × 3 | 蓝/紫/粉交错 4s 周期，blur(80px) |
+| 噪点纹理 | CSS `background-image` SVG data URI | 透明度 0.025，磨砂质感 |
+| Liquid Glass | Double-Bezel + backdrop-filter blur | panel-shell(20px) + chat-panel(40px) / pod-shell(12px) + pod-core(40px) |
+| 自定义 Tooltip | CSS `attr(data-tip)` + `::after` 气泡 | 防裁剪、防出界右对齐 |
+| 智能滚动 | `_userScrolledUp` 检测 | 打字机跟随，手动上翻停止 + 回到底部按钮 |
+
+### Phase 7 液玻璃视觉重塑 & 引导式 Onboarding
+
+| 改进 | 类型 | 说明 |
+|------|------|------|
+| 侧栏渐进式引导 | 交互 | 前 3 次打开面板展示圆点 + 文字标签（会话/对话/设置），大圆呼吸脉冲，localStorage 持久化计数，3 次后回归 hover-only |
+| 引导重置入口 | 交互 | 设置页 actions-bar 新增"重新展示侧栏引导"按钮，`storage` 事件跨标签页实时同步 |
+| 欢迎区重构 | 视觉 | 机器人图标居中 → 能力列表（3 条业务说明）→ 分割线 → 操作提示，双主题适配 |
+| 深色模式液玻璃 | 视觉 | `panel-shell`/`chat-panel` 用径向光球 `::before`/`::after` 替代 `linear-gradient` 渐变，降低不透明度至 0.38–0.42 增强背景穿透感 |
+| 亮色模式液玻璃 | 视觉 | 微渐变底色 `linear-gradient(135deg, 蓝→紫→粉)` + 淡光晕伪元素，解决"白上叠白"虚无感 |
+| 定向光叠加层 | 视觉 | `panel-shell`/`chat-header`/`chat-footer`/`.assistant .msg-content` 各加 `::before` 线性光伪元素，模拟左上光线打在玻璃上的折射 |
+| 玻璃折射高光线 | 视觉 | `box-shadow` 从单条 `inset` 改为双层（顶部高光 + 底部暗边），物理边缘感 |
+| 输入框聚焦光环 | 视觉 | `chat-input-wrap:focus-within` 扩散光晕 + `scale(1.008)` 微缩放 |
+| 消息气泡尺寸 | 视觉 | `max-width` 70%→85%，输入框 `font-size` 13→14px，`padding` 7→9px |
+| 响应式硬约束 | 修复 | `max-width: calc(100vw - 64px)` 硬截断防止面板被挤出视口；resize 时重夹持 x/y 百分比 |
+| fab badge 修复 | 修复 | 用 `lastReadMsgCount` 替代 `visible` 判断，关闭面板后不立即重亮；`watch.visible` 标记已读 |
+| conv-list 动画对齐 | 修复 | `transition` 0.28s→0.02s 瞬关对齐面板动画；关闭面板时顺手 `convListVisible = false` |
+| 参考项目借鉴 | 设计 | 借鉴 iOS 26 Liquid Glass Chatbot 的定向光渐变、玻璃折射边缘、聚焦光环等 4 个设计模式 |
+
+### Phase 8 设计 Token 体系化 & Surface 深度层次
+
+| 改进 | 类型 | 说明 |
+|------|------|------|
+| AI 语义 Token 体系 | 架构 | 新增 92 个 Token 8 大类：文本 6 级 / 玻璃表面 10 级 / 边框 4 级 / 模式色 9 级 / 光晕 4 级 / 模糊 5 级 / 交互状态 4 级 / 组件级 5 级 + 投影 3 级；亮暗双主题自动切换 |
+| 硬编码值 Token 化 | 重构 | ChatModel (16) + aiSettings (51) 合计 67 处 `rgba`/`hex` 硬编码值替换为语义 Token，一处修改全局生效 |
+| WCAG AA 对比度修复 | 无障碍 | aiSettings 暗色模式 16 处文本颜色提升至 ≥4.5:1 (正文) / ≥3:1 (辅助文字/placeholder) |
+| 卡片 hover 抬升 | 视觉 | `.pod-shell:hover` 增加 `translateY(-2px)` + 投影加深至 `0 14px 44px` |
+| 背景光斑滚动视差 | 视觉 | 3 个 bg-orb 以不同速率 (0.06x/0.08x/0.04x) 随滚动偏移，`requestAnimationFrame` 驱动 + reduceMotion 启停控制 |
+| 消息区景深分层 | 视觉 | `.chat-body` 渐变背景 (浅→深)，模拟"近深远浅"玻璃折射 |
+| 气泡顶部高光条 | 视觉 | `.msg-content::after` 1px 高光线，两端透明中间亮 |
+| 发送按钮居中修复 | 修复 | `.chat-send-btn` 添加 `align-self: center` 覆盖父容器底部对齐 |
 
 ### 地图导航
 
@@ -347,8 +360,9 @@ api_key = your_amap_key
 |------|----------|------|
 | 密钥 | `skyeye/config.ini` | DeepSeek / 高德 API Key / 数据库连接 |
 | 依赖 | `node_modules/` | npm 包（`npm install` 安装） |
+| Python 虚拟环境 | `venv/` `.venv/` `env/` `.env/` | Python 虚拟环境目录 |
 | 构建产物 | `dist/` `build/` | 前端打包输出 |
-| Python 缓存 | `__pycache__/` `*.pyc` `*.pyo` `*.egg-info/` | 字节码 / 包元数据 |
+| Python 缓存 | `__pycache__/` `*.pyc` `*.pyo` `*.egg-info/` `.eggs/` | 字节码 / 包元数据 |
 | 测试文件 | `test*.py` `*_test.py` `tests/` `*.spec.js` `*.test.js` `*.spec.ts` `*.test.ts` `__tests__/` | 单元测试 |
 | SQL | `*.sql` | 数据库脚本 |
 | 影像/视频 | `*.tif` `*.mp4` | 影像视频文件 |
@@ -356,7 +370,7 @@ api_key = your_amap_key
 | 多媒体 | `*.swf` `*.air` `*.ipa` `*.apk` | Flash / 移动应用包 |
 | 运行时产物 | `skyeye/static/shp/` `skyeye/static/route_jobs/` `skyeye/static/route_plan/` `skyeye/static/layers/` | 地理数据 / 航线缓存 / 图层 |
 | 日志 | `*.log` `logs/` `dev-server.log` | 运行日志 |
-| IDE | `.idea/` `.vscode/` `*.suo` `*.sln` | 编辑器个人配置 |
+| IDE | `.idea/` `.vscode/` `*.suo` `*.ntvs*` `*.njsproj` `*.sln` | 编辑器个人配置 |
 | 系统 | `.DS_Store` `Thumbs.db` | OS 生成文件 |
 
 ---

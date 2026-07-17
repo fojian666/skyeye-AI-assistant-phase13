@@ -4,9 +4,9 @@
         <canvas ref="auroraCanvas" class="aurora-canvas" aria-hidden="true"></canvas>
 
         <!-- CSS 呼吸光斑（iOS 26 风格，交错延迟） -->
-        <div class="bg-orb bg-orb-1" aria-hidden="true"></div>
-        <div class="bg-orb bg-orb-2" aria-hidden="true"></div>
-        <div class="bg-orb bg-orb-3" aria-hidden="true"></div>
+        <div ref="orb1" class="bg-orb bg-orb-1" aria-hidden="true"></div>
+        <div ref="orb2" class="bg-orb bg-orb-2" aria-hidden="true"></div>
+        <div ref="orb3" class="bg-orb bg-orb-3" aria-hidden="true"></div>
 
         <!-- 噪点纹理叠加层 -->
         <div class="noise-overlay" aria-hidden="true"></div>
@@ -598,6 +598,17 @@ export default {
         this._startTypewriter();
         // 只有深色 + 非减少动效时才启 WebGL 极光
         if (!this._themeWasLight && !this.reduceMotion) this._initAuroraCanvas();
+        // bg-orb 滚动视差
+        if (!this.reduceMotion) {
+            this._orbScrollHandler = () => {
+                const scrollY = window.scrollY || window.pageYOffset;
+                if (this.$refs.orb1) this.$refs.orb1.style.transform = `translateY(${scrollY * 0.06}px)`;
+                if (this.$refs.orb2) this.$refs.orb2.style.transform = `translateY(${-scrollY * 0.08}px)`;
+                if (this.$refs.orb3) this.$refs.orb3.style.transform = `translateY(${scrollY * 0.04}px)`;
+                this._orbRaf = requestAnimationFrame(this._orbScrollHandler);
+            };
+            this._orbRaf = requestAnimationFrame(this._orbScrollHandler);
+        }
     },
 
     beforeDestroy() {
@@ -605,6 +616,8 @@ export default {
         clearTimeout(this._toastTimer);
         clearTimeout(this._saveTimer);
         this._destroyAurora();
+        if (this._orbRaf) cancelAnimationFrame(this._orbRaf);
+        if (this._orbScrollHandler) window.removeEventListener('scroll', this._orbScrollHandler);
     },
 
     watch: {
@@ -631,6 +644,10 @@ export default {
             this.savePrefs();
             if (v) {
                 this._destroyAurora();
+                if (this._orbRaf) cancelAnimationFrame(this._orbRaf);
+                if (this.$refs.orb1) this.$refs.orb1.style.transform = '';
+                if (this.$refs.orb2) this.$refs.orb2.style.transform = '';
+                if (this.$refs.orb3) this.$refs.orb3.style.transform = '';
             } else {
                 this._initAuroraCanvas();
             }
@@ -1061,18 +1078,18 @@ void main(){
     width: 40px;
     height: 40px;
     border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--ai-border-default);
+    background: var(--ai-glass-02);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--ai-text-tertiary);
     cursor: pointer;
     transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease, transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
 
     &:hover {
-        background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(255, 255, 255, 0.2);
-        color: rgba(255, 255, 255, 0.85);
+        background: var(--ai-glass-04);
+        border-color: var(--ai-border-active);
+        color: var(--ai-text-primary);
         transform: translateX(-2px);
     }
 
@@ -1234,14 +1251,14 @@ void main(){
     h1 {
         font-size: clamp(36px, 5vw, 54px);
         font-weight: 700;
-        color: rgba(255, 255, 255, 0.95);
+        color: var(--ai-text-strong);
         margin: 0 0 12px;
         line-height: 1.1;
         letter-spacing: -0.025em;
     }
 
     .subtitle {
-        color: rgba(255, 255, 255, 0.55);
+        color: var(--ai-text-secondary);
         font-size: 16px;
         margin: 0;
     }
@@ -1272,24 +1289,24 @@ void main(){
     gap: 6px;
     padding: 10px 20px;
     border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--ai-border-default);
+    background: var(--ai-glass-02);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--ai-text-tertiary);
     font-size: 13px;
     font-family: inherit;
     cursor: pointer;
     transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 
     &:hover {
-        background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(255, 255, 255, 0.2);
+        background: var(--ai-glass-04);
+        border-color: var(--ai-border-active);
         color: rgba(255, 255, 255, 0.8);
     }
 
     &:active {
-        background: rgba(255, 255, 255, 0.08);
+        background: var(--ai-glass-03);
     }
 
     &:focus-visible {
@@ -1315,7 +1332,7 @@ void main(){
     border: 1px solid rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(32px);
     -webkit-backdrop-filter: blur(32px);
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--ai-text-primary);
     font-size: 13px;
     font-weight: 500;
     letter-spacing: 0.02em;
@@ -1342,15 +1359,15 @@ void main(){
     .pod-shell {
         padding: 4px;
         border-radius: 24px;
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--ai-glass-02);
         border: 1px solid rgba(255, 255, 255, 0.08);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 24px rgba(0, 0, 0, 0.3);
-        transition: border-color 0.6s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.6s cubic-bezier(0.32, 0.72, 0, 1);
+        transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 
         &:hover {
-            border-color: rgba(255, 255, 255, 0.15);
+            border-color: var(--ai-border-hover);
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 40px rgba(0, 0, 0, 0.45);
         }
     }
@@ -1360,7 +1377,7 @@ void main(){
         position: relative;
         padding: 28px 28px 32px;
         border-radius: 21px;
-        background: rgba(255, 255, 255, 0.04);
+        background: var(--ai-glass-01);
         border: 1px solid rgba(255, 255, 255, 0.08);
         backdrop-filter: blur(40px);
         -webkit-backdrop-filter: blur(40px);
@@ -1412,7 +1429,7 @@ void main(){
 
     .pod-desc {
         font-size: 13px;
-        color: rgba(255, 255, 255, 0.5);
+        color: var(--ai-text-secondary);
         margin: 0 0 24px;
         line-height: 1.5;
     }
@@ -1433,7 +1450,7 @@ void main(){
     gap: 5px;
     font-size: 12px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--ai-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.06em;
     margin-bottom: 8px;
@@ -1448,9 +1465,9 @@ void main(){
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.35);
+    background: var(--ai-glass-03);
+    border: 1px solid var(--ai-border-default);
+    color: var(--ai-text-tertiary);
     font-size: 10px;
     font-weight: 600;
     font-family: inherit;
@@ -1584,11 +1601,11 @@ void main(){
         width: 100%;
         padding: 11px 36px 11px 14px;
         border-radius: 14px;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: var(--ai-glass-02);
+        border: 1px solid var(--ai-border-default);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
-        color: rgba(255, 255, 255, 0.85);
+        color: var(--ai-text-primary);
         font-size: 14px;
         font-family: inherit;
         appearance: none;
@@ -1609,7 +1626,7 @@ void main(){
         right: 14px;
         top: 50%;
         transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.3);
+        color: var(--ai-text-placeholder);
         pointer-events: none;
         transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), color 0.35s cubic-bezier(0.32, 0.72, 0, 1);
     }
@@ -1669,7 +1686,7 @@ void main(){
     display: flex;
     justify-content: space-between;
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--ai-text-tertiary);
     padding-top: 2px;
 }
 
@@ -1689,7 +1706,7 @@ void main(){
 
 .toggle-hint {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--ai-text-tertiary);
 }
 
 .toggle-switch {
@@ -1698,7 +1715,7 @@ void main(){
     height: 28px;
     border-radius: 28px;
     border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--ai-glass-03);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     cursor: pointer;
@@ -1754,11 +1771,11 @@ void main(){
     gap: 6px;
     padding: 12px 8px;
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--ai-border-default);
+    background: var(--ai-glass-01);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--ai-text-tertiary);
     cursor: pointer;
     outline: none;
     font-family: inherit;
@@ -1781,8 +1798,8 @@ void main(){
     }
 
     &:hover {
-        border-color: rgba(255, 255, 255, 0.2);
-        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--ai-border-active);
+        background: var(--ai-glass-03);
         color: rgba(255, 255, 255, 0.75);
 
         .chip-icon {
@@ -1804,6 +1821,11 @@ void main(){
     &:active {
         transform: scale(0.97);
     }
+}
+
+.pod-shell:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
 }
 
 /* ---- 快捷键列表 ---- */
@@ -1837,12 +1859,12 @@ void main(){
         height: 26px;
         padding: 0 8px;
         border-radius: 7px;
-        background: rgba(255, 255, 255, 0.08);
+        background: var(--ai-glass-03);
         border: 1px solid rgba(255, 255, 255, 0.12);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 0 rgba(0, 0, 0, 0.3);
-        color: rgba(255, 255, 255, 0.6);
+        color: var(--ai-text-secondary);
         font-size: 11px;
         font-weight: 600;
         font-family: inherit;
@@ -1863,19 +1885,19 @@ void main(){
     padding: 10px 14px;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--ai-border-subtle);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     transition: border-color 0.4s cubic-bezier(0.32, 0.72, 0, 1), background 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 
     &:hover {
-        border-color: rgba(255, 255, 255, 0.15);
-        background: rgba(255, 255, 255, 0.06);
+        border-color: var(--ai-border-hover);
+        background: var(--ai-glass-02);
     }
 
     .meta-key {
         font-size: 13px;
-        color: rgba(255, 255, 255, 0.4);
+        color: var(--ai-text-tertiary);
     }
 
     .meta-val {
@@ -2162,7 +2184,7 @@ void main(){
 
 .token-label {
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.2);
+    color: var(--ai-text-placeholder);
     white-space: nowrap;
 }
 
@@ -2170,7 +2192,7 @@ void main(){
     flex: 1;
     height: 4px;
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--ai-glass-03);
     overflow: hidden;
 }
 
@@ -2288,8 +2310,8 @@ void main(){
     padding: 8px 16px;
     border-radius: var(--radius-lg, 12px);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.04);
-    color: rgba(255, 255, 255, 0.55);
+    background: var(--ai-glass-01);
+    color: var(--ai-text-secondary);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
@@ -2298,7 +2320,7 @@ void main(){
 }
 
 .template-mode-tab:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--ai-glass-03);
     color: rgba(255, 255, 255, 0.8);
 }
 
@@ -2403,8 +2425,8 @@ void main(){
     flex: 1;
     padding: 10px 14px;
     border-radius: var(--radius-md, 10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--ai-border-default);
+    background: var(--ai-glass-01);
     color: #e0e6f0;
     font-size: 13px;
     font-family: inherit;
@@ -2413,7 +2435,7 @@ void main(){
 }
 
 .template-input::placeholder {
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--ai-text-placeholder);
     font-style: italic;
 }
 
@@ -2444,7 +2466,7 @@ void main(){
     border-radius: 50%;
     border: 1px solid transparent;
     background: transparent;
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--ai-text-placeholder);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2503,7 +2525,7 @@ void main(){
 
 .template-limit-hint {
     text-align: center;
-    color: rgba(255, 255, 255, 0.2);
+    color: var(--ai-text-placeholder);
     font-size: 12px;
     margin-top: 4px;
 }

@@ -2,6 +2,8 @@
 
 无人机智能监管平台 Django 服务，集成 DeepSeek 大模型 AI 智能助手。
 
+> **Phase 8** — 前端 Design Token 体系化 & Surface 深度层次 & WCAG 无障碍（后端无变更）
+
 ## AI 助手 API
 
 | 端点 | 方法 | 说明 |

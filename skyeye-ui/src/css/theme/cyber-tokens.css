@@ -123,6 +123,75 @@
   --cyber-btn-exit: var(--button-danger-bg);
   --head-background: linear-gradient(90deg, #00f3ff 0%, #00b8d4 50%, #00ff88 100%);
   --global-neutral-color: var(--text-secondary);
+
+  /* ===== AI 助手语义 Token (Phase 8) ===== */
+  --ai-text-strong: rgba(255, 255, 255, 0.95);
+  --ai-text-primary: rgba(255, 255, 255, 0.85);
+  --ai-text-secondary: rgba(255, 255, 255, 0.65);
+  --ai-text-tertiary: rgba(255, 255, 255, 0.5);
+  --ai-text-muted: rgba(255, 255, 255, 0.35);
+  --ai-text-placeholder: rgba(255, 255, 255, 0.45);
+  --ai-glass-01: rgba(255, 255, 255, 0.04);
+  --ai-glass-02: rgba(255, 255, 255, 0.06);
+  --ai-glass-03: rgba(255, 255, 255, 0.08);
+  --ai-glass-04: rgba(255, 255, 255, 0.12);
+  --ai-glass-05: rgba(255, 255, 255, 0.18);
+  --ai-glass-06: rgba(255, 255, 255, 0.24);
+  --ai-glass-shell: rgba(255, 255, 255, 0.05);
+  --ai-glass-core: rgba(255, 255, 255, 0.08);
+  --ai-glass-header: rgba(255, 255, 255, 0.06);
+  --ai-glass-footer: rgba(255, 255, 255, 0.06);
+  --ai-border-subtle: rgba(255, 255, 255, 0.06);
+  --ai-border-default: rgba(255, 255, 255, 0.1);
+  --ai-border-hover: rgba(255, 255, 255, 0.15);
+  --ai-border-active: rgba(255, 255, 255, 0.2);
+  --ai-mode-chat: #3b82f6;
+  --ai-mode-chat-light: rgba(59, 130, 246, 0.15);
+  --ai-mode-chat-dark: rgba(59, 130, 246, 0.3);
+  --ai-mode-query: #ef4444;
+  --ai-mode-query-light: rgba(239, 68, 68, 0.15);
+  --ai-mode-query-dark: rgba(239, 68, 68, 0.3);
+  --ai-mode-summary: #f59e0b;
+  --ai-mode-summary-light: rgba(245, 158, 11, 0.15);
+  --ai-mode-summary-dark: rgba(245, 158, 11, 0.3);
+  --ai-glow-blue: rgba(59, 130, 246, 0.25);
+  --ai-glow-purple: rgba(139, 92, 246, 0.2);
+  --ai-glow-red: rgba(239, 68, 68, 0.2);
+  --ai-glow-amber: rgba(245, 158, 11, 0.2);
+  --ai-panel-bg: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
+  --ai-blur-shell: blur(22px) saturate(115%);
+  --ai-blur-core: blur(14px) saturate(110%);
+  --ai-blur-card: blur(10px) saturate(105%);
+  --ai-blur-input: blur(8px) saturate(100%);
+  --ai-blur-header: blur(8px) saturate(100%);
+
+  /* 交互状态 */
+  --ai-hover-bg: rgba(255, 255, 255, 0.06);
+  --ai-active-bg: rgba(255, 255, 255, 0.1);
+  --ai-disabled-opacity: 0.4;
+  --ai-focus-ring: 0 0 0 2px rgba(99, 102, 241, 0.6);
+
+  /* 组件级 */
+  --ai-scrollbar-track: rgba(255, 255, 255, 0.05);
+  --ai-scrollbar-thumb: rgba(255, 255, 255, 0.15);
+  --ai-input-bg: rgba(255, 255, 255, 0.04);
+  --ai-overlay-bg: rgba(0, 0, 0, 0.45);
+  --ai-dropdown-bg: rgba(15, 25, 45, 0.95);
+
+  /* 模式背景 */
+  --ai-mode-chat-bg: rgba(59, 130, 246, 0.12);
+  --ai-mode-query-bg: rgba(239, 68, 68, 0.12);
+  --ai-mode-summary-bg: rgba(245, 158, 11, 0.12);
+
+  /* 模式光晕阴影 */
+  --ai-mode-chat-glow: 0 0 20px rgba(59, 130, 246, 0.25);
+  --ai-mode-query-glow: 0 0 20px rgba(239, 68, 68, 0.25);
+  --ai-mode-summary-glow: 0 0 20px rgba(245, 158, 11, 0.25);
+
+  /* 投影层级 */
+  --ai-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --ai-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --ai-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
 }
 
 /* 亮色主题 — 选中态与主色覆盖 */
@@ -136,4 +205,44 @@ html[data-theme='light'] {
   --brand-accent: #2563eb;
   --button-hover-shadow: rgba(37, 99, 235, 0.2);
   --cyber-accent: #2563eb;
+
+  /* ===== AI 助手语义 Token — 亮色覆盖 ===== */
+  --ai-text-strong: #0f172a;
+  --ai-text-primary: #1e293b;
+  --ai-text-secondary: #334155;
+  --ai-text-tertiary: #64748b;
+  --ai-text-muted: #94a3b8;
+  --ai-text-placeholder: #94a3b8;
+  --ai-glass-01: rgba(255, 255, 255, 0.4);
+  --ai-glass-02: rgba(255, 255, 255, 0.5);
+  --ai-glass-03: rgba(255, 255, 255, 0.6);
+  --ai-glass-04: rgba(255, 255, 255, 0.7);
+  --ai-glass-05: rgba(255, 255, 255, 0.8);
+  --ai-glass-06: rgba(255, 255, 255, 0.9);
+  --ai-glass-shell: rgba(255, 255, 255, 0.35);
+  --ai-glass-core: rgba(255, 255, 255, 0.45);
+  --ai-glass-header: rgba(255, 255, 255, 0.4);
+  --ai-glass-footer: rgba(255, 255, 255, 0.4);
+  --ai-border-subtle: rgba(0, 0, 0, 0.04);
+  --ai-border-default: rgba(0, 0, 0, 0.08);
+  --ai-border-hover: rgba(0, 0, 0, 0.12);
+  --ai-border-active: rgba(0, 0, 0, 0.16);
+  --ai-panel-bg: linear-gradient(135deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.01) 100%);
+
+  /* 交互状态 */
+  --ai-hover-bg: rgba(0, 0, 0, 0.04);
+  --ai-active-bg: rgba(0, 0, 0, 0.06);
+  --ai-focus-ring: 0 0 0 2px rgba(37, 99, 235, 0.4);
+
+  /* 组件级 */
+  --ai-scrollbar-track: rgba(0, 0, 0, 0.05);
+  --ai-scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --ai-input-bg: rgba(0, 0, 0, 0.02);
+  --ai-overlay-bg: rgba(0, 0, 0, 0.15);
+  --ai-dropdown-bg: rgba(255, 255, 255, 0.95);
+
+  /* 投影层级 */
+  --ai-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --ai-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --ai-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12);
 }

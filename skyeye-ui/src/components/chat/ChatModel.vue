@@ -2057,7 +2057,7 @@ export default {
     background: rgba(0, 0, 0, 0.55);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid var(--ai-border-hover);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
     display: flex;
     align-items: center;
@@ -2380,7 +2380,7 @@ export default {
     padding: 0 0 12px;
     font-size: 13px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--ai-text-primary);
     flex-shrink: 0;
 }
 
@@ -2429,7 +2429,7 @@ export default {
 
 .conv-limit-hint {
     text-align: center;
-    color: rgba(255, 255, 255, 0.2);
+    color: var(--ai-text-muted);
     font-size: 11px;
     padding: 8px 0 4px;
     flex-shrink: 0;
@@ -2484,7 +2484,7 @@ export default {
 .conv-title {
     font-size: 13px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--ai-text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2497,7 +2497,7 @@ export default {
 
 .conv-meta {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--ai-text-muted);
 }
 
 .conv-del-btn {
@@ -2507,7 +2507,7 @@ export default {
     border-radius: 50%;
     border: none;
     background: transparent;
-    color: rgba(255, 255, 255, 0.2);
+    color: var(--ai-text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2521,13 +2521,13 @@ export default {
 }
 
 .conv-del-btn:hover {
-    background: rgba(239, 68, 68, 0.15);
+    background: var(--ai-mode-query-light);
     color: #f87171;
 }
 
 .conv-empty {
     text-align: center;
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--ai-text-muted);
     font-size: 12px;
     padding: 20px 0;
 }
@@ -2643,8 +2643,8 @@ export default {
     border-radius: 24px;
     background: rgba(5, 18, 42, 0.38);
     border: 1px solid rgba(0, 180, 240, 0.12);
-    backdrop-filter: blur(22px) saturate(115%);
-    -webkit-backdrop-filter: blur(22px) saturate(115%);
+    backdrop-filter: var(--ai-blur-shell);
+    -webkit-backdrop-filter: var(--ai-blur-shell);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.1),
         /* 顶部折射高光 */
@@ -2744,7 +2744,7 @@ export default {
 
 /* 数据查询模式 */
 .chat-wrapper.query-mode .chat-panel {
-    border-color: rgba(239, 68, 68, 0.3);
+    border-color: var(--ai-mode-query-dark);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 24px rgba(239, 68, 68, 0.08);
     transition: border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -2754,7 +2754,7 @@ export default {
     transition: background 0.3s 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .chat-wrapper.query-mode .chat-header-left small {
-    color: #ef4444 !important;
+    color: var(--ai-mode-query) !important;
     transition: color 0.25s 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .chat-wrapper.query-mode .chat-footer {
@@ -2788,7 +2788,7 @@ export default {
 
 /* 智能摘要模式 — 琥珀/金色 */
 .chat-wrapper.summary-mode .chat-panel {
-    border-color: rgba(245, 158, 11, 0.3);
+    border-color: var(--ai-mode-summary-dark);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 24px rgba(245, 158, 11, 0.08);
     transition: border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -2798,7 +2798,7 @@ export default {
     transition: background 0.3s 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .chat-wrapper.summary-mode .chat-header-left small {
-    color: #f59e0b !important;
+    color: var(--ai-mode-summary) !important;
     transition: color 0.25s 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .chat-wrapper.summary-mode .chat-footer {
@@ -2963,6 +2963,11 @@ export default {
 /* 消息区 */
 .chat-body {
     flex: 1;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.06) 0%,
+        rgba(255, 255, 255, 0.03) 100%
+    );
     overflow-y: auto;
     overflow-x: hidden;
     padding: 18px;
@@ -3108,7 +3113,7 @@ export default {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid var(--ai-border-hover);
     background: rgba(15, 23, 42, 0.85);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -3250,6 +3255,7 @@ export default {
 }
 
 .msg-content {
+    position: relative;
     max-width: 85%;
     padding: clamp(10px, 0.8vw, 16px);
     font-size: clamp(12px, 0.75vw, 14px);
@@ -3282,6 +3288,23 @@ export default {
     }
 }
 
+.msg-content::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.12) 30%,
+        rgba(255, 255, 255, 0.12) 70%,
+        transparent
+    );
+    pointer-events: none;
+}
+
 .msg-suggestions {
     display: flex;
     flex-wrap: wrap;
@@ -3297,8 +3320,8 @@ export default {
         font-size: 12px;
         line-height: 1.4;
         border-radius: 16px;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: var(--ai-glass-02);
+        border: 1px solid var(--ai-border-default);
         color: rgba(255, 255, 255, 0.75);
         transition: all 0.25s ease;
         white-space: nowrap;
@@ -3551,6 +3574,7 @@ export default {
     justify-content: center;
     transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), background 0.3s ease, box-shadow 0.3s ease;
     flex-shrink: 0;
+    align-self: center;
 
     &:hover:not(:disabled) {
         transform: scale(1.06);
@@ -3649,7 +3673,7 @@ export default {
 
     &:hover {
         background: rgba(12, 35, 65, 0.75);
-        color: rgba(255, 255, 255, 0.85);
+        color: var(--ai-text-primary);
     }
 
     &.retry {
