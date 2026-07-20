@@ -4249,6 +4249,270 @@ export default {
     transition-duration: 0.1s !important;
 }
 
+/* ========================= 响应式 ========================= */
+
+/* 大屏手机 (<= 480px) */
+@media (max-width: 480px) {
+    .chat-wrapper {
+        max-width: calc(100dvw - 16px);
+    }
+
+    .chat-wrapper.drawer-open {
+        max-width: calc(100dvw - 16px - var(--conv-list-width));
+    }
+
+    .chat-fab {
+        height: 44px;
+        min-width: 44px;
+        padding: 0 14px;
+        border-radius: 24px;
+
+        &:hover {
+            padding: 0 18px 0 16px;
+            gap: 5px;
+        }
+    }
+
+    .fab-robot-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .fab-label {
+        font-size: 12px;
+    }
+
+    .panel-shell {
+        min-width: 0;
+        padding: 2px;
+        border-radius: 18px;
+    }
+
+    .chat-panel {
+        border-radius: 16px;
+    }
+
+    .chat-header {
+        padding: 10px 12px;
+    }
+
+    .chat-header-left strong {
+        font-size: 13px;
+    }
+
+    .chat-header-left small {
+        font-size: 10px;
+    }
+
+    .chat-header-right {
+        gap: 2px;
+    }
+
+    .chat-btn-icon {
+        width: 30px;
+        height: 30px;
+
+        svg {
+            width: 14px;
+            height: 14px;
+        }
+    }
+
+    .chat-body {
+        padding: 8px 10px;
+    }
+
+    .msg-content {
+        padding: 10px 12px;
+    }
+
+    .chat-footer {
+        padding: 6px 10px;
+        gap: 5px;
+    }
+
+    .chat-input {
+        font-size: 13px;
+    }
+
+    .chat-send-btn,
+    .chat-stop-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .quick-questions button {
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+
+    .conv-list-panel {
+        --conv-list-width: 180px;
+        border-radius: 14px;
+    }
+
+    .conv-panel-header {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .conv-item {
+        padding: 8px 10px;
+    }
+
+    .conv-title {
+        font-size: 12px;
+    }
+
+    .conv-meta {
+        font-size: 10px;
+    }
+
+    /* 降低 blur 开销 — 非关键元素在窄屏关闭 backdrop-filter */
+    .chat-fab {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    .side-rail {
+        --rail-width: 80px;
+        --rail-height: 150px;
+        margin-right: 0;
+    }
+}
+
+/* 小屏手机 (<= 375px) */
+@media (max-width: 375px) {
+    .chat-wrapper {
+        max-width: 100dvw;
+    }
+
+    .chat-wrapper.drawer-open {
+        max-width: calc(100dvw - var(--conv-list-width));
+    }
+
+    .chat-fab {
+        height: 40px;
+        min-width: 40px;
+        padding: 0 10px;
+        border-radius: 20px;
+
+        &:hover {
+            padding: 0 14px 0 12px;
+            gap: 4px;
+        }
+    }
+
+    .fab-label {
+        font-size: 11px;
+    }
+
+    /* 窄屏彻底隐藏侧栏，节省所有横向空间 */
+    .side-rail {
+        display: none;
+    }
+
+    .panel-shell {
+        padding: 1px;
+        border-radius: 14px;
+    }
+
+    .chat-panel {
+        border-radius: 12px;
+    }
+
+    .chat-header {
+        padding: 8px 10px;
+
+        &-left {
+            gap: 4px;
+
+            strong { font-size: 12px; }
+            small { font-size: 9px; }
+        }
+
+        &-right {
+            gap: 0;
+        }
+    }
+
+    .chat-btn-icon {
+        width: 28px;
+        height: 28px;
+
+        svg {
+            width: 13px;
+            height: 13px;
+        }
+    }
+
+    .chat-logo-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .msg-content {
+        padding: 8px 10px;
+        font-size: clamp(11px, 0.7vw, 13px);
+    }
+
+    .chat-footer {
+        padding: 4px 8px;
+        gap: 4px;
+    }
+
+    .chat-input {
+        font-size: 12px;
+    }
+
+    .chat-send-btn,
+    .chat-stop-btn {
+        width: 28px;
+        height: 28px;
+
+        svg {
+            width: 14px;
+            height: 14px;
+        }
+    }
+
+    .conv-list-panel {
+        --conv-list-width: 160px;
+        border-radius: 10px;
+
+        .conv-drawer-inner {
+            padding: 6px 8px;
+        }
+    }
+
+    .conv-panel-header {
+        font-size: 11px;
+    }
+
+    .conv-new-btn {
+        font-size: 11px;
+        padding: 6px 8px;
+    }
+
+    /* 空状态缩小间距 */
+    .chat-empty {
+        padding: 20px 6px;
+
+        p {
+            font-size: 14px;
+        }
+
+        .quick-questions {
+            gap: 6px;
+
+            button {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+        }
+    }
+}
+
 /* ========================= prefers-reduced-motion ========================= */
 @media (prefers-reduced-motion: reduce) {
     .chat-wrapper * {

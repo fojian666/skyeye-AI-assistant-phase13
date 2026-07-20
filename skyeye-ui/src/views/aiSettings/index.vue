@@ -2352,6 +2352,12 @@ void main(){
     border-color: rgba(0, 0, 0, 0.12);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+
+    &.active {
+        background: rgba(99, 102, 241, 0.55);
+        border-color: rgba(99, 102, 241, 0.6);
+        box-shadow: 0 0 16px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
 }
 
 [data-theme='light'] .mode-chip {
