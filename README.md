@@ -1,6 +1,6 @@
 # 金陵阡陌（SkyEye）— 低空遥感智能巡检平台
 
-> **Phase 9** — FAB 数字徽章 · 侧栏液态灌满 · 光斑系统瘦身 · 微交互润色
+> **Phase 10** — 滚动词条 · 氛围光斑 · 滚动触发布局入场 · 页面装饰系统
 
 ## 项目概述
 
@@ -311,6 +311,15 @@ skyeye/
 | 过渡时长缩减 | 性能 | FAB/侧栏 hover/active transition 从 0.55s→0.35s，内耗项 0.25s→0.16s |
 | 移除呼吸光斑系统 | 瘦身 | aiSettings 删除 3 个 `bg-orb` + `noise-overlay` + `@keyframes orb-breathe` + 滚动视差 rAF |
 | 亮色模式氛围光替代 | 视觉 | `.light-gradient-overlay` 纯 CSS 渐变层（页面温度 + 右上自然光），零 JS 零动画 |
+
+### Phase 10 页面装饰系统 & 滚动触发入场
+
+| 改进 | 类型 | 说明 |
+|------|------|------|
+| 滚动词条装饰 | 视觉 | Hallmark Ft8 风格水平无限滚动跑马灯，页面顶部紧贴，三模式（indigo/red/amber）颜色联动，`backdrop-filter` 玻璃底座 + 双层边框 + 文字发光 `text-shadow`，`reduce-motion` 冻结 |
+| 两侧氛围光斑 | 视觉 | 4 个固定定位高斯模糊光斑（左上 320px / 右上 260px / 右下 380px / 左侧中 220px），`filter: blur(100px)`，三模式颜色联动 1.2s 过渡，亮暗双主题适配，`pointer-events: none` + `aria-hidden` |
+| 滚动触发布局入场 | 交互 | `IntersectionObserver` 替代全量一次性幕布揭示，5 张卡片在打字机完成后进入"可触发"状态，滚入视口（threshold 0.1 + rootMargin -8%）时逐个 `curtain-revealed`，one-shot `unobserve`，`reduceMotion` 直接全显示 |
+| 静态资源补全 | 修复 | Leaflet/SuperMap CDN 文件从 `node_modules` 复制到 `public/static/lib/cdn/`，解决 404 加载错误 |
 
 ### 地图导航
 

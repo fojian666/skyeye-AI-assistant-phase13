@@ -1,10 +1,41 @@
     <template>
-    <div class="settings-root" :class="[`theme-${theme}`]">
+    <div class="settings-root" :class="[`theme-${theme}`, { 'reduce-motion': reduceMotion }]">
         <!-- Canvas: 动态极光 + 粒子连接网 -->
         <canvas ref="auroraCanvas" class="aurora-canvas" aria-hidden="true"></canvas>
 
         <!-- 亮色模式背景氛围光 (纯 CSS，无动画) -->
         <div class="light-gradient-overlay" aria-hidden="true"></div>
+
+        <!-- 滚动词条装饰 -->
+        <div class="marquee-strip" :class="'marquee--' + templateTab" aria-hidden="true">
+            <div class="marquee-track">
+                <span>DeepSeek-V3</span> <span class="marquee-dot">·</span>
+                <span>DeepSeek-R1</span> <span class="marquee-dot">·</span>
+                <span>智能推理</span> <span class="marquee-dot">·</span>
+                <span>数据查询</span> <span class="marquee-dot">·</span>
+                <span>AI 摘要</span> <span class="marquee-dot">·</span>
+                <span>变化检测</span> <span class="marquee-dot">·</span>
+                <span>图像分割</span> <span class="marquee-dot">·</span>
+                <span>航线规划</span> <span class="marquee-dot">·</span>
+                <!-- 第二份副本实现无缝循环 -->
+                <span>DeepSeek-V3</span> <span class="marquee-dot">·</span>
+                <span>DeepSeek-R1</span> <span class="marquee-dot">·</span>
+                <span>智能推理</span> <span class="marquee-dot">·</span>
+                <span>数据查询</span> <span class="marquee-dot">·</span>
+                <span>AI 摘要</span> <span class="marquee-dot">·</span>
+                <span>变化检测</span> <span class="marquee-dot">·</span>
+                <span>图像分割</span> <span class="marquee-dot">·</span>
+                <span>航线规划</span> <span class="marquee-dot">·</span>
+            </div>
+        </div>
+
+        <!-- 两侧氛围光斑 -->
+        <div class="ambient-orbs" :class="'orbs--' + templateTab" aria-hidden="true">
+            <div class="orb orb--tl"></div>
+            <div class="orb orb--tr"></div>
+            <div class="orb orb--br"></div>
+            <div class="orb orb--ml"></div>
+        </div>
 
         <main class="settings-main">
             <!-- 返回按钮 -->
@@ -600,6 +631,7 @@ export default {
         clearTimeout(this._toastTimer);
         clearTimeout(this._saveTimer);
         this._destroyAurora();
+        this._destroyScrollReveal();
     },
 
     watch: {
@@ -654,7 +686,7 @@ export default {
                 this.typedTitle = '设置';
                 this.typedSubtitle = '个性化你的智能对话体验';
                 this.typingLine = 'done';
-                this.$nextTick(() => this._revealCurtains());
+                this.$nextTick(() => this._initScrollReveal());
                 return;
             }
             const eyebrows = 'AI 助手';
@@ -672,7 +704,7 @@ export default {
                             this._typeChars(subtitle, 'typedSubtitle', 40, () => {
                                 this.typingLine = 'done';
                                 setTimeout(() => {
-                                    this._revealCurtains();
+                                    this._initScrollReveal();
                                 }, 200);
                             });
                         }, 200);
@@ -696,11 +728,42 @@ export default {
             tick();
         },
 
-        _revealCurtains() {
-            this.$nextTick(() => {
-                const items = this.$el.querySelectorAll('.curtain-item');
+        /* ===== 滚动触发布局入场 (IntersectionObserver, Hallmark 风格) ===== */
+        _initScrollReveal() {
+            this._destroyScrollReveal();
+
+            const items = this.$el.querySelectorAll('.curtain-item');
+            if (!items.length) return;
+
+            // reduceMotion：直接全部展示
+            if (this.reduceMotion) {
                 items.forEach((el) => el.classList.add('curtain-revealed'));
-            });
+                return;
+            }
+
+            this._revealObserver = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('curtain-revealed');
+                            this._revealObserver.unobserve(entry.target);
+                        }
+                    });
+                },
+                {
+                    threshold: 0.1,
+                    rootMargin: '0px 0px -8% 0px'
+                }
+            );
+
+            items.forEach((el) => this._revealObserver.observe(el));
+        },
+
+        _destroyScrollReveal() {
+            if (this._revealObserver) {
+                this._revealObserver.disconnect();
+                this._revealObserver = null;
+            }
         },
 
         // ==================== WebGL: Ether Shader 背景 ====================
@@ -1122,6 +1185,259 @@ void main(){
 /* 仅亮色模式可见 */
 [data-theme='light'] .light-gradient-overlay {
     opacity: 1;
+}
+
+/* ========================= 滚动词条装饰 (Ft8 Marquee) ========================= */
+.marquee-strip {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    width: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    user-select: none;
+    border-top: 2px solid;
+    border-bottom: 2px solid;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    /* 两侧淡出，中央清晰 */
+    mask-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.3) 8%,
+        rgba(0, 0, 0, 1) 20%,
+        rgba(0, 0, 0, 1) 80%,
+        rgba(0, 0, 0, 0.3) 92%,
+        transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.3) 8%,
+        rgba(0, 0, 0, 1) 20%,
+        rgba(0, 0, 0, 1) 80%,
+        rgba(0, 0, 0, 0.3) 92%,
+        transparent 100%
+    );
+}
+
+.marquee-track {
+    display: flex;
+    gap: 2rem;
+    width: max-content;
+    padding: 14px 0;
+    font-family: inherit;
+    font-size: clamp(14px, 2.5vw, 20px);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    animation: marquee-scroll 32s linear infinite;
+}
+
+.marquee-dot {
+    opacity: 0.3;
+    text-shadow: none;
+}
+
+@keyframes marquee-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
+/* 减少动效：冻结滚动 */
+.reduce-motion .marquee-track {
+    animation: none;
+}
+
+/* 模式色联动 */
+.marquee--chat {
+    --mq-border: rgba(99, 102, 241, 0.18);
+    --mq-bg-from: rgba(99, 102, 241, 0.06);
+    --mq-bg-to: rgba(15, 23, 42, 0.5);
+    --mq-text: rgba(165, 180, 252, 0.6);
+    --mq-glow: rgba(99, 102, 241, 0.3);
+    --mq-dot: rgba(99, 102, 241, 0.6);
+}
+.marquee--query {
+    --mq-border: rgba(239, 68, 68, 0.18);
+    --mq-bg-from: rgba(239, 68, 68, 0.06);
+    --mq-bg-to: rgba(15, 23, 42, 0.5);
+    --mq-text: rgba(252, 165, 165, 0.6);
+    --mq-glow: rgba(239, 68, 68, 0.3);
+    --mq-dot: rgba(239, 68, 68, 0.6);
+}
+.marquee--summary {
+    --mq-border: rgba(245, 158, 11, 0.18);
+    --mq-bg-from: rgba(245, 158, 11, 0.06);
+    --mq-bg-to: rgba(15, 23, 42, 0.5);
+    --mq-text: rgba(252, 211, 77, 0.6);
+    --mq-glow: rgba(245, 158, 11, 0.3);
+    --mq-dot: rgba(245, 158, 11, 0.6);
+}
+
+.marquee-strip {
+    border-top-color: var(--mq-border);
+    border-bottom-color: var(--mq-border);
+    background: linear-gradient(180deg, var(--mq-bg-from) 0%, var(--mq-bg-to) 100%);
+    transition: border-color 0.5s ease, background 0.5s ease;
+}
+.marquee-track {
+    color: var(--mq-text);
+    text-shadow: 0 0 16px var(--mq-glow);
+    transition: color 0.5s ease, text-shadow 0.5s ease;
+}
+.marquee-dot {
+    color: var(--mq-dot);
+    transition: color 0.5s ease;
+}
+
+/* 亮色 — 模式色联动 */
+[data-theme='light'] .marquee--chat {
+    --mq-border: rgba(99, 102, 241, 0.1);
+    --mq-bg-from: rgba(99, 102, 241, 0.04);
+    --mq-bg-to: rgba(255, 255, 255, 0.4);
+    --mq-text: rgba(37, 99, 235, 0.45);
+    --mq-glow: rgba(37, 99, 235, 0.15);
+    --mq-dot: rgba(37, 99, 235, 0.4);
+}
+[data-theme='light'] .marquee--query {
+    --mq-border: rgba(239, 68, 68, 0.1);
+    --mq-bg-from: rgba(239, 68, 68, 0.04);
+    --mq-bg-to: rgba(255, 255, 255, 0.4);
+    --mq-text: rgba(220, 38, 38, 0.45);
+    --mq-glow: rgba(220, 38, 38, 0.15);
+    --mq-dot: rgba(220, 38, 38, 0.4);
+}
+[data-theme='light'] .marquee--summary {
+    --mq-border: rgba(245, 158, 11, 0.1);
+    --mq-bg-from: rgba(245, 158, 11, 0.04);
+    --mq-bg-to: rgba(255, 255, 255, 0.4);
+    --mq-text: rgba(217, 119, 6, 0.45);
+    --mq-glow: rgba(217, 119, 6, 0.15);
+    --mq-dot: rgba(217, 119, 6, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .marquee-track {
+        animation: none;
+    }
+}
+
+/* ========================= 两侧氛围光斑 ========================= */
+.ambient-orbs {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.12;
+    transition: background 1.2s cubic-bezier(0.32, 0.72, 0, 1),
+        opacity 1.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.orb--tl {
+    top: -8%;
+    left: -5%;
+    width: 320px;
+    height: 320px;
+    background: rgb(99, 102, 241);
+    /* indigo */
+}
+
+.orb--tr {
+    top: 12%;
+    right: -3%;
+    width: 260px;
+    height: 260px;
+    background: rgb(56, 189, 248);
+    /* cyan */
+    opacity: 0.09;
+}
+
+.orb--br {
+    bottom: -10%;
+    right: -6%;
+    width: 380px;
+    height: 380px;
+    background: rgb(139, 92, 246);
+    /* violet */
+    opacity: 0.1;
+}
+
+.orb--ml {
+    top: 55%;
+    left: -4%;
+    width: 220px;
+    height: 220px;
+    background: rgb(99, 102, 241);
+    /* indigo */
+    opacity: 0.08;
+}
+
+/* --- 红色通道 (数据查询) --- */
+.orbs--query .orb--tl {
+    background: rgb(239, 68, 68);
+    /* red */
+}
+
+.orbs--query .orb--tr {
+    background: rgb(251, 146, 60);
+    /* orange */
+}
+
+.orbs--query .orb--br {
+    background: rgb(239, 68, 68);
+    /* red */
+}
+
+.orbs--query .orb--ml {
+    background: rgb(239, 68, 68);
+    /* red */
+}
+
+/* --- 琥珀通道 (智能摘要) --- */
+.orbs--summary .orb--tl {
+    background: rgb(245, 158, 11);
+    /* amber */
+}
+
+.orbs--summary .orb--tr {
+    background: rgb(250, 204, 21);
+    /* yellow */
+}
+
+.orbs--summary .orb--br {
+    background: rgb(245, 158, 11);
+    /* amber */
+}
+
+.orbs--summary .orb--ml {
+    background: rgb(245, 158, 11);
+    /* amber */
+}
+
+/* 亮色主题适配 */
+[data-theme='light'] .orb {
+    opacity: 0.06;
+}
+
+[data-theme='light'] .orb--tr {
+    opacity: 0.04;
+}
+
+[data-theme='light'] .orb--ml {
+    opacity: 0.04;
+}
+
+/* 减动效时隐藏光斑 */
+.reduce-motion .ambient-orbs {
+    display: none;
 }
 
 /* ========================= 主容器 ========================= */

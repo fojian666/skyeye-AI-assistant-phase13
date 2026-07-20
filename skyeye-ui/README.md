@@ -1,4 +1,4 @@
-# 金陵阡陌 — AI 助手 (Phase 9)
+# 金陵阡陌 — AI 助手 (Phase 10)
 
 无人机巡检智能平台前端，集成 AI 对话面板与可视化参数设置。
 
@@ -117,6 +117,13 @@ skyeye-ui/src/
 - **过渡时长优化**: FAB/侧栏 hover/active transition 从 0.55s→0.35s，内耗项 0.25s→0.16s
 - **移除呼吸光斑系统**: aiSettings 删除 3 个 `bg-orb` + `noise-overlay` + 滚动视差 rAF + `@keyframes orb-breathe`
 - **亮色氛围光替代**: `.light-gradient-overlay` 纯 CSS 渐变层，零 JS 零动画
+
+#### Phase 10 页面装饰系统 & 滚动触发入场
+
+- **滚动词条**: Hallmark Ft8 风格水平无限滚动跑马灯，页面顶部紧贴，三模式颜色联动，`backdrop-filter` 玻璃底座 + 双层边框 + 文字发光
+- **氛围光斑**: 4 个固定定位高斯模糊光斑分布于页面四角，`filter: blur(100px)`，三模式颜色联动 1.2s 过渡，亮暗双主题适配
+- **滚动触发布局入场**: `IntersectionObserver` 替代全量一次性幕布揭示，卡片滚入视口时逐个触发 `curtain-revealed` 动画
+- **静态资源补全**: Leaflet/SuperMap 文件复制到 `public/static/lib/cdn/`，解决 404 错误
 
 ## 快速开始
 
