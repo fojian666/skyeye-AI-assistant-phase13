@@ -1,6 +1,6 @@
 # 金陵阡陌（SkyEye）— 低空遥感智能巡检平台
 
-> **Phase 8** — 设计 Token 体系化 · Surface 深度层次 · WCAG AA 无障碍
+> **Phase 9** — FAB 数字徽章 · 侧栏液态灌满 · 光斑系统瘦身 · 微交互润色
 
 ## 项目概述
 
@@ -294,6 +294,23 @@ skyeye/
 | 消息区景深分层 | 视觉 | `.chat-body` 渐变背景 (浅→深)，模拟"近深远浅"玻璃折射 |
 | 气泡顶部高光条 | 视觉 | `.msg-content::after` 1px 高光线，两端透明中间亮 |
 | 发送按钮居中修复 | 修复 | `.chat-send-btn` 添加 `align-self: center` 覆盖父容器底部对齐 |
+
+### Phase 9 FAB 数字徽章 & 侧栏液态灌满 & 光斑系统瘦身
+
+| 改进 | 类型 | 说明 |
+|------|------|------|
+| FAB 新消息数字徽章 | 交互 | 红色圆点 → 数字胶囊（99+ 截断），显示未读消息数 |
+| FAB 生成中呼吸微光 | 视觉 | 按 chat/query/summary 模式变色呼吸光效 (`fab-glow` 2s)，`reduce-motion` 禁用 |
+| FAB grab 光标 + 按下反馈 | 微交互 | 默认 `grab` / 拖拽 `grabbing`，`:active` 缩放 0.95×、`focus-visible` 聚焦环 |
+| 侧栏大圆"水面灌满" | 视觉 | `::before` 伪元素 `clip-path: inset(100% 0 0 0)` → hover 自下而上灌满纯色填充 |
+| 侧栏 focus-visible | 无障碍 | 大圆/小圆 `outline: 3px solid color-mix(...)` 圆环聚焦轮廓 |
+| 侧栏标签字体升级 | 视觉 | 字体 Plus Jakarta Sans / Geist / Inter，字号 11→12px，letter-spacing -0.01em |
+| 回到底部胶囊化 | 视觉 | 圆形 36px → 胶囊 32px，hover 展开"最新"文字，SVG 16→14px |
+| 切换会话保留列表 | 交互 | `switchConversation` 不再自动关闭会话列表面板 |
+| 亮色侧栏模式色 | 视觉 | 亮色主题下查询/摘要模式大圆 background + border-color 按模式适配 |
+| 过渡时长缩减 | 性能 | FAB/侧栏 hover/active transition 从 0.55s→0.35s，内耗项 0.25s→0.16s |
+| 移除呼吸光斑系统 | 瘦身 | aiSettings 删除 3 个 `bg-orb` + `noise-overlay` + `@keyframes orb-breathe` + 滚动视差 rAF |
+| 亮色模式氛围光替代 | 视觉 | `.light-gradient-overlay` 纯 CSS 渐变层（页面温度 + 右上自然光），零 JS 零动画 |
 
 ### 地图导航
 

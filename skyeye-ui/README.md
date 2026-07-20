@@ -1,4 +1,4 @@
-# 金陵阡陌 — AI 助手 (Phase 8)
+# 金陵阡陌 — AI 助手 (Phase 9)
 
 无人机巡检智能平台前端，集成 AI 对话面板与可视化参数设置。
 
@@ -102,6 +102,21 @@ skyeye-ui/src/
 - **Surface 深度层次**: 卡片 hover 抬升 (translateY -2px)、bg-orb 滚动视差、消息区景深渐变 (.chat-body)
 - **气泡顶部高光条**: `.msg-content::after` 1px 光线掠射
 - **发送按钮居中**: `.chat-send-btn` 添加 `align-self: center`
+
+#### Phase 9 微交互润色 & 视觉瘦身
+
+- **FAB 数字徽章**: 红色圆点 → 数字胶囊 (99+ 截断)，直观显示未读消息数
+- **FAB 生成中呼吸微光**: `fab-glow` 按模式变色呼吸光效 (chat 蓝 / query 红 / summary 琥珀)，`reduce-motion` 禁用
+- **FAB 光标与反馈**: 默认 `grab` / 拖拽 `grabbing`，`:active` scale(0.95)，`focus-visible` 聚焦环
+- **侧栏"水面灌满"**: 大圆/小圆 `::before` 伪元素 `clip-path` 动画，hover 自下而上灌满纯色填充
+- **侧栏 focus-visible**: `outline: 3px solid color-mix(...)` 圆环聚焦轮廓
+- **侧栏标签**: 字体 Plus Jakarta Sans，字号 11→12px，letter-spacing -0.01em
+- **回到底部胶囊化**: 圆形 36px → 胶囊 32px，hover 展开"最新"文字标签
+- **切换会话保留列表**: `switchConversation` 不再自动关闭会话列表面板
+- **亮色侧栏模式色**: 亮色主题下查询/摘要模式侧栏大圆 background + border-color 按模式适配
+- **过渡时长优化**: FAB/侧栏 hover/active transition 从 0.55s→0.35s，内耗项 0.25s→0.16s
+- **移除呼吸光斑系统**: aiSettings 删除 3 个 `bg-orb` + `noise-overlay` + 滚动视差 rAF + `@keyframes orb-breathe`
+- **亮色氛围光替代**: `.light-gradient-overlay` 纯 CSS 渐变层，零 JS 零动画
 
 ## 快速开始
 
