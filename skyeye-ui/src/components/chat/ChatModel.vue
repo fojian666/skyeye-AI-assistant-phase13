@@ -6,7 +6,7 @@
         role="complementary"
         aria-label="AI 助手面板">
         <!-- 悬浮按钮 -->
-        <div v-if="!visible" class="chat-fab" @click="open" @mousedown="startDrag" title="AI 助手" aria-label="打开 AI 助手" role="button">
+        <div v-if="!visible" class="chat-fab" :class="{ dragging, 'fab-streaming': streaming }" @click="open" @mousedown="startDrag" title="AI 助手" aria-label="打开 AI 助手" role="button">
             <span class="fab-robot-icon"
                 ><svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -26,7 +26,7 @@
                     <path d="M9 13v2" /></svg
             ></span>
             <span class="fab-label">AI 助手</span>
-            <span v-if="messages.length > lastReadMsgCount" class="fab-badge" aria-label="有新消息"></span>
+            <span v-if="messages.length > lastReadMsgCount" class="fab-badge" aria-label="有新消息">{{ messages.length - lastReadMsgCount > 99 ? '99+' : messages.length - lastReadMsgCount }}</span>
         </div>
 
         <!-- 聊天窗口 + 拓展槽 -->
@@ -490,8 +490,8 @@
                         aria-label="滚动到最新消息">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
+                            width="14"
+                            height="14"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
@@ -500,6 +500,7 @@
                             stroke-linejoin="round">
                             <path d="m6 9 6 6 6-6" />
                         </svg>
+                        <span class="scroll-btn-label">最新</span>
                     </button>
 
                     <!-- 输入区 -->
@@ -1405,10 +1406,7 @@ export default {
 
         /** 切换会话 */
         switchConversation(id) {
-            if (id === this.activeConversationId) {
-                this.convListVisible = false;
-                return;
-            }
+            if (id === this.activeConversationId) return;
             if (this.streaming) this.stopGeneration();
             this._syncMessagesToConv();
             const conv = this.conversations.find((c) => c.id === id);
@@ -1421,7 +1419,6 @@ export default {
             this.phase = null;
             this._userScrolledUp = false;
             this.showScrollBtn = false;
-            this.convListVisible = false;
             this.scrollToBottom(true);
         },
 
@@ -2063,10 +2060,10 @@ export default {
     align-items: center;
     justify-content: center;
     gap: 0;
-    cursor: pointer;
+    cursor: grab;
     color: #fff;
     user-select: none;
-    transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1), gap 0.45s 0.08s, padding 0.45s 0.08s;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1), gap 0.3s 0.06s, padding 0.3s 0.06s;
 
     &:hover {
         transform: scale(1.05);
@@ -2078,10 +2075,24 @@ export default {
         box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
     }
 
+    &:active {
+        transform: scale(0.95);
+        transition-duration: 0.12s;
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.5), 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+    }
+
+    &.dragging {
+        cursor: grabbing;
+    }
+
     .fab-robot-icon {
         display: flex;
         line-height: 1;
-        transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 
         svg {
             display: block;
@@ -2099,25 +2110,47 @@ export default {
         max-width: 0;
         overflow: hidden;
         opacity: 0;
-        transition: max-width 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s 0.1s;
+        transition: max-width 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s 0.06s;
     }
 
     &:hover .fab-label {
         max-width: 80px;
         opacity: 1;
     }
+
+    /* P1: AI 生成中模式色呼吸微光 */
+    &.fab-streaming {
+        animation: fab-glow 2s ease-in-out infinite;
+    }
 }
 
-/* FAB 历史对话指示器 */
+/* P1: FAB 生成中呼吸光效 — 按 chatMode 变色 */
+@keyframes fab-glow {
+    0%, 100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.06) inset; }
+    50% { box-shadow: 0 8px 36px rgba(0, 0, 0, 0.25), 0 0 24px var(--glow-color, rgba(59, 130, 246, 0.35)), 0 0 0 1px rgba(255, 255, 255, 0.1) inset; }
+}
+.chat-fab.fab-streaming { --glow-color: rgba(59, 130, 246, 0.35); }
+.query-mode .chat-fab.fab-streaming { --glow-color: rgba(239, 68, 68, 0.35); }
+.summary-mode .chat-fab.fab-streaming { --glow-color: rgba(245, 158, 11, 0.35); }
+
+/* FAB 新消息数胶囊 */
 .fab-badge {
     position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
+    top: -5px;
+    right: -5px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
     background: var(--app-accent, #6366f1);
-    box-shadow: 0 0 6px rgba(99, 102, 241, 0.5);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 18px;
+    text-align: center;
+    white-space: nowrap;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+    z-index: 1;
 }
 
 /* 面板行 — flex 并排聊天面板 + 拓展槽 */
@@ -2150,7 +2183,7 @@ export default {
     pointer-events: none;
     transition: opacity 0.35s cubic-bezier(0.32, 0.72, 0, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform, opacity; /* 独立合成层，避免 hover 时触发面板重绘 */
-    contain: layout style paint;     /* 将 side-rail 的布局/绘制隔离在自身子树内 */
+    contain: layout style;          /* 将 side-rail 的布局隔离在自身子树内，开放 paint 让 label 可溢出 */
 
     &.visible {
         opacity: 1;
@@ -2172,7 +2205,7 @@ export default {
 
         .rail-label {
             opacity: 1;
-            max-width: 50px;
+            max-width: 80px;
         }
 
         .rail-item.large {
@@ -2202,29 +2235,66 @@ export default {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background 0.35s cubic-bezier(0.32, 0.72, 0, 1), border-color 0.35s cubic-bezier(0.32, 0.72, 0, 1),
-        color 0.35s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.35s cubic-bezier(0.32, 0.72, 0, 1),
-        transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: background 0.16s ease, border-color 0.16s ease,
+        color 0.16s ease, box-shadow 0.14s cubic-bezier(0.2, 0.7, 0.3, 1),
+        opacity 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+        transform 0.14s cubic-bezier(0.2, 0.7, 0.3, 1);
 
     /* 大圆：右中，始终可见 */
     &.large {
-        width: clamp(48px, 3vw, 60px);
-        height: clamp(48px, 3vw, 60px);
+        width: clamp(52px, 3.5vw, 64px);
+        height: clamp(52px, 3.5vw, 64px);
         right: clamp(3px, 0.25vw, 5px);
         top: 50%;
-        transform: translateY(-50%);
-        font-size: clamp(20px, 1.4vw, 26px);
+        transform: translateY(calc(-50% + 0px));
+        font-size: clamp(22px, 1.5vw, 28px);
         background: rgba(59, 130, 246, 0.18);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(59, 130, 246, 0.35);
+        border: 1.5px solid rgba(59, 130, 246, 0.4);
         color: rgba(200, 220, 255, 0.9);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        transition: transform 0.14s cubic-bezier(0.2, 0.7, 0.3, 1),
+                    background-color 0.16s ease;
         z-index: 1;
 
-        &:hover {
-            background: rgba(59, 130, 246, 0.28);
-            border-color: rgba(59, 130, 246, 0.55);
+        /* 纯色自下而上灌满，clip-path 保持圆形不畸变 */
+        &::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: var(--rail-fill, rgba(59, 130, 246, 0.45));
+            clip-path: inset(100% 0 0 0);
+            transition: clip-path 0.3s cubic-bezier(0.2, 0.7, 0.3, 1);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        @media (hover: hover) {
+            &:hover {
+                transform: translateY(calc(-50% - 2px));
+            }
+
+            &:hover::before {
+                clip-path: inset(0 0 0 0);
+            }
+        }
+
+        &:active {
+            transform: translateY(calc(-50% + 3px));
+            transition-duration: 0.07s;
+        }
+
+        &:active::before {
+            clip-path: inset(0 0 0 0);
+            transition-duration: 0.1s;
+        }
+
+        &:focus-visible {
+            outline: 3px solid color-mix(in oklch, var(--rail-edge, rgba(59, 130, 246, 0.7)) 70%, transparent);
+            outline-offset: 3px;
+            border-radius: 50%;
+            transition: none;
         }
     }
 
@@ -2236,19 +2306,54 @@ export default {
         background: rgba(8, 25, 52, 0.75);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(0, 180, 240, 0.14);
+        border: 1.5px solid rgba(0, 180, 240, 0.18);
         color: rgba(200, 220, 255, 0.65);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
         opacity: 0;
         transform: scale(0);
         transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1) 0.25s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.25s,
-            background 0.25s cubic-bezier(0.32, 0.72, 0, 1), border-color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-            color 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+            background 0.16s ease, border-color 0.16s ease,
+            color 0.16s ease, box-shadow 0.14s cubic-bezier(0.2, 0.7, 0.3, 1);
 
-        &:hover {
-            background: rgba(12, 35, 70, 0.88);
-            border-color: rgba(0, 200, 255, 0.35);
-            color: #fff;
+        /* 水面自下而上灌满 */
+        &::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: var(--rail-fill, rgba(0, 180, 240, 0.35));
+            clip-path: inset(100% 0 0 0);
+            transition: clip-path 0.3s cubic-bezier(0.2, 0.7, 0.3, 1);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        @media (hover: hover) {
+            &:hover {
+                background: rgba(12, 35, 70, 0.88);
+                border-color: rgba(0, 200, 255, 0.4);
+                color: #fff;
+            }
+
+            &:hover::before {
+                clip-path: inset(0 0 0 0);
+            }
+        }
+
+        &:active {
+            transform: scale(0.95);
+            transition-duration: 0.07s;
+        }
+
+        &:active::before {
+            clip-path: inset(0 0 0 0);
+            transition-duration: 0.1s;
+        }
+
+        &:focus-visible {
+            outline: 3px solid color-mix(in oklch, var(--rail-edge, rgba(59, 130, 246, 0.7)) 70%, transparent);
+            outline-offset: 3px;
+            border-radius: 50%;
+            transition: none;
         }
     }
 }
@@ -2259,20 +2364,22 @@ export default {
     position: absolute;
     left: calc(100% + 8px);
     white-space: nowrap;
-    font-size: 11px;
+    font-family: "Plus Jakarta Sans", "Geist", "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-size: 12px;
     font-weight: 600;
+    letter-spacing: -0.01em;
     color: rgba(200, 220, 255, 0.8);
     opacity: 0;
     max-width: 0;
     overflow: hidden;
     pointer-events: none;
     transition: opacity 0.3s ease, max-width 0.35s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s ease;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 .theme-light .rail-label {
     color: rgba(30, 40, 60, 0.8);
-    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.35);
 }
 
 /* 亮色主题下标签 hover 加深 */
@@ -2301,7 +2408,7 @@ export default {
 /* hover 时展开所有标签，与引导期一致 */
 .side-rail:hover .rail-label {
     opacity: 1;
-    max-width: 50px;
+    max-width: 80px;
 }
 
 /* 悬浮对应圆点时标签高亮 */
@@ -2611,11 +2718,50 @@ export default {
     -webkit-backdrop-filter: blur(12px);
     border-color: rgba(37, 99, 235, 0.45);
     color: #fff;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 0 22px rgba(37, 99, 235, 0.25);
+    --rail-fill: rgba(37, 99, 235, 0.5);
+    --rail-edge: rgba(37, 99, 235, 0.4);
+    --rail-cast: rgba(37, 99, 235, 0.3);
+    transition: transform 0.14s cubic-bezier(0.2, 0.7, 0.3, 1),
+                background-color 0.16s ease;
+
+    @media (hover: hover) {
+        &:hover {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.65), rgba(59, 130, 246, 0.45));
+            transform: translateY(calc(-50% - 2px));
+        }
+    }
+
+    &:active {
+        transform: translateY(calc(-50% + 3px));
+        transition-duration: 0.07s;
+    }
+}
+
+/* 亮色主题 — 查询模式大圆 */
+.theme-light .rails.query-mode .rail-item.large,
+.theme-light .chat-wrapper.query-mode .rail-item.large {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.5), rgba(239, 68, 68, 0.3));
+    border-color: rgba(220, 38, 38, 0.45);
+    --rail-fill: rgba(220, 38, 38, 0.5);
+    --rail-edge: rgba(220, 38, 38, 0.4);
+    --rail-cast: rgba(220, 38, 38, 0.3);
 
     &:hover {
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.65), rgba(59, 130, 246, 0.45));
-        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 32px rgba(37, 99, 235, 0.45);
+        background: linear-gradient(135deg, rgba(220, 38, 38, 0.65), rgba(239, 68, 68, 0.45));
+    }
+}
+
+/* 亮色主题 — 摘要模式大圆 */
+.theme-light .rails.summary-mode .rail-item.large,
+.theme-light .chat-wrapper.summary-mode .rail-item.large {
+    background: linear-gradient(135deg, rgba(217, 119, 6, 0.5), rgba(245, 158, 11, 0.3));
+    border-color: rgba(217, 119, 6, 0.45);
+    --rail-fill: rgba(217, 119, 6, 0.5);
+    --rail-edge: rgba(217, 119, 6, 0.4);
+    --rail-cast: rgba(217, 119, 6, 0.3);
+
+    &:hover {
+        background: linear-gradient(135deg, rgba(217, 119, 6, 0.65), rgba(245, 158, 11, 0.45));
     }
 }
 .theme-light .rail-item.small {
@@ -2624,13 +2770,26 @@ export default {
     -webkit-backdrop-filter: blur(12px);
     border-color: rgba(0, 0, 0, 0.18);
     color: #374151;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    --rail-fill: rgba(37, 99, 235, 0.3);
 
-    &:hover {
-        background: rgba(37, 99, 235, 0.2);
-        border-color: rgba(37, 99, 235, 0.45);
-        color: #1e40af;
-        box-shadow: 0 2px 14px rgba(0, 0, 0, 0.12), 0 0 18px rgba(37, 99, 235, 0.25);
+    @media (hover: hover) {
+        &:hover {
+            background: rgba(37, 99, 235, 0.2);
+            border-color: rgba(37, 99, 235, 0.45);
+            color: #1e40af;
+        }
+    }
+
+    &:active {
+        transform: scale(0.95);
+        transition-duration: 0.07s;
+    }
+
+    &:focus-visible {
+        outline: 3px solid color-mix(in oklch, var(--rail-edge, rgba(37, 99, 235, 0.7)) 70%, transparent);
+        outline-offset: 3px;
+        border-radius: 50%;
+        transition: none;
     }
 }
 
@@ -2834,21 +2993,23 @@ export default {
 /* 查询模式 */
 .chat-wrapper.query-mode .rail-item.large {
     background: rgba(239, 68, 68, 0.18);
-    border-color: rgba(239, 68, 68, 0.35);
+    border-color: rgba(239, 68, 68, 0.4);
     color: rgba(255, 180, 170, 0.9);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
+    --rail-fill: rgba(239, 68, 68, 0.45);
+    --rail-edge: rgba(239, 68, 68, 0.45);
+    --rail-cast: rgba(239, 68, 68, 0.35);
     &:hover {
         background: rgba(239, 68, 68, 0.28);
-        border-color: rgba(239, 68, 68, 0.55);
+        border-color: rgba(239, 68, 68, 0.6);
     }
 }
 .chat-wrapper.query-mode .rail-item.small {
-    border-color: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.25);
     color: rgba(255, 160, 140, 0.7);
+    --rail-fill: rgba(239, 68, 68, 0.35);
     transition: all 0.3s ease;
     &:hover {
-        border-color: rgba(239, 68, 68, 0.45);
+        border-color: rgba(239, 68, 68, 0.5);
         color: #fff;
     }
 }
@@ -2856,21 +3017,23 @@ export default {
 /* 摘要模式 */
 .chat-wrapper.summary-mode .rail-item.large {
     background: rgba(245, 158, 11, 0.18);
-    border-color: rgba(245, 158, 11, 0.35);
+    border-color: rgba(245, 158, 11, 0.4);
     color: rgba(255, 220, 160, 0.9);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
+    --rail-fill: rgba(245, 158, 11, 0.45);
+    --rail-edge: rgba(245, 158, 11, 0.45);
+    --rail-cast: rgba(245, 158, 11, 0.35);
     &:hover {
         background: rgba(245, 158, 11, 0.28);
-        border-color: rgba(245, 158, 11, 0.55);
+        border-color: rgba(245, 158, 11, 0.6);
     }
 }
 .chat-wrapper.summary-mode .rail-item.small {
-    border-color: rgba(245, 158, 11, 0.2);
+    border-color: rgba(245, 158, 11, 0.25);
     color: rgba(255, 200, 120, 0.7);
+    --rail-fill: rgba(245, 158, 11, 0.35);
     transition: all 0.3s ease;
     &:hover {
-        border-color: rgba(245, 158, 11, 0.45);
+        border-color: rgba(245, 158, 11, 0.5);
         color: #fff;
     }
 }
@@ -3104,29 +3267,38 @@ export default {
     }
 }
 
-/* 回到底部按钮 */
+/* 回到底部 — 胶囊形 */
 .scroll-bottom-btn {
     position: absolute;
     bottom: 12px;
     left: 50%;
     transform: translateX(-50%);
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 16px;
     border: 1px solid var(--ai-border-hover);
     background: rgba(15, 23, 42, 0.85);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     color: rgba(255, 255, 255, 0.6);
-    font-size: 16px;
+    font-size: 12px;
     cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 6px;
     z-index: 2;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     animation: scroll-btn-in 0.25s cubic-bezier(0.32, 0.72, 0, 1);
     transition: all 0.25s ease;
+
+    .scroll-btn-label {
+        max-width: 0;
+        overflow: hidden;
+        opacity: 0;
+        font-weight: 500;
+        white-space: nowrap;
+        transition: max-width 0.25s ease, opacity 0.2s;
+    }
 
     &:hover {
         background: rgba(30, 41, 59, 0.9);
@@ -3134,6 +3306,11 @@ export default {
         color: #fff;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
         transform: translateX(-50%) translateY(-2px);
+
+        .scroll-btn-label {
+            max-width: 40px;
+            opacity: 1;
+        }
     }
 }
 
@@ -4040,6 +4217,9 @@ export default {
 .reduce-motion .streaming-cursor::after {
     animation: none;
     opacity: 0;
+}
+.reduce-motion .fab-streaming {
+    animation: none;
 }
 .reduce-motion .dots-container .dot {
     animation: none;

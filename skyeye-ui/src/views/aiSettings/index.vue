@@ -3,13 +3,8 @@
         <!-- Canvas: 动态极光 + 粒子连接网 -->
         <canvas ref="auroraCanvas" class="aurora-canvas" aria-hidden="true"></canvas>
 
-        <!-- CSS 呼吸光斑（iOS 26 风格，交错延迟） -->
-        <div ref="orb1" class="bg-orb bg-orb-1" aria-hidden="true"></div>
-        <div ref="orb2" class="bg-orb bg-orb-2" aria-hidden="true"></div>
-        <div ref="orb3" class="bg-orb bg-orb-3" aria-hidden="true"></div>
-
-        <!-- 噪点纹理叠加层 -->
-        <div class="noise-overlay" aria-hidden="true"></div>
+        <!-- 亮色模式背景氛围光 (纯 CSS，无动画) -->
+        <div class="light-gradient-overlay" aria-hidden="true"></div>
 
         <main class="settings-main">
             <!-- 返回按钮 -->
@@ -598,17 +593,6 @@ export default {
         this._startTypewriter();
         // 只有深色 + 非减少动效时才启 WebGL 极光
         if (!this._themeWasLight && !this.reduceMotion) this._initAuroraCanvas();
-        // bg-orb 滚动视差
-        if (!this.reduceMotion) {
-            this._orbScrollHandler = () => {
-                const scrollY = window.scrollY || window.pageYOffset;
-                if (this.$refs.orb1) this.$refs.orb1.style.transform = `translateY(${scrollY * 0.06}px)`;
-                if (this.$refs.orb2) this.$refs.orb2.style.transform = `translateY(${-scrollY * 0.08}px)`;
-                if (this.$refs.orb3) this.$refs.orb3.style.transform = `translateY(${scrollY * 0.04}px)`;
-                this._orbRaf = requestAnimationFrame(this._orbScrollHandler);
-            };
-            this._orbRaf = requestAnimationFrame(this._orbScrollHandler);
-        }
     },
 
     beforeDestroy() {
@@ -616,8 +600,6 @@ export default {
         clearTimeout(this._toastTimer);
         clearTimeout(this._saveTimer);
         this._destroyAurora();
-        if (this._orbRaf) cancelAnimationFrame(this._orbRaf);
-        if (this._orbScrollHandler) window.removeEventListener('scroll', this._orbScrollHandler);
     },
 
     watch: {
@@ -644,10 +626,6 @@ export default {
             this.savePrefs();
             if (v) {
                 this._destroyAurora();
-                if (this._orbRaf) cancelAnimationFrame(this._orbRaf);
-                if (this.$refs.orb1) this.$refs.orb1.style.transform = '';
-                if (this.$refs.orb2) this.$refs.orb2.style.transform = '';
-                if (this.$refs.orb3) this.$refs.orb3.style.transform = '';
             } else {
                 this._initAuroraCanvas();
             }
@@ -1053,19 +1031,6 @@ void main(){
         background: rgba(255, 255, 255, 0.15);
     }
 }
-
-/* ========================= 噪点纹理 (background-image, 避免合成层导致光标异常) ========================= */
-.noise-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    opacity: 0.03;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    background-size: 256px 256px;
-}
-
 /* ========================= 返回按钮 ========================= */
 .back-btn {
     position: absolute;
@@ -1129,97 +1094,34 @@ void main(){
     pointer-events: none;
 }
 
-/* ========================= 呼吸光斑 (iOS 26 风格) ========================= */
-.bg-orb {
+/* 亮色模式 · 氛围光 — 方案 A(页面温度) + C(右上自然光) 组合 */
+.light-gradient-overlay {
     position: fixed;
-    border-radius: 50%;
-    filter: blur(80px);
-    pointer-events: none;
+    inset: 0;
     z-index: 0;
-    animation: orb-breathe 4s ease-in-out infinite;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    background:
+        /* C: 右上自然光源 — 淡蓝白扩散，模拟窗户侧光 */
+        radial-gradient(
+            ellipse 60% 40% at 75% 0%,
+            rgba(147, 197, 253, 0.07) 0%,
+            rgba(191, 219, 254, 0.03) 35%,
+            transparent 65%
+        ),
+        /* A: 页面温度 — 顶部微暖，底部收束为冷灰 */
+        linear-gradient(
+            180deg,
+            rgba(248, 250, 252, 0) 0%,
+            rgba(241, 245, 249, 0.35) 50%,
+            rgba(226, 232, 240, 0.15) 100%
+        );
 }
 
-.bg-orb-1 {
-    width: 384px;
-    height: 384px;
-    top: 15%;
-    left: 15%;
-    background: rgba(59, 130, 246, 0.06);
-    animation-delay: 0s;
-}
-
-.bg-orb-2 {
-    width: 320px;
-    height: 320px;
-    bottom: 20%;
-    right: 15%;
-    background: rgba(139, 92, 246, 0.06);
-    animation-delay: 1.5s;
-}
-
-.bg-orb-3 {
-    width: 280px;
-    height: 280px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(236, 72, 153, 0.05);
-    animation-delay: 3s;
-}
-
-@keyframes orb-breathe {
-    0%,
-    100% {
-        opacity: 0.5;
-        transform: translate(-50%, -50%) scale(1);
-    }
-    50% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1.15);
-    }
-}
-
-/* orb-1 和 orb-2 不使用 translate(-50%,-50%)，需要分写 */
-.bg-orb-1 {
-    animation-name: orb-breathe-1;
-}
-.bg-orb-2 {
-    animation-name: orb-breathe-2;
-}
-
-@keyframes orb-breathe-1 {
-    0%,
-    100% {
-        opacity: 0.5;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 1;
-        transform: scale(1.15);
-    }
-}
-
-@keyframes orb-breathe-2 {
-    0%,
-    100% {
-        opacity: 0.4;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.9;
-        transform: scale(1.12);
-    }
-}
-
-/* 浅色主题下光斑不可见（已有浅色背景） */
-[data-theme='light'] .bg-orb {
-    display: none;
-}
-
-/* 减少动效模式下光斑不呼吸 */
-.reduce-motion .bg-orb {
-    animation: none;
-    opacity: 0.3;
+/* 仅亮色模式可见 */
+[data-theme='light'] .light-gradient-overlay {
+    opacity: 1;
 }
 
 /* ========================= 主容器 ========================= */
@@ -1779,17 +1681,33 @@ void main(){
     cursor: pointer;
     outline: none;
     font-family: inherit;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
 
     &:focus-visible {
         outline: 2px solid rgba(99, 102, 241, 0.6);
         outline-offset: 2px;
     }
 
-    transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    transition: border-color 0.3s ease, color 0.3s ease, transform 0.14s cubic-bezier(0.2, 0.7, 0.3, 1);
+
+    /* 水面自下而上灌满 */
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 16px;
+        background: var(--chip-fill, rgba(99, 102, 241, 0.35));
+        clip-path: inset(100% 0 0 0);
+        transition: clip-path 0.3s cubic-bezier(0.2, 0.7, 0.3, 1);
+        z-index: -1;
+        pointer-events: none;
+    }
 
     .chip-icon {
         display: block;
-        transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+        transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.3, 1);
     }
 
     .chip-label {
@@ -1797,13 +1715,18 @@ void main(){
         font-weight: 550;
     }
 
-    &:hover {
-        border-color: var(--ai-border-active);
-        background: var(--ai-glass-03);
-        color: rgba(255, 255, 255, 0.75);
+    @media (hover: hover) {
+        &:hover {
+            border-color: var(--ai-border-active);
+            color: rgba(255, 255, 255, 0.85);
 
-        .chip-icon {
-            transform: scale(1.15);
+            .chip-icon {
+                transform: scale(1.15);
+            }
+        }
+
+        &:hover::before {
+            clip-path: inset(0 0 0 0);
         }
     }
 
@@ -1821,7 +1744,17 @@ void main(){
     &:active {
         transform: scale(0.97);
     }
+
+    &:active::before {
+        clip-path: inset(0 0 0 0);
+        transition-duration: 0.1s;
+    }
 }
+
+/* 模式色水位 */
+.mode-chip[data-mode='chat']    { --chip-fill: rgba(99, 102, 241, 0.35); }
+.mode-chip[data-mode='query']   { --chip-fill: rgba(239, 68, 68, 0.35); }
+.mode-chip[data-mode='summary'] { --chip-fill: rgba(245, 158, 11, 0.35); }
 
 .pod-shell:hover {
     transform: translateY(-2px);
@@ -2120,6 +2053,10 @@ void main(){
     }
 }
 
+[data-theme='light'] .mode-chip[data-mode='chat']    { --chip-fill: rgba(99, 102, 241, 0.25); }
+[data-theme='light'] .mode-chip[data-mode='query']   { --chip-fill: rgba(239, 68, 68, 0.25); }
+[data-theme='light'] .mode-chip[data-mode='summary'] { --chip-fill: rgba(245, 158, 11, 0.25); }
+
 [data-theme='light'] .kbd-row kbd {
     background: rgba(0, 0, 0, 0.04);
     border-color: rgba(0, 0, 0, 0.1);
@@ -2315,51 +2252,96 @@ void main(){
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: border-color 0.25s ease, color 0.25s ease, transform 0.14s cubic-bezier(0.2, 0.7, 0.3, 1);
     outline-offset: 2px;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+
+    /* 水面自下而上灌满 */
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: var(--radius-lg, 12px);
+        background: var(--chip-fill, rgba(99, 102, 241, 0.35));
+        clip-path: inset(100% 0 0 0);
+        transition: clip-path 0.3s cubic-bezier(0.2, 0.7, 0.3, 1);
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    .tab-icon {
+        flex-shrink: 0;
+        opacity: 0.7;
+        transition: opacity 0.25s ease;
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            color: rgba(255, 255, 255, 0.8);
+
+            .tab-icon {
+                opacity: 1;
+            }
+        }
+
+        &:hover::before {
+            clip-path: inset(0 0 0 0);
+        }
+    }
+
+    &.active {
+        background: rgba(99, 102, 241, 0.15);
+        border-color: rgba(99, 102, 241, 0.35);
+        color: rgba(165, 180, 252, 0.95);
+
+        .tab-icon {
+            opacity: 1;
+        }
+    }
+
+    &:active {
+        transform: scale(0.97);
+    }
+
+    &:active::before {
+        clip-path: inset(0 0 0 0);
+        transition-duration: 0.1s;
+    }
+
+    &:focus-visible {
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+    }
 }
 
-.template-mode-tab:hover {
-    background: var(--ai-glass-03);
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.template-mode-tab:focus-visible {
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
-}
-
-.template-mode-tab.active {
-    background: rgba(99, 102, 241, 0.15);
-    border-color: rgba(99, 102, 241, 0.35);
-    color: rgba(165, 180, 252, 0.95);
-}
-
-.template-mode-tab .tab-icon {
-    flex-shrink: 0;
-    opacity: 0.7;
-}
-
-.template-mode-tab.active .tab-icon {
-    opacity: 1;
-}
+/* 提示词标签水位色 */
+.template-mode-tab[data-mode='chat']    { --chip-fill: rgba(99, 102, 241, 0.35); }
+.template-mode-tab[data-mode='query']   { --chip-fill: rgba(239, 68, 68, 0.35); }
+.template-mode-tab[data-mode='summary'] { --chip-fill: rgba(245, 158, 11, 0.35); }
 
 /* 亮色主题 */
 .theme-light .template-mode-tab {
     border-color: rgba(0, 0, 0, 0.08);
     background: rgba(0, 0, 0, 0.02);
     color: rgba(0, 0, 0, 0.45);
+
+    @media (hover: hover) {
+        &:hover {
+            color: rgba(0, 0, 0, 0.7);
+        }
+    }
+
+    &.active {
+        background: rgba(37, 99, 235, 0.08);
+        border-color: rgba(37, 99, 235, 0.3);
+        color: #2563eb;
+    }
 }
 
-.theme-light .template-mode-tab:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: rgba(0, 0, 0, 0.7);
-}
-
-.theme-light .template-mode-tab.active {
-    background: rgba(37, 99, 235, 0.08);
-    border-color: rgba(37, 99, 235, 0.3);
-    color: #2563eb;
-}
+.theme-light .template-mode-tab[data-mode='chat']    { --chip-fill: rgba(99, 102, 241, 0.25); }
+.theme-light .template-mode-tab[data-mode='query']   { --chip-fill: rgba(239, 68, 68, 0.25); }
+.theme-light .template-mode-tab[data-mode='summary'] { --chip-fill: rgba(245, 158, 11, 0.25); }
 
 /* 模板列表 */
 .template-list {
