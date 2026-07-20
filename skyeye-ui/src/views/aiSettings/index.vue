@@ -7,7 +7,7 @@
         <div class="light-gradient-overlay" aria-hidden="true"></div>
 
         <!-- 滚动词条装饰 -->
-        <div class="marquee-strip" :class="'marquee--' + templateTab" aria-hidden="true">
+        <div class="marquee-strip" :class="'marquee--' + defaultMode" aria-hidden="true">
             <div class="marquee-track">
                 <span>DeepSeek-V3</span> <span class="marquee-dot">·</span>
                 <span>DeepSeek-R1</span> <span class="marquee-dot">·</span>
@@ -30,7 +30,7 @@
         </div>
 
         <!-- 两侧氛围光斑 -->
-        <div class="ambient-orbs" :class="'orbs--' + templateTab" aria-hidden="true">
+        <div class="ambient-orbs" :class="'orbs--' + defaultMode" aria-hidden="true">
             <div class="orb orb--tl"></div>
             <div class="orb orb--tr"></div>
             <div class="orb orb--br"></div>
@@ -297,6 +297,47 @@
                     </div>
                 </div>
 
+                <!-- ===== API 调用频率热力图 (占 1 列) ===== -->
+                <div ref="cardHeatmap" class="card-pod col-wide curtain-item curtain-bottom">
+                    <div class="pod-shell">
+                        <div class="pod-core">
+                            <div class="pod-icon-wrap pod-icon-wrap--amber">
+                                <svg class="pod-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                                    <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                                    <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                                    <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                                </svg>
+                            </div>
+                            <h3>API 调用频率</h3>
+                            <p class="pod-desc">近 7 天每小时调用分布</p>
+                            <div class="heatmap-grid" aria-label="API 调用频率热力图">
+                                <div class="heatmap-header">
+                                    <span v-for="d in heatmapDays" :key="d" class="heatmap-day-label">{{ d }}</span>
+                                </div>
+                                <div class="heatmap-body">
+                                    <div v-for="(row, ri) in heatmapData" :key="ri" class="heatmap-row">
+                                        <span class="heatmap-hour-label">{{ heatmapHours[ri] }}</span>
+                                        <div v-for="(val, ci) in row" :key="ci"
+                                            class="heatmap-cell"
+                                            :class="'heatmap-cell--' + heatmapLevel(val)"
+                                            :title="`${heatmapDays[ci]} ${heatmapHours[ri]}: ${val} 次`">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="heatmap-legend">
+                                    <span class="heatmap-legend-label">少</span>
+                                    <span class="heatmap-legend-dot heatmap-cell--low"></span>
+                                    <span class="heatmap-legend-dot heatmap-cell--mid"></span>
+                                    <span class="heatmap-legend-dot heatmap-cell--high"></span>
+                                    <span class="heatmap-legend-dot heatmap-cell--peak"></span>
+                                    <span class="heatmap-legend-label">多</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ===== 提示词模板 (占 2 列) ===== -->
                 <div ref="card6" class="card-pod col-wide curtain-item curtain-bottom">
                     <div class="pod-shell">
@@ -348,7 +389,8 @@
                             </div>
 
                             <!-- 模板列表 -->
-                            <div class="template-list" :key="templateTab">
+                            <transition name="template-fade" mode="out-in">
+                                <div class="template-list" :key="templateTab">
                                 <div v-for="(item, idx) in currentTemplates" :key="idx" class="template-row">
                                     <span class="template-num">{{ idx + 1 }}</span>
                                     <input
@@ -398,6 +440,7 @@
                                 </button>
                                 <p v-else class="template-limit-hint">已达上限（5 条）</p>
                             </div>
+                            </transition>
                         </div>
                     </div>
                 </div>
@@ -478,6 +521,11 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 空白区域漂浮粒子装饰 -->
+                <div class="bento-particles" aria-hidden="true">
+                    <span v-for="n in 8" :key="n" class="bento-particle" :style="particleStyle(n)"></span>
+                </div>
             </div>
             <!-- 操作行 -->
             <div class="actions-bar">
@@ -520,7 +568,17 @@
 
         <!-- 保存确认 Toast -->
         <transition name="toast">
-            <div v-if="toastVisible" class="save-toast" :class="{ 'save-toast--error': _storageError }">{{ toastMessage }}</div>
+            <div v-if="toastVisible" class="save-toast" :class="{ 'save-toast--error': _storageError }">
+                <svg v-if="!_storageError" class="toast-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <svg v-else class="toast-icon toast-icon--warn" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <span>{{ toastMessage }}</span>
+            </div>
         </transition>
 
         <!-- localStorage 异常警告 -->
@@ -579,6 +637,11 @@ export default {
                 { label: '发送消息', keys: ['Enter'] },
                 { label: '消息中换行', keys: ['Shift', 'Enter'] }
             ],
+            // 热力图
+            heatmapDays: ['一', '二', '三', '四', '五', '六', '日'],
+            heatmapHours: ['0h', '3h', '6h', '9h', '12h', '15h', '18h', '21h'],
+            heatmapData: [], // 在 created 中生成
+            _particleSeeds: [], // 粒子随机种子缓存
             // 打字机
             typedEyebrow: '',
             typedTitle: '',
@@ -617,6 +680,18 @@ export default {
                 summary: ['例：有哪些高风险项？', '例：整体完成进度如何？', '例：下一步建议怎么做？', '例：输入自定义提问', '例：输入自定义提问']
             };
         }
+    },
+
+    created() {
+        this.heatmapData = this._generateHeatmapData();
+        // 预计算粒子随机种子
+        this._particleSeeds = Array.from({ length: 8 }, () => ({
+            x: Math.random() * 80 + 10,
+            y: Math.random() * 80 + 10,
+            size: Math.random() * 4 + 3,
+            dur: Math.random() * 4 + 4,
+            delay: Math.random() * 5
+        }));
     },
 
     mounted() {
@@ -671,6 +746,48 @@ export default {
         _isMac() {
             return /Mac|iPod|iPhone|iPad/.test(navigator.platform || '');
         },
+
+        // ==================== 热力图 ====================
+
+        _generateHeatmapData() {
+            // 模拟 8 小时段 × 7 天的调用频率
+            const rows = [];
+            for (let h = 0; h < 8; h++) {
+                const row = [];
+                let base = h >= 2 && h <= 5 ? 8 : 3; // 9:00-18:00 繁忙
+                for (let d = 0; d < 7; d++) {
+                    // 周末略低 + 随机波动
+                    const weekendPenalty = d >= 5 ? 0.5 : 1;
+                    row.push(Math.round(Math.max(0, base + (Math.random() - 0.5) * 4) * weekendPenalty));
+                }
+                rows.push(row);
+            }
+            return rows;
+        },
+
+        heatmapLevel(val) {
+            if (val === 0) return 'low';
+            if (val <= 3) return 'low';
+            if (val <= 7) return 'mid';
+            if (val <= 10) return 'high';
+            return 'peak';
+        },
+
+        // ==================== 漂浮粒子 ====================
+
+        particleStyle(n) {
+            const s = this._particleSeeds[n - 1] || { x: 50, y: 50, size: 3, dur: 5, delay: 0 };
+            return {
+                left: s.x + '%',
+                top: s.y + '%',
+                width: s.size + 'px',
+                height: s.size + 'px',
+                animationDuration: s.dur + 's',
+                animationDelay: s.delay + 's'
+            };
+        },
+
+        // ==================== 主题 ====================
 
         toggleTheme() {
             const next = this.theme === 'light' ? 'dark' : 'light';
@@ -1484,6 +1601,7 @@ void main(){
 
 /* ========================= 便当盒网格 ========================= */
 .bento-grid {
+    position: relative;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
@@ -1544,6 +1662,9 @@ void main(){
     left: 50%;
     transform: translateX(-50%);
     z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     padding: 10px 22px;
     border-radius: 14px;
     background: rgba(15, 23, 42, 0.85);
@@ -1556,23 +1677,43 @@ void main(){
     letter-spacing: 0.02em;
     pointer-events: none;
     white-space: nowrap;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Toast transition */
+.toast-icon {
+    flex-shrink: 0;
+    color: #34d399;
+    filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.4));
+}
+
+.toast-icon--warn {
+    color: #fbbf24;
+    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.4));
+}
+
+/* 错误状态 */
+.save-toast--error {
+    border-color: rgba(251, 191, 36, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(251, 191, 36, 0.15);
+}
+
+/* Toast transition — spring 弹入 */
 .toast-enter-active {
-    transition: opacity 0.25s cubic-bezier(0.32, 0.72, 0, 1), transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+    transition: opacity 0.3s cubic-bezier(0.25, 1.1, 0.4, 1), transform 0.35s cubic-bezier(0.25, 1.1, 0.4, 1);
 }
 .toast-leave-active {
-    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
 }
 .toast-enter,
 .toast-leave-to {
     opacity: 0;
-    transform: translateX(-50%) translateY(8px);
+    transform: translateX(-50%) translateY(12px) scale(0.92);
 }
 
 /* ========================= 卡片 Pod — Liquid Glass ========================= */
 .card-pod {
+    position: relative;
+    z-index: 1;
     /* 外壳 — 半透明玻璃托盘 */
     .pod-shell {
         padding: 4px;
@@ -2219,6 +2360,12 @@ void main(){
 .bento-grid .curtain-item:nth-child(5) {
     transition-delay: 0.26s;
 }
+.bento-grid .curtain-item:nth-child(6) {
+    transition-delay: 0.32s;
+}
+.bento-grid .curtain-item:nth-child(7) {
+    transition-delay: 0.38s;
+}
 
 /* ========================= 亮色主题覆盖 ========================= */
 [data-theme='light'] .settings-root {
@@ -2423,14 +2570,6 @@ void main(){
         border-color: rgba(0, 0, 0, 0.14);
         color: rgba(0, 0, 0, 0.55);
     }
-}
-
-[data-theme='light'] .save-toast {
-    background: rgba(255, 255, 255, 0.85);
-    border-color: rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(32px);
-    -webkit-backdrop-filter: blur(32px);
-    color: #1e293b;
 }
 
 /* ========================= Token 预览条 ========================= */
@@ -2836,5 +2975,171 @@ void main(){
 
 .theme-light .template-limit-hint {
     color: rgba(0, 0, 0, 0.2);
+}
+
+/* ========================= Template 切换过渡 ========================= */
+.template-fade-enter-active {
+    transition: opacity 0.25s cubic-bezier(0.25, 1.1, 0.4, 1), transform 0.3s cubic-bezier(0.25, 1.1, 0.4, 1), filter 0.25s ease;
+}
+.template-fade-leave-active {
+    transition: opacity 0.15s ease, transform 0.2s ease, filter 0.15s ease;
+}
+.template-fade-enter {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+    filter: blur(4px);
+}
+.template-fade-leave-to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+    filter: blur(4px);
+}
+
+/* ========================= API 调用频率热力图 ========================= */
+.pod-icon-wrap--amber {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+}
+
+.heatmap-grid {
+    margin-top: 12px;
+}
+
+.heatmap-header {
+    display: flex;
+    gap: 2px;
+    margin-left: 32px; /* align with cells after hour label */
+    margin-bottom: 2px;
+}
+
+.heatmap-day-label {
+    flex: 1;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ai-text-placeholder);
+    text-transform: uppercase;
+}
+
+.heatmap-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.heatmap-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.heatmap-hour-label {
+    width: 28px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--ai-text-placeholder);
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.heatmap-cell {
+    flex: 1;
+    aspect-ratio: 1;
+    border-radius: 3px;
+    transition: transform 0.15s ease;
+    cursor: default;
+}
+
+.heatmap-cell:hover {
+    transform: scale(1.3);
+    z-index: 1;
+}
+
+/* 强度色阶 — 从几乎透明到琥珀色 */
+.heatmap-cell--low { background: rgba(251, 191, 36, 0.08); }
+.heatmap-cell--mid { background: rgba(251, 191, 36, 0.28); }
+.heatmap-cell--high { background: rgba(251, 191, 36, 0.55); }
+.heatmap-cell--peak { background: rgba(251, 191, 36, 0.85); box-shadow: 0 0 4px rgba(251, 191, 36, 0.3); }
+
+.heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    justify-content: flex-end;
+}
+
+.heatmap-legend-label {
+    font-size: 10px;
+    color: var(--ai-text-placeholder);
+}
+
+.heatmap-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+/* ========================= 空白区域漂浮粒子 ========================= */
+.bento-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.bento-particle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.3), transparent);
+    animation: particle-drift ease-in-out infinite alternate;
+    opacity: 0;
+}
+
+@keyframes particle-drift {
+    0% { opacity: 0; transform: translate(0, 0); }
+    30% { opacity: 0.25; }
+    70% { opacity: 0.2; }
+    100% { opacity: 0; transform: translate(var(--particle-drift-x, 8px), var(--particle-drift-y, -6px)); }
+}
+
+/* 每个粒子不同的漂移方向 */
+.bento-particle:nth-child(1) { --particle-drift-x: 10px; --particle-drift-y: -8px; }
+.bento-particle:nth-child(2) { --particle-drift-x: -6px; --particle-drift-y: -12px; }
+.bento-particle:nth-child(3) { --particle-drift-x: 15px; --particle-drift-y: 5px; }
+.bento-particle:nth-child(4) { --particle-drift-x: -10px; --particle-drift-y: 10px; }
+.bento-particle:nth-child(5) { --particle-drift-x: 8px; --particle-drift-y: 14px; }
+.bento-particle:nth-child(6) { --particle-drift-x: -14px; --particle-drift-y: -4px; }
+.bento-particle:nth-child(7) { --particle-drift-x: 4px; --particle-drift-y: -16px; }
+.bento-particle:nth-child(8) { --particle-drift-x: -8px; --particle-drift-y: 8px; }
+
+/* 减少动效：冻结粒子 */
+.reduce-motion .bento-particle {
+    animation: none;
+    opacity: 0;
+}
+
+/* ========================= 亮色主题 Toast ========================= */
+[data-theme='light'] .save-toast {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: rgba(0, 0, 0, 0.85);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='light'] .toast-icon {
+    color: #059669;
+    filter: none;
+}
+
+[data-theme='light'] .toast-icon--warn {
+    color: #d97706;
+    filter: none;
+}
+
+[data-theme='light'] .save-toast--error {
+    border-color: rgba(217, 119, 6, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(217, 119, 6, 0.2);
 }
 </style>

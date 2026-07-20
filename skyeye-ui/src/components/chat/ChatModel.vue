@@ -2035,6 +2035,7 @@ export default {
     position: fixed;
     z-index: 1000; /* z: 面板层，高于普通页面元素 */
     max-width: calc(100dvw - 64px); /* 视口缩小时不溢出左边界 */
+    transition: max-width 0.4s cubic-bezier(0.25, 1.1, 0.4, 1);
 
     /* 尺寸令牌 — conv-list 需在 wrapper 层定义供 inline style var() 引用 */
     --conv-list-width: clamp(195px, 12vw, 250px);
@@ -2063,7 +2064,7 @@ export default {
     cursor: grab;
     color: #fff;
     user-select: none;
-    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1), gap 0.3s 0.06s, padding 0.3s 0.06s;
+    transition: all 0.35s cubic-bezier(0.25, 1.1, 0.4, 1), gap 0.3s 0.06s, padding 0.3s 0.06s;
 
     &:hover {
         transform: scale(1.05);
@@ -2092,7 +2093,7 @@ export default {
     .fab-robot-icon {
         display: flex;
         line-height: 1;
-        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: transform 0.35s cubic-bezier(0.25, 1.1, 0.4, 1);
 
         svg {
             display: block;
@@ -2110,7 +2111,7 @@ export default {
         max-width: 0;
         overflow: hidden;
         opacity: 0;
-        transition: max-width 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s 0.06s;
+        transition: max-width 0.35s cubic-bezier(0.25, 1.1, 0.4, 1), opacity 0.25s 0.06s;
     }
 
     &:hover .fab-label {
@@ -2181,7 +2182,7 @@ export default {
     opacity: 0;
     transform: translate(-16px, -50%);
     pointer-events: none;
-    transition: opacity 0.35s cubic-bezier(0.32, 0.72, 0, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.35s cubic-bezier(0.25, 1.1, 0.4, 1), transform 0.35s cubic-bezier(0.25, 1.1, 0.4, 1);
     will-change: transform, opacity; /* 独立合成层，避免 hover 时触发面板重绘 */
     contain: layout style;          /* 将 side-rail 的布局隔离在自身子树内，开放 paint 让 label 可溢出 */
 
@@ -2235,10 +2236,11 @@ export default {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    user-select: none;
     transition: background 0.16s ease, border-color 0.16s ease,
-        color 0.16s ease, box-shadow 0.14s cubic-bezier(0.2, 0.7, 0.3, 1),
-        opacity 0.35s cubic-bezier(0.32, 0.72, 0, 1),
-        transform 0.14s cubic-bezier(0.2, 0.7, 0.3, 1);
+        color 0.16s ease, box-shadow 0.14s cubic-bezier(0.25, 1.1, 0.4, 1),
+        opacity 0.35s cubic-bezier(0.25, 1.1, 0.4, 1),
+        transform 0.14s cubic-bezier(0.25, 1.1, 0.4, 1);
 
     /* 大圆：右中，始终可见 */
     &.large {
@@ -2253,7 +2255,7 @@ export default {
         -webkit-backdrop-filter: blur(12px);
         border: 1.5px solid rgba(59, 130, 246, 0.4);
         color: rgba(200, 220, 255, 0.9);
-        transition: transform 0.14s cubic-bezier(0.2, 0.7, 0.3, 1),
+        transition: transform 0.14s cubic-bezier(0.25, 1.1, 0.4, 1),
                     background-color 0.16s ease;
         z-index: 1;
 
@@ -2310,9 +2312,9 @@ export default {
         color: rgba(200, 220, 255, 0.65);
         opacity: 0;
         transform: scale(0);
-        transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1) 0.25s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.25s,
+        transition: opacity 0.3s cubic-bezier(0.25, 1.1, 0.4, 1) 0.25s, transform 0.4s cubic-bezier(0.25, 1.1, 0.4, 1) 0.25s,
             background 0.16s ease, border-color 0.16s ease,
-            color 0.16s ease, box-shadow 0.14s cubic-bezier(0.2, 0.7, 0.3, 1);
+            color 0.16s ease, box-shadow 0.14s cubic-bezier(0.25, 1.1, 0.4, 1);
 
         /* 水面自下而上灌满 */
         &::before {
@@ -2373,7 +2375,8 @@ export default {
     max-width: 0;
     overflow: hidden;
     pointer-events: none;
-    transition: opacity 0.3s ease, max-width 0.35s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s ease;
+    user-select: none;
+    transition: opacity 0.3s ease, max-width 0.35s cubic-bezier(0.25, 1.1, 0.4, 1), color 0.25s ease;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
@@ -2436,15 +2439,15 @@ export default {
   max-width: 0;
   overflow: hidden;
   flex-shrink: 0;
-  border-radius: 20px;
-  background: rgba(5, 18, 42, 0.78);
-  border: 1px solid rgba(0, 180, 240, 0.1);
-  border-right-color: rgba(0, 180, 240, 0.05);
+  border-radius: 24px 0 0 24px; /* 右侧平直，与面板无缝融合 */
+  background: rgba(5, 18, 42, 0.38); /* 与 panel-shell 统一 */
+  border: 1px solid rgba(0, 180, 240, 0.12); /* 与 panel-shell 统一 */
+  border-right: none; /* 去除右边框，避免接缝 */
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   opacity: 0;
-  transition: max-width 0.02s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.02s ease;
+  transition: max-width 0.4s cubic-bezier(0.25, 1.1, 0.4, 1), opacity 0.35s ease;
   align-self: stretch;
 
   &.open {
@@ -2468,8 +2471,10 @@ export default {
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: 20px;
-    background: linear-gradient(135deg, rgba(0, 180, 240, 0.04) 0%, transparent 50%);
+    border-radius: 24px 0 0 24px;
+    background:
+        radial-gradient(ellipse at 25% 15%, rgba(96, 165, 250, 0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 75% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 45%);
     pointer-events: none;
     z-index: 0;
   }
@@ -2641,15 +2646,21 @@ export default {
 
 /* 亮色主题 — conv */
 .theme-light .conv-list-panel {
-    background: rgba(255, 255, 255, 0.7);
-    border-color: rgba(0, 0, 0, 0.12);
-    border-right-color: rgba(0, 0, 0, 0.06);
+    background: linear-gradient(150deg,
+        rgba(235, 245, 255, 0.88) 0%,
+        rgba(245, 240, 255, 0.82) 50%,
+        rgba(255, 240, 245, 0.78) 100%); /* 与 panel-shell 统一 */
+    border-color: rgba(255, 255, 255, 0.8); /* 与 panel-shell 统一 */
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .theme-light .conv-drawer-inner {
     &::before {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, transparent 50%);
+        background: radial-gradient(
+            ellipse at 30% 20%,
+            rgba(120, 170, 255, 0.1) 0%,
+            transparent 60%
+        );
     }
 }
 
@@ -2826,6 +2837,12 @@ export default {
 
 .docked .panel-shell {
     height: 100%;
+}
+
+/* drawer 打开时，panel 左侧与抽屉无缝对接 */
+.chat-wrapper.drawer-open .panel-shell {
+    border-radius: 0 24px 24px 0;
+    padding-left: 0;
 }
 
 /* 聊天面板 — 内核 */
@@ -4288,6 +4305,11 @@ export default {
         border-radius: 18px;
     }
 
+    .chat-wrapper.drawer-open .panel-shell {
+        border-radius: 0 18px 18px 0;
+        padding-left: 0;
+    }
+
     .chat-panel {
         border-radius: 16px;
     }
@@ -4348,7 +4370,7 @@ export default {
 
     .conv-list-panel {
         --conv-list-width: 180px;
-        border-radius: 14px;
+        border-radius: 18px 0 0 18px;
     }
 
     .conv-panel-header {
@@ -4417,6 +4439,11 @@ export default {
         border-radius: 14px;
     }
 
+    .chat-wrapper.drawer-open .panel-shell {
+        border-radius: 0 14px 14px 0;
+        padding-left: 0;
+    }
+
     .chat-panel {
         border-radius: 12px;
     }
@@ -4478,7 +4505,7 @@ export default {
 
     .conv-list-panel {
         --conv-list-width: 160px;
-        border-radius: 10px;
+        border-radius: 14px 0 0 14px;
 
         .conv-drawer-inner {
             padding: 6px 8px;
