@@ -1,4 +1,4 @@
-# 金陵阡陌 — AI 助手 (Phase 11)
+# 金陵阡陌 — AI 助手 (Phase 12)
 
 无人机巡检智能平台前端，集成 AI 对话面板与可视化参数设置。
 
@@ -30,7 +30,50 @@ skyeye-ui/src/
     └── index.vue                  # 全局布局（挂载 ChatModel）
 ```
 
-## Phase 5 新增功能
+## Phase 12 新增功能
+
+### 灵动岛一体化控制中心
+
+`chat-header` 行被移除，所有头部功能收敛到灵动岛：
+
+- **紧凑默认态**: 32×32px 纯色实心圆（按模式蓝/红/琥珀），悬浮展开为胶囊 "● 金陵阡陌 ▾"
+- **下拉控制面板**: 点击展开毛玻璃卡片，包含标题信息 + 5 个操作按钮（动态效果 / 吸附 / 设置 / 清空 / 关闭）
+- **模式色全联动**: 圆点、展开态边框、光晕、下拉面板副标题、按钮栏分隔线均随 chat/query/summary 三模式切换
+- **淡入淡出动画**: `cubic-bezier(0.25, 1.1, 0.4, 1)` 弹簧缓动，`min-width`/`border-radius`/`opacity` 联合过渡
+
+### 手机外壳外观
+
+- **iOS 状态栏**: 时间 + 信号/WiFi/电池 SVG 图标（源自 ContraQuest 项目），14px top padding
+- **灵动岛同行**: 状态栏三区布局（时间 | 灵动岛 | 图标），Flex 居中
+- **设备级投影**: `panel-shell` 三层 `box-shadow` 模拟手机壳体厚度与圆角
+- **玻璃折射**: 定向光伪元素 `::before`/`::after` 模拟物理玻璃折射
+
+### 会话列表与面板一体化
+
+- **无缝边框**: 展开会话列表时，`panel-shell` 左侧 `border-left: none`，由 `conv-list-panel` 承接上-左-下边框
+- **统一背景**: `conv-list-panel` 与 `panel-shell` 共用相同的多层渐变 + `backdrop-filter` + 光晕伪元素
+- **底部对齐**: `.chat-wrapper.drawer-open .panel-shell` 设置 `align-self: stretch`，消除底部错位
+
+### 四角缩放
+
+- 四个角落 (`br/bl/tr/tl`) 均支持拖拽缩放，各自正确的光标方向
+- 左侧/顶部方向缩放时同步移动面板位置，保持对侧/对边不动
+- 三角指示器颜色按暗/亮双主题适配
+
+### 点击外部收起至 FAB
+
+- `document mousedown` 监听，点击 `.chat-wrapper` 外部 → `closeChat()` 返回悬浮按钮
+- docked 模式下不触发（嵌入页面时不收起）
+- 与灵动岛下拉关闭共用同一 `_onDocMouseDown` 事件
+
+### 欢迎区重构
+
+- 统一静态能力列表，列出三种模式及核心能力（对话/数据查询/智能摘要）
+- 引导文案全部指向灵动岛："点击顶部灵动岛可展开控制面板"
+
+---
+
+## 历史功能摘要
 
 ### AI 对话面板 (`ChatModel.vue`)
 
@@ -38,7 +81,7 @@ skyeye-ui/src/
 - **工具调用**: LLM 可通过 `navigate_page`、`map_action`、`lookup_task`、`query_data` 四个工具控制系统行为
 - **流式渲染**: SSE 流式响应 + 打字机效果 + 阶段指示器（理解中/查询中/生成中）
 - **交互增强**: 拖拽定位、右下吸附 (dock)、四角缩放、侧栏快捷操作、Cmd+K 快捷键
-- **视觉系统**: iOS 26 Liquid Glass 双层玻璃 (panel-shell + chat-panel)、backdrop-filter 模糊、多模式光晕
+- **视觉系统**: iOS Liquid Glass 双层玻璃 (panel-shell + chat-panel)、backdrop-filter 模糊、多模式光晕
 - **无障碍**: focus-visible 键盘导航、aria-label、prefers-reduced-motion、reduceMotion 手动开关
 
 ### AI 设置页 (`aiSettings/index.vue`)
@@ -48,25 +91,27 @@ skyeye-ui/src/
 - **对话默认**: 三模式默认选择、自动摘要开关、减少动态效果、组合快捷键参考
 - **数据持久化**: localStorage 双向同步，ChatModel 和设置页共享 `skyeye_ai_settings` 键
 - **从聊天打开设置**: LLM 意图推理 `navigate_page` → 设置页返回自动恢复聊天面板（sessionStorage 闭环）
-- **视觉系统**: WebGL 极光着色器 + CSS 呼吸光斑 + 噪声纹理 + 双层玻璃卡片 (pod-shell/pod-core)
+- **视觉系统**: WebGL 极光着色器 + CSS 氛围光斑 + 便当盒网格 + 双层玻璃卡片
 - **工具提示**: 自定义 tooltip 气泡，支持防出界对齐
+- **滚动词条**: Hallmark Ft8 风格水平无限滚动跑马灯，三模式颜色联动
+- **滚动触发布局入场**: `IntersectionObserver` 逐个触发卡片入场动画
 
 ### 设计 Token (`cyber-tokens.css`)
 
+- 92 个语义 Token 8 大类（文本/玻璃/边框/模式色/光晕/模糊/交互态/组件级+投影），亮暗双主题自动切换
 - `--app-accent` (indigo #6366f1) 统一主色调
 - `--radius-sm/md/lg/xl/2xl` 六级圆角弹性系统
-- `--font-mono` 代码/数据等宽字体栈
 
-### 修复记录
+## 修复记录
 
-#### Phase 5
+### Phase 5
 - Dock 模式下滚动条出现导致右侧缩进 → 锁定 `.chat-panel.docked` 宽度
 - tooltip 被 `.pod-core` overflow:hidden 裁剪 → 移除 overflow 限制 + 右侧防出界对齐
 - 导航清空对话历史 → 改为保留历史 + FAB badge 指示
 - 打字机动画在 reduceMotion 下仍播放 → 跳过动画直接渲染
 - 工具调用空白 assistant 消息残留 → 导航分支清理中间消息
 
-#### Phase 6 鲁棒性加固
+### Phase 6 鲁棒性加固
 
 - **13 项生命周期清理**: `beforeDestroy` 中 AbortController.abort() / GSAP killTweensOf / 定时器清理 / WebGL rAF 取消 / copyTimer / mapDispatchTimer
 - **fetch 60s 硬超时**: setTimeout + AbortController，防止请求永久挂起
@@ -76,62 +121,52 @@ skyeye-ui/src/
 - **`savePrefs` 300ms 防抖**: 快速拖 slider 只写一次 localStorage
 - **输入防护**: textarea `maxlength=5000` + 字符计数提示 + trim 空消息拦截
 
-#### Phase 6 交互增强
+### Phase 6 交互增强
 
-- **工具冲突裁决**: 四个工具 (`navigate_page`/`map_action`/`lookup_task`/`query_data`) 互相引反例 + 后端 5 条裁决规则；消除"数据概览"→误跳页面的歧义
-- **三层并发锁**: 动画锁 (模式切换/dock 400ms) + 发送锁 (防重复提交) + streaming watcher 自动释放
-- **多模式用户气泡**: 用户消息随 chat(蓝)/query(红)/summary(琥珀) 模式变色，亮暗双主题适配
-- **eyebrow 排版修复**: 去 uppercase + 字号 11→12px + letter-spacing 收紧
+- **工具冲突裁决**: 四个工具互相引反例 + 后端 5 条裁决规则
+- **三层并发锁**: 动画锁 + 发送锁 + streaming watcher 自动释放
+- **多模式用户气泡**: 用户消息随模式变色，亮暗双主题适配
 
-#### Phase 7 液玻璃视觉重塑 & 引导式 Onboarding
+### Phase 7 液玻璃视觉重塑 & 引导式 Onboarding
 
-- **侧栏渐进式引导**: 前 3 次打开面板展示圆点 + 文字标签（会话/对话/设置），大圆呼吸脉冲，localStorage 持久化计数，3 次后回归 hover-only
-- **欢迎区重构**: 机器人图标居中 → 能力列表（3 条业务说明）→ 分割线 → 操作提示
-- **液玻璃背景**: 深色模式用径向光球替代 linear-gradient，亮色模式用微渐变底色解决"白上叠白"
-- **定向光叠加层**: panel-shell/chat-header/chat-footer/消息气泡各加 `::before` 线性光伪元素
-- **玻璃折射高光线**: `box-shadow` 双层 inset（顶部高光 + 底部暗边）
-- **输入框聚焦光环**: `focus-within` 扩散光晕 + `scale(1.008)`
-- **响应式硬约束**: `max-width: calc(100vw - 64px)` 防止面板被挤出
-- **fab badge 修复**: `lastReadMsgCount` 替代 `visible` 判断
+- **侧栏渐进式引导**: 前 3 次打开面板展示圆点 + 文字标签，大圆呼吸脉冲
+- **液玻璃背景**: 径向光球替代 linear-gradient
+- **定向光叠加层**: 各容器 `::before` 线性光伪元素
 
-#### Phase 8 设计 Token 体系化 & Surface 深度层次
+### Phase 8 设计 Token 体系化 & Surface 深度层次
 
-- **AI 语义 Token 体系**: 92 个 Token 8 大类（文本/玻璃/边框/模式色/光晕/模糊/交互态/组件级+投影），亮暗双主题自动切换
-- **硬编码值 Token 化**: ChatModel 16 处 + aiSettings 51 处硬编码值替换为语义 Token
-- **WCAG AA 对比度**: aiSettings 暗色模式 16 处文本颜色提升至 ≥4.5:1 (正文) / ≥3:1 (辅助)
-- **Surface 深度层次**: 卡片 hover 抬升 (translateY -2px)、bg-orb 滚动视差、消息区景深渐变 (.chat-body)
-- **气泡顶部高光条**: `.msg-content::after` 1px 光线掠射
-- **发送按钮居中**: `.chat-send-btn` 添加 `align-self: center`
+- **92 个语义 Token**: 8 大类，亮暗双主题自动切换
+- **WCAG AA 对比度**: aiSettings 暗色模式 16 处文本 ≥4.5:1
+- **Surface 深度层次**: 卡片 hover 抬升、消息区景深渐变
 
-#### Phase 9 微交互润色 & 视觉瘦身
+### Phase 9 微交互润色 & 视觉瘦身
 
-- **FAB 数字徽章**: 红色圆点 → 数字胶囊 (99+ 截断)，直观显示未读消息数
-- **FAB 生成中呼吸微光**: `fab-glow` 按模式变色呼吸光效 (chat 蓝 / query 红 / summary 琥珀)，`reduce-motion` 禁用
-- **FAB 光标与反馈**: 默认 `grab` / 拖拽 `grabbing`，`:active` scale(0.95)，`focus-visible` 聚焦环
-- **侧栏"水面灌满"**: 大圆/小圆 `::before` 伪元素 `clip-path` 动画，hover 自下而上灌满纯色填充
-- **侧栏 focus-visible**: `outline: 3px solid color-mix(...)` 圆环聚焦轮廓
-- **侧栏标签**: 字体 Plus Jakarta Sans，字号 11→12px，letter-spacing -0.01em
-- **回到底部胶囊化**: 圆形 36px → 胶囊 32px，hover 展开"最新"文字标签
-- **切换会话保留列表**: `switchConversation` 不再自动关闭会话列表面板
-- **亮色侧栏模式色**: 亮色主题下查询/摘要模式侧栏大圆 background + border-color 按模式适配
-- **过渡时长优化**: FAB/侧栏 hover/active transition 从 0.55s→0.35s，内耗项 0.25s→0.16s
-- **移除呼吸光斑系统**: aiSettings 删除 3 个 `bg-orb` + `noise-overlay` + 滚动视差 rAF + `@keyframes orb-breathe`
-- **亮色氛围光替代**: `.light-gradient-overlay` 纯 CSS 渐变层，零 JS 零动画
+- **FAB 数字徽章**: 未读消息数字胶囊 (99+ 截断)
+- **FAB 生成中呼吸微光**: 按模式变色
+- **侧栏"水面灌满"**: clip-path 动画
+- **回到底部胶囊化**: hover 展开"最新"标签
+- **移除呼吸光斑系统**: 删除 3 个 bg-orb + noise-overlay + 滚动视差 rAF
 
-#### Phase 10 页面装饰系统 & 滚动触发入场
+### Phase 10 页面装饰系统 & 滚动触发入场
 
-- **滚动词条**: Hallmark Ft8 风格水平无限滚动跑马灯，页面顶部紧贴，三模式颜色联动，`backdrop-filter` 玻璃底座 + 双层边框 + 文字发光
-- **氛围光斑**: 4 个固定定位高斯模糊光斑分布于页面四角，`filter: blur(100px)`，三模式颜色联动 1.2s 过渡，亮暗双主题适配
-- **滚动触发布局入场**: `IntersectionObserver` 替代全量一次性幕布揭示，卡片滚入视口时逐个触发 `curtain-revealed` 动画
-- **静态资源补全**: Leaflet/SuperMap 文件复制到 `public/static/lib/cdn/`，解决 404 错误
+- **滚动词条**: Hallmark Ft8 风格跑马灯，三模式颜色联动
+- **氛围光斑**: 4 个固定定位 blur(100px) 光斑，三模式颜色联动
+- **滚动触发布局入场**: IntersectionObserver 逐个触发
 
-#### Phase 11 模式欢迎语 & 停止生成补充 & 地图跳转修复
+### Phase 11 模式欢迎语 & 停止生成补充 & 地图跳转修复
 
-- **三模式欢迎语**: `chatMode` 联动欢迎区能力列表和底部提示，对话/查询/摘要各自展示实际可用功能
-- **手动停止对话补充**: 有部分文本追加 `…[已停止]`，无文本插入"已停止生成"，保持 user/assistant 交替，对话逻辑完整
-- **导航消息兼容**: `_skipContext` 标记消息替换为"收到"而非过滤，保证 user/assistant 交替，LLM 不混淆历史
-- **地图跳转 timer 修复**: ChatModel `_mapDispatchTimer` 设置前清除旧 timer，防止连续查询地名时事件丢失
-- **侧栏动画优化**: softSpring 缓动曲线 (`cubic-bezier(0.25,1.1,0.4,1)`) 应用到折叠/展开逻辑，会话列表抽屉与面板融为一体无间隙
+- **三模式欢迎语**: chatMode 联动欢迎区能力列表和底部提示
+- **手动停止对话补充**: 追加 `…[已停止]` / "已停止生成"
+- **导航消息兼容**: `_skipContext` 标记消息替换为"收到"
+- **地图跳转 timer 修复**: 设置前清除旧 timer
+
+### Phase 12 灵动岛 & 手机外壳 & 一体化会话抽屉
+
+- **灵动岛一体化**: 聊天头部功能全部收敛至灵动岛（小圆→胶囊→下拉面板），模式色全联动
+- **手机外壳外观**: iOS 状态栏（时间 + 信号/WiFi/电池） + 设备级投影 + 玻璃折射
+- **会话列表一体化**: 与面板无缝融合（统一背景/边框/光效），底部对齐
+- **四角缩放**: 四个角落均可拖拽缩放
+- **点击外部收起**: 点击 ChatModel 外部自动返回 FAB
 
 ## 快速开始
 

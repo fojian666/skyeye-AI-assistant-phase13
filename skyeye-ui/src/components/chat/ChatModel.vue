@@ -117,27 +117,54 @@
                     role="dialog"
                     aria-label="AI 助手对话窗口"
                     :aria-modal="docked">
-                    <!-- 头部 -->
-                    <div class="chat-header" @mousedown="startDrag">
-                        <div class="chat-header-left">
-                            <span class="chat-logo-icon"
-                                ><svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="24"
-                                    height="24"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
+                    <!-- 上半部分拖拽区域 -->
+                    <div class="phone-top-section" @mousedown="startDrag">
+                    <!-- iOS 状态栏 + 灵动岛（同行） -->
+                    <div class="phone-status-bar">
+                        <span class="sb-time">{{ currentTime }}</span>
+                        <div
+                            class="dynamic-island"
+                            :class="[chatMode, { streaming, expanded: diExpanded }]"
+                            @mousedown.stop
+                            @click="toggleDynamicIsland"
+                            role="button"
+                            :aria-expanded="diExpanded"
+                            aria-label="展开面板菜单">
+                            <span class="di-dot"></span>
+                            <span class="di-label">金陵阡陌</span>
+                            <span class="di-chevron" :class="{ rotated: diExpanded }">
+                                <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                                    <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <span class="sb-icons">
+                            <svg class="sb-icon sb-signal" width="20" height="13" viewBox="0 0 20 13" fill="none">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M19.2 1.146C19.2 0.513 18.722 0 18.133 0H17.067C16.478 0 16 0.513 16 1.146v9.934c0 .633.478 1.146 1.067 1.146h1.066c.589 0 1.067-.513 1.067-1.146V1.146zM11.766 2.445h1.067c.589 0 1.066.526 1.066 1.174v7.434c0 .648-.477 1.173-1.066 1.173h-1.067c-.589 0-1.066-.525-1.066-1.173V3.619c0-.648.477-1.174 1.066-1.174zM7.434 5.094H6.367c-.589 0-1.066.533-1.066 1.189v4.755c0 .656.477 1.188 1.066 1.188h1.067c.589 0 1.066-.532 1.066-1.188V6.283c0-.656-.477-1.189-1.066-1.189zM2.133 7.54H1.067C.478 7.54 0 8.064 0 8.711v2.344c0 .647.478 1.171 1.067 1.171h1.066c.59 0 1.067-.524 1.067-1.171V8.711c0-.647-.478-1.172-1.067-1.172z" fill="currentColor"/>
+                            </svg>
+                            <svg class="sb-icon sb-wifi" width="18" height="13" viewBox="0 0 18 13" fill="none">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M8.571 2.466c2.487 0 4.88.922 6.682 2.576a.305.305 0 0 0 .486-.004l1.298-1.263a.3.3 0 0 0-.003-.494C12.303-1.094 4.839-1.094.108 3.281a.3.3 0 0 0-.003.494l1.298 1.263a.306.306 0 0 0 .486.004c1.803-1.654 4.195-2.576 6.682-2.576zm-.003 4.22c1.357 0 2.666.512 3.672 1.436a.307.307 0 0 0 .483-.006l1.287-1.32a.3.3 0 0 0-.005-.519c-3.064-2.89-7.809-2.89-10.872 0a.3.3 0 0 0-.005.52l1.287 1.319a.307.307 0 0 0 .483.006c1.005-.923 2.313-1.435 3.67-1.436zm2.524 2.794a.278.278 0 0 1-.102.28l-2.177 2.455a.316.316 0 0 1-.483 0l-2.177-2.455a.278.278 0 0 1 .01-.556c1.39-1.314 3.426-1.314 4.817 0a.278.278 0 0 1 .112.276z" fill="currentColor"/>
+                            </svg>
+                            <svg class="sb-icon sb-battery" width="28" height="13" viewBox="0 0 28 13" fill="none">
+                                <rect opacity=".35" x="0.5" y="0.5" width="24" height="12" rx="3.8" stroke="currentColor"/>
+                                <path opacity=".4" d="M26 4.78v4.076c.805-.345 1.328-1.148 1.328-2.038s-.523-1.693-1.328-2.038" fill="currentColor"/>
+                                <rect x="2" y="2" width="21" height="9" rx="2.5" fill="currentColor"/>
+                            </svg>
+                        </span>
+                    </div>
+                    <!-- 灵动岛下拉面板 -->
+                    <div v-if="diExpanded" class="di-dropdown" :class="chatMode" @mousedown.stop>
+                        <div class="di-dd-header">
+                            <span class="di-dd-logo">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M12 8V4H8" />
                                     <rect width="16" height="12" x="4" y="8" rx="2" />
                                     <path d="M2 14h2" />
                                     <path d="M20 14h2" />
                                     <path d="M15 13v2" />
-                                    <path d="M9 13v2" /></svg
-                            ></span>
+                                    <path d="M9 13v2" />
+                                </svg>
+                            </span>
                             <div>
                                 <strong>金陵阡陌 AI 助手</strong>
                                 <small>
@@ -147,120 +174,26 @@
                                 </small>
                             </div>
                         </div>
-                        <div class="chat-header-right">
-                            <button
-                                class="chat-btn-icon"
-                                :title="reduceMotion ? '启用动态效果' : '减少动态效果'"
-                                @click="reduceMotion = !reduceMotion"
-                                aria-label="切换动态效果">
-                                <svg
-                                    v-if="reduceMotion"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <polygon points="6 3 20 12 6 21 6 3" />
-                                </svg>
-                                <svg
-                                    v-else
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <rect x="6" y="4" width="4" height="16" />
-                                    <rect x="14" y="4" width="4" height="16" />
-                                </svg>
+                        <div class="di-dd-actions">
+                            <button class="chat-btn-icon" :title="reduceMotion ? '启用动态效果' : '减少动态效果'" @click="reduceMotion = !reduceMotion" aria-label="切换动态效果">
+                                <svg v-if="reduceMotion" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3" /></svg>
+                                <svg v-else xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
                             </button>
                             <button class="chat-btn-icon" :title="docked ? '取消吸附' : '吸附到右侧'" @click="docked = !docked" aria-label="切换吸附">
-                                <svg
-                                    v-if="docked"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="m12 19-7-7 7-7" />
-                                    <path d="M19 12H5" />
-                                </svg>
-                                <svg
-                                    v-else
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="m12 5 7 7-7 7" />
-                                    <path d="M5 12h14" />
-                                </svg>
+                                <svg v-if="docked" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>
+                                <svg v-else xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 5 7 7-7 7" /><path d="M5 12h14" /></svg>
                             </button>
                             <button class="chat-btn-icon" title="AI 助手设置" @click="openSettings" aria-label="AI 助手设置">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path
-                                        d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-                                    <circle cx="12" cy="12" r="3" />
-                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>
                             </button>
                             <button class="chat-btn-icon" title="清空对话" @click="clearMessages" aria-label="清空对话">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M3 6h18" />
-                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                    <line x1="10" y1="11" x2="10" y2="17" />
-                                    <line x1="14" y1="11" x2="14" y2="17" />
-                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
                             </button>
                             <button class="chat-btn-icon" title="关闭" @click="closeChat" aria-label="关闭面板">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M18 6 6 18" />
-                                    <path d="m6 6 12 12" />
-                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                             </button>
                         </div>
+                    </div>
                     </div>
 
                     <!-- 消息列表 -->
@@ -304,35 +237,14 @@
                                 </svg>
                             </div>
                             <p>你好！我是金陵阡陌 AI 助手</p>
-                            <span class="welcome-intro">
-                                <template v-if="chatMode === 'chat'">当前为对话模式，我可以帮你：</template>
-                                <template v-else-if="chatMode === 'query'">当前为数据查询模式，我可以帮你：</template>
-                                <template v-else>当前为智能摘要模式，我可以帮你：</template>
-                            </span>
-                            <ul v-if="chatMode === 'chat'" class="welcome-capabilities">
-                                <li>导航定位：带你去指定地点查看地图</li>
-                                <li>页面跳转：打开航线、任务、全景等页面</li>
-                                <li>任务查询：查找巡检任务和检测数据</li>
-                                <li>通用问答：解答巡检业务相关问题</li>
-                            </ul>
-                            <ul v-else-if="chatMode === 'query'" class="welcome-capabilities">
+                            <span class="welcome-intro">点击顶部灵动岛可展开控制面板，如需切换功能模式：</span>
+                            <ul class="welcome-capabilities">
+                                <li>对话模式：导航定位、任务查询、通用问答</li>
                                 <li>数据查询：统计分析航线、任务、异常数据</li>
-                                <li>导航定位：带你去指定地点查看地图</li>
-                                <li>页面跳转：打开航线、任务、全景等页面</li>
-                                <li>任务查询：查找当前检测任务详情</li>
-                            </ul>
-                            <ul v-else class="welcome-capabilities">
-                                <li>综合摘要：对选中要素自动生成分析报告</li>
-                                <li>风险评估：识别高风险区域和异常指标</li>
-                                <li>进度跟踪：汇总整体完成情况和瓶颈</li>
-                                <li>决策建议：基于数据提供下一步行动建议</li>
+                                <li>智能摘要：对选中要素自动生成分析报告</li>
                             </ul>
                             <hr class="welcome-sep" />
-                            <span class="welcome-tips">
-                                <template v-if="chatMode === 'chat'">💡 试试下方快捷提问，或直接说出你的需求；左侧圆点可切换模式和会话</template>
-                                <template v-else-if="chatMode === 'query'">💡 试试下方快捷提问，或直接输入数据查询需求；左侧圆点可切换模式和会话</template>
-                                <template v-else>💡 先在数据页选中要素，然后试试下方快捷提问；左侧圆点可切换模式和会话</template>
-                            </span>
+                            <span class="welcome-tips">💡 试试下方快捷提问，或点击顶部灵动岛展开更多设置</span>
                             <div class="quick-questions">
                                 <button v-for="q in quickQuestions" :key="q" @click="sendQuick(q)">{{ q }}</button>
                             </div>
@@ -561,8 +473,14 @@
                         </div>
                     </div>
 
-                    <!-- 拖拽缩放把手 -->
-                    <div class="resize-handle" @mousedown.prevent="startResize"></div>
+                    <!-- 四角拖拽缩放把手 -->
+                    <div class="resize-handle resize-handle-br" @mousedown.prevent="startResize($event, 'br')"></div>
+                    <div class="resize-handle resize-handle-bl" @mousedown.prevent="startResize($event, 'bl')"></div>
+                    <div class="resize-handle resize-handle-tr" @mousedown.prevent="startResize($event, 'tr')"></div>
+                    <div class="resize-handle resize-handle-tl" @mousedown.prevent="startResize($event, 'tl')"></div>
+
+                    <!-- 手机 Home Indicator -->
+                    <div class="phone-home-indicator"></div>
                 </div>
             </div>
 
@@ -803,13 +721,15 @@ export default {
             dragPos: { xPct: null, yPct: null },  // 百分比位置 (0-1)，窗口缩放自适应
             dragStart: { x: 0, y: 0, elX: 0, elY: 0 },
             docked: false,
+            diExpanded: false,
             sideRailVisible: false,
             sideRailHovered: false,
             panelW: Math.min(window.innerWidth * 0.27, 560),  // 与 CSS clamp(400,27vw,560) 对齐
             panelH: Math.min(window.innerHeight * 0.78, Math.min(window.innerHeight * 0.85, 900)),
             // CSS height clamp = min(85vh, 900), init = 78vh
             resizing: false,
-            resizeStart: { x: 0, y: 0, w: 0, h: 0 },
+            resizeCorner: 'br',
+            resizeStart: { x: 0, y: 0, w: 0, h: 0, left: 0, top: 0 },
             chatQuickQuestions: ['带我去南京鼓楼区看看', '帮我打开航线规划页面', '当前有哪些检测任务？'],
             queryQuickQuestions: ['当前页面数据概览', '最近有哪些异常情况？', '按状态分类统计'],
             summaryQuickQuestions: ['有哪些高风险项？', '整体完成进度如何？', '下一步建议怎么做？'],
@@ -852,6 +772,12 @@ export default {
     },
     computed: {
         ...mapState({ theme: (state) => state.theme }),
+        currentTime() {
+            const now = new Date();
+            const h = now.getHours().toString().padStart(2, '0');
+            const m = now.getMinutes().toString().padStart(2, '0');
+            return `${h}:${m}`;
+        },
         /** side-rail 渐进引导阶段：前 3 次打开面板展示标签，之后永久隐藏 */
         onboardPhase() {
             return this.railOnboardCount < 3 ? 'onboard' : '';
@@ -925,12 +851,14 @@ export default {
         this._onResizeMove = this.onResizeMove.bind(this);
         this._onResizeEnd = this.onResizeEnd.bind(this);
         this._onKeydown = this.onKeydown.bind(this);
+        this._onDocMouseDown = this._onDocMouseDown.bind(this);
         document.addEventListener('mousemove', this._onDragMove);
         document.addEventListener('mouseup', this._onDragEnd);
         document.addEventListener('mousemove', this._onGlobalMouse);
         document.addEventListener('mousemove', this._onResizeMove);
         document.addEventListener('mouseup', this._onResizeEnd);
         document.addEventListener('keydown', this._onKeydown);
+        document.addEventListener('mousedown', this._onDocMouseDown);
         window.addEventListener('resize', this._onWindowResize);
         this._onStorage = (e) => {
             if (e.key === 'skyeye_rail_onboard') {
@@ -961,6 +889,7 @@ export default {
         document.removeEventListener('mousemove', this._onResizeMove);
         document.removeEventListener('mouseup', this._onResizeEnd);
         document.removeEventListener('keydown', this._onKeydown);
+        document.removeEventListener('mousedown', this._onDocMouseDown);
         window.removeEventListener('resize', this._onWindowResize);
         window.removeEventListener('storage', this._onStorage);
     },
@@ -1076,17 +1005,57 @@ export default {
         onDragEnd() {
             this.dragging = false;
         },
-        startResize(e) {
+        startResize(e, corner) {
             this.resizing = true;
-            this.resizeStart = { x: e.clientX, y: e.clientY, w: this.panelW, h: this.panelH };
+            this.resizeCorner = corner;
+            const panel = this.$refs.panel;
+            const rect = panel.getBoundingClientRect();
+            this.resizeStart = {
+                x: e.clientX,
+                y: e.clientY,
+                w: this.panelW,
+                h: this.panelH,
+                left: rect.left,
+                top: rect.top
+            };
         },
         onResizeMove(e) {
             if (!this.resizing) return;
             const dx = e.clientX - this.resizeStart.x;
             const dy = e.clientY - this.resizeStart.y;
-            // 范围与 CSS clamp(400,27vw,560) / clamp(480,85vh,900) 对齐
-            this.panelW = Math.min(window.innerWidth * 0.35, Math.max(360, this.resizeStart.w + dx));
-            this.panelH = Math.min(window.innerHeight * 0.85, Math.max(420, this.resizeStart.h + dy));
+            const corner = this.resizeCorner;
+            const minW = 360, maxW = Math.round(window.innerWidth * 0.35);
+            const minH = 420, maxH = Math.round(window.innerHeight * 0.85);
+            let newW = this.resizeStart.w;
+            let newH = this.resizeStart.h;
+            let newLeft = this.resizeStart.left;
+            let newTop = this.resizeStart.top;
+
+            if (corner[1] === 'r') {
+                newW = Math.max(minW, Math.min(maxW, this.resizeStart.w + dx));
+            } else {
+                // left-side: width changes opposite to mouse movement
+                const rawW = this.resizeStart.w - dx;
+                newW = Math.max(minW, Math.min(maxW, rawW));
+                newLeft = this.resizeStart.left + this.resizeStart.w - newW;
+            }
+            if (corner[0] === 'b') {
+                newH = Math.max(minH, Math.min(maxH, this.resizeStart.h + dy));
+            } else {
+                // top-side: height changes opposite to mouse movement
+                const rawH = this.resizeStart.h - dy;
+                newH = Math.max(minH, Math.min(maxH, rawH));
+                newTop = this.resizeStart.top + this.resizeStart.h - newH;
+            }
+
+            this.panelW = newW;
+            this.panelH = newH;
+            if (corner[1] === 'l' || corner[0] === 't') {
+                this.dragPos = {
+                    xPct: newLeft / window.innerWidth,
+                    yPct: newTop / window.innerHeight
+                };
+            }
         },
         onResizeEnd() {
             this.resizing = false;
@@ -1243,6 +1212,7 @@ export default {
         },
 
         closeChat() {
+            this.diExpanded = false;
             const panel = this.$refs.panel;
             if (panel && this.visible) {
                 const shell = panel.parentElement; // .panel-shell 外壳
@@ -1268,6 +1238,24 @@ export default {
                 this.docked = false;
                 this.convListVisible = false;
                 this.dragPos = { xPct: null, yPct: null };
+            }
+        },
+
+        toggleDynamicIsland() {
+            this.diExpanded = !this.diExpanded;
+        },
+
+        _onDocMouseDown(e) {
+            if (this.diExpanded) {
+                const island = this.$el.querySelector('.dynamic-island');
+                const dropdown = this.$el.querySelector('.di-dropdown');
+                if (!(island && island.contains(e.target)) && !(dropdown && dropdown.contains(e.target))) {
+                    this.diExpanded = false;
+                }
+            }
+            // 点击组件外部 → 收起至 FAB
+            if (this.visible && !this.docked && this.$el && !this.$el.contains(e.target)) {
+                this.closeChat();
             }
         },
 
@@ -2470,15 +2458,53 @@ export default {
   overflow: hidden;
   flex-shrink: 0;
   border-radius: 24px 0 0 24px; /* 右侧平直，与面板无缝融合 */
-  background: rgba(5, 18, 42, 0.38); /* 与 panel-shell 统一 */
-  border: 1px solid rgba(0, 180, 240, 0.12); /* 与 panel-shell 统一 */
+  background: linear-gradient(160deg,
+      rgba(18, 28, 52, 0.55) 0%,
+      rgba(10, 22, 44, 0.5) 40%,
+      rgba(8, 18, 36, 0.55) 100%); /* 与 panel-shell 完全一致 */
+  border: 1.5px solid rgba(100, 180, 255, 0.1); /* 与 panel-shell 统一 */
   border-right: none; /* 去除右边框，避免接缝 */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(28px) saturate(110%);
+  -webkit-backdrop-filter: blur(28px) saturate(110%);
+  box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   opacity: 0;
   transition: max-width 0.4s cubic-bezier(0.25, 1.1, 0.4, 1), opacity 0.35s ease;
   align-self: stretch;
+  position: relative;
+
+  /* 装饰光晕（与 panel-shell 统一） */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+        radial-gradient(ellipse at 25% 15%, rgba(120, 180, 255, 0.1) 0%, transparent 45%),
+        radial-gradient(ellipse at 70% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* 斜向金属高光 */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.04) 0%,
+        transparent 35%,
+        transparent 65%,
+        rgba(255, 255, 255, 0.02) 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
 
   &.open {
     max-width: var(--conv-list-width);
@@ -2494,20 +2520,6 @@ export default {
   display: flex;
   flex-direction: column;
   padding: 20px 18px 18px;
-  position: relative;
-
-  /* 装饰光晕 */
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 24px 0 0 24px;
-    background:
-        radial-gradient(ellipse at 25% 15%, rgba(96, 165, 250, 0.12) 0%, transparent 50%),
-        radial-gradient(ellipse at 75% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 45%);
-    pointer-events: none;
-    z-index: 0;
-  }
 
   > * {
     position: relative;
@@ -2676,21 +2688,28 @@ export default {
 
 /* 亮色主题 — conv */
 .theme-light .conv-list-panel {
-    background: linear-gradient(150deg,
-        rgba(235, 245, 255, 0.88) 0%,
-        rgba(245, 240, 255, 0.82) 50%,
-        rgba(255, 240, 245, 0.78) 100%); /* 与 panel-shell 统一 */
-    border-color: rgba(255, 255, 255, 0.8); /* 与 panel-shell 统一 */
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
+    background: linear-gradient(160deg,
+        rgba(245, 245, 250, 0.82) 0%,
+        rgba(238, 242, 250, 0.78) 40%,
+        rgba(242, 238, 248, 0.8) 100%); /* 与 panel-shell 完全一致 */
+    border-color: rgba(180, 200, 230, 0.25); /* 与 panel-shell 统一 */
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
 
-.theme-light .conv-drawer-inner {
     &::before {
         background: radial-gradient(
-            ellipse at 30% 20%,
-            rgba(120, 170, 255, 0.1) 0%,
-            transparent 60%
+            ellipse at 25% 15%,
+            rgba(140, 180, 240, 0.08) 0%,
+            transparent 55%
         );
+    }
+
+    &::after {
+        background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.3) 0%,
+            transparent 35%,
+            transparent 65%,
+            rgba(255, 255, 255, 0.1) 100%);
     }
 }
 
@@ -2834,23 +2853,29 @@ export default {
     }
 }
 
-/* —— 外壳：铝合金托盘 + 面板内核（Double-Bezel） —— */
+/* —— 外壳：手机轮廓（Phone Shell · ContraQuest-inspired） —— */
 .panel-shell {
     position: relative;
-    flex: 1 1 auto; /* 抽屉打开时等比收缩，不被挤出 */
-    min-width: clamp(260px, 16vw, 360px); /* 最小面板宽，防止被压扁 */
-    padding: 4px;
-    border-radius: 24px;
-    background: rgba(5, 18, 42, 0.38);
-    border: 1px solid rgba(0, 180, 240, 0.12);
-    backdrop-filter: var(--ai-blur-shell);
-    -webkit-backdrop-filter: var(--ai-blur-shell);
+    flex: 1 1 auto;
+    min-width: clamp(260px, 16vw, 360px);
+    padding: 5px;
+    border-radius: 48px;
+    background: linear-gradient(160deg,
+        rgba(18, 28, 52, 0.55) 0%,
+        rgba(10, 22, 44, 0.5) 40%,
+        rgba(8, 18, 36, 0.55) 100%);
+    border: 1.5px solid rgba(100, 180, 255, 0.1);
+    backdrop-filter: blur(28px) saturate(110%);
+    -webkit-backdrop-filter: blur(28px) saturate(110%);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.1),
-        /* 顶部折射高光 */
-        inset 0 -1px 0 rgba(0, 0, 0, 0.18),
-        /* 底部暗边 */
-        0 16px 56px rgba(0, 0, 0, 0.6);
+        0 32px 64px rgba(0, 0, 0, 0.45),
+        0 16px 32px rgba(0, 0, 0, 0.3),
+        0 8px 16px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+    transition:
+        border-radius 0.3s cubic-bezier(0.25, 1.1, 0.4, 1),
+        box-shadow 0.35s cubic-bezier(0.25, 1.1, 0.4, 1);
 
     &::before {
         content: '';
@@ -2858,8 +2883,23 @@ export default {
         inset: 0;
         border-radius: inherit;
         background:
-            radial-gradient(ellipse at 25% 15%, rgba(96, 165, 250, 0.12) 0%, transparent 50%),
-            radial-gradient(ellipse at 75% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 45%);
+            radial-gradient(ellipse at 20% 12%, rgba(120, 180, 255, 0.1) 0%, transparent 45%),
+            radial-gradient(ellipse at 78% 85%, rgba(139, 92, 246, 0.06) 0%, transparent 40%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* 斜向金属高光 */
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.04) 0%,
+            transparent 35%,
+            transparent 65%,
+            rgba(255, 255, 255, 0.02) 100%);
         pointer-events: none;
         z-index: 0;
     }
@@ -2871,17 +2911,22 @@ export default {
 
 /* drawer 打开时，panel 左侧与抽屉无缝对接 */
 .chat-wrapper.drawer-open .panel-shell {
-    border-radius: 0 24px 24px 0;
+    border-radius: 0 48px 48px 0;
     padding-left: 0;
+    border-left: none;
+    align-self: stretch;
+}
+.chat-wrapper.drawer-open .chat-panel {
+    border-radius: 0 42px 42px 0;
 }
 
-/* 聊天面板 — 内核 */
+/* 聊天面板 — 手机屏幕 */
 .chat-panel {
     position: relative;
     box-sizing: border-box;
     max-width: clamp(400px, 27vw, 560px);
     max-height: clamp(480px, 85vh, 900px);
-    border-radius: 20px;
+    border-radius: 42px;
     background: rgba(4, 16, 36, 0.42);
     backdrop-filter: blur(44px) saturate(125%);
     -webkit-backdrop-filter: blur(44px) saturate(125%);
@@ -2954,15 +2999,6 @@ export default {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 24px rgba(239, 68, 68, 0.08);
     transition: border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.chat-wrapper.query-mode .chat-header {
-    background: rgba(239, 68, 68, 0.08);
-    border-bottom-color: rgba(239, 68, 68, 0.12);
-    transition: background 0.3s 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.chat-wrapper.query-mode .chat-header-left small {
-    color: var(--ai-mode-query) !important;
-    transition: color 0.25s 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
 .chat-wrapper.query-mode .chat-footer {
     border-top-color: rgba(239, 68, 68, 0.12);
     transition: border-color 0.3s 0.05s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2997,15 +3033,6 @@ export default {
     border-color: var(--ai-mode-summary-dark);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 24px rgba(245, 158, 11, 0.08);
     transition: border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.chat-wrapper.summary-mode .chat-header {
-    background: rgba(245, 158, 11, 0.08);
-    border-bottom-color: rgba(245, 158, 11, 0.12);
-    transition: background 0.3s 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.chat-wrapper.summary-mode .chat-header-left small {
-    color: var(--ai-mode-summary) !important;
-    transition: color 0.25s 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .chat-wrapper.summary-mode .chat-footer {
     border-top-color: rgba(245, 158, 11, 0.12);
@@ -3085,62 +3112,481 @@ export default {
     }
 }
 
-/* 头部 — 毛玻璃顶栏 */
-.chat-header {
-    position: relative;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 18px;
-    border-bottom: 1px solid rgba(0, 180, 240, 0.08);
-    background: rgba(3, 12, 28, 0.85);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    user-select: none;
-    transition: background 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-
-    &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, transparent 60%);
-        pointer-events: none;
-    }
+/* ===== 上半部分拖拽区域 ===== */
+.phone-top-section {
+    flex-shrink: 0;
+    cursor: grab;
 
     &:active {
         cursor: grabbing;
     }
 }
 
-.chat-header-left {
+/* ===== iOS 状态栏 ===== */
+.phone-status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 6px;
+    color: rgba(255, 255, 255, 0.92);
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    z-index: 10;
+    user-select: none;
+    flex-shrink: 0;
+    cursor: grab;
+}
+
+.sb-time {
+    flex: 0 0 54px;
+    font-size: 15px;
+    font-weight: 590;
+    line-height: 20px;
+    text-align: left;
+}
+
+.sb-icons {
+    flex: 0 0 74px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+}
+
+.sb-icon {
+    flex-shrink: 0;
+    opacity: 1;
+}
+
+.sb-signal {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.sb-wifi {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.sb-battery {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* 浅色主题 */
+.theme-light .phone-status-bar {
+    color: rgba(15, 23, 42, 0.8);
+}
+
+.theme-light .sb-signal,
+.theme-light .sb-wifi,
+.theme-light .sb-battery {
+    color: rgba(15, 23, 42, 0.8);
+}
+
+/* 窄屏缩小状态栏字体 */
+@media (max-width: 480px) {
+    .phone-status-bar {
+        padding: 10px 14px 4px;
+    }
+    .sb-time {
+        flex: 0 0 46px;
+        font-size: 13px;
+    }
+    .sb-icons {
+        flex: 0 0 62px;
+        gap: 5px;
+    }
+    .sb-signal { width: 14px; height: 10px; }
+    .sb-wifi   { width: 14px; height: 10px; }
+    .sb-battery { width: 22px; height: 11px; }
+}
+
+@media (max-width: 375px) {
+    .phone-status-bar {
+        padding: 8px 10px 2px;
+    }
+    .sb-time {
+        flex: 0 0 40px;
+        font-size: 12px;
+    }
+    .sb-icons {
+        flex: 0 0 56px;
+        gap: 4px;
+    }
+}
+
+/* ===== 灵动岛 (Dynamic Island) ===== */
+.dynamic-island {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    min-width: 32px;
+    max-width: 32px;
+    height: 32px;
+    margin: 0;
+    padding: 0;
+    border-radius: 50%;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 10;
+    transition:
+        min-width 0.45s cubic-bezier(0.25, 1.1, 0.4, 1),
+        max-width 0.45s cubic-bezier(0.25, 1.1, 0.4, 1),
+        padding 0.45s cubic-bezier(0.25, 1.1, 0.4, 1),
+        border-radius 0.45s cubic-bezier(0.25, 1.1, 0.4, 1),
+        box-shadow 0.35s cubic-bezier(0.25, 1.1, 0.4, 1),
+        background 0.3s ease;
+    user-select: none;
+    cursor: pointer;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 1px;
+        border-radius: inherit;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, transparent 50%);
+        pointer-events: none;
+        transition: border-radius 0.45s cubic-bezier(0.25, 1.1, 0.4, 1);
+    }
+
+    /* 悬浮展开为胶囊 → 恢复毛玻璃背景 */
+    &:hover,
+    &.expanded,
+    &.streaming {
+        min-width: 100px;
+        max-width: 180px;
+        padding: 0 14px 0 18px;
+        border-radius: 999px;
+        gap: 6px;
+        background: rgba(3, 12, 32, 0.92);
+        box-shadow:
+            0 2px 8px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+        &::before {
+            opacity: 1;
+        }
+    }
+
+    /* 点击反馈 */
+    &:active {
+        transform: scale(0.96);
+        transition: transform 0.12s ease;
+    }
+
+    /* ---------- 默认纯色主题 ---------- */
+    /* 对话（默认蓝） */
+    background: #3b82f6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 10px rgba(59, 130, 246, 0.35);
+
+    &.query {
+        background: #ef4444;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 10px rgba(239, 68, 68, 0.35);
+    }
+    &.summary {
+        background: #f59e0b;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 10px rgba(245, 158, 11, 0.35);
+    }
+
+    /* 展开时不同模式光晕 */
+    &.expanded {
+        box-shadow:
+            0 0 14px rgba(59, 130, 246, 0.18),
+            0 2px 8px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    &.query.expanded {
+        box-shadow:
+            0 0 14px rgba(239, 68, 68, 0.2),
+            0 2px 8px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    &.summary.expanded {
+        box-shadow:
+            0 0 14px rgba(245, 158, 11, 0.2),
+            0 2px 8px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    /* 输出中保持 glow */
+    &.streaming {
+        box-shadow:
+            0 0 12px rgba(0, 180, 240, 0.2),
+            0 2px 8px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    /* 纯色态隐藏 ::before 高光 */
+    &::before {
+        opacity: 0;
+    }
+
+    /* 展开时显示 dot 颜色标记 */
+    .di-dot {
+        background: #3b82f6;
+        box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
+    }
+    &.query .di-dot {
+        background: #ef4444;
+        box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+    }
+    &.summary .di-dot {
+        background: #f59e0b;
+        box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+    }
+}
+
+.di-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: background 0.3s, box-shadow 0.3s;
+}
+
+.di-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+    flex-shrink: 0;
+    opacity: 0;
+    max-width: 0;
+    overflow: hidden;
+    transition:
+        opacity 0.3s 0.15s,
+        max-width 0.45s cubic-bezier(0.25, 1.1, 0.4, 1),
+        color 0.3s;
+}
+
+.di-chevron {
+    display: flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.4);
+    flex-shrink: 0;
+    opacity: 0;
+    max-width: 0;
+    overflow: hidden;
+    transition:
+        opacity 0.3s 0.18s,
+        max-width 0.45s cubic-bezier(0.25, 1.1, 0.4, 1),
+        transform 0.3s cubic-bezier(0.25, 1.1, 0.4, 1),
+        color 0.3s;
+
+    &.rotated {
+        transform: rotate(180deg);
+        color: rgba(255, 255, 255, 0.7);
+    }
+}
+
+/* 悬浮/展开/输出中 显示 label 和 chevron */
+.dynamic-island:hover,
+.dynamic-island.expanded,
+.dynamic-island.streaming {
+    .di-label {
+        opacity: 1;
+        max-width: 120px;
+    }
+    .di-chevron {
+        opacity: 1;
+        max-width: 12px;
+    }
+}
+
+/* ===== 灵动岛下拉面板 ===== */
+.di-dropdown {
+    position: relative;
+    z-index: 15;
+    margin: 0 16px;
+    padding: 14px 16px;
+    border-radius: 20px;
+    background: rgba(3, 12, 32, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    overflow: hidden;
+
+    /* 默认模式 — 蓝 */
+    border-color: rgba(59, 130, 246, 0.15);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(59, 130, 246, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+    .di-dd-header small { color: #3b82f6; }
+    .di-dd-logo { background: rgba(59, 130, 246, 0.15); }
+    .di-dd-actions { border-top-color: rgba(59, 130, 246, 0.1); }
+
+    &.query {
+        border-color: rgba(239, 68, 68, 0.18);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.4),
+            0 0 20px rgba(239, 68, 68, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        .di-dd-header small { color: #ef4444; }
+        .di-dd-logo { background: rgba(239, 68, 68, 0.15); }
+        .di-dd-actions { border-top-color: rgba(239, 68, 68, 0.1); }
+    }
+
+    &.summary {
+        border-color: rgba(245, 158, 11, 0.18);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.4),
+            0 0 20px rgba(245, 158, 11, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        .di-dd-header small { color: #f59e0b; }
+        .di-dd-logo { background: rgba(245, 158, 11, 0.15); }
+        .di-dd-actions { border-top-color: rgba(245, 158, 11, 0.1); }
+    }
+}
+
+.di-dd-header {
     display: flex;
     align-items: center;
     gap: 10px;
+    margin-bottom: 10px;
 
-    .chat-logo-icon {
-        svg {
-            display: block;
-        }
+    .di-dd-logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        color: rgba(255, 255, 255, 0.85);
+        flex-shrink: 0;
+        transition: background 0.3s;
     }
 
     strong {
         display: block;
-        font-size: 14px;
-        color: var(--text-primary, #fff);
-        transition: color 0.25s 0.05s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.92);
+        line-height: 1.3;
     }
 
     small {
         font-size: 11px;
-        color: var(--text-muted, rgba(140, 182, 214, 0.78));
+        color: rgba(140, 182, 214, 0.78);
+        transition: color 0.3s;
     }
 }
 
-.chat-header-right {
+.di-dd-actions {
     display: flex;
+    justify-content: center;
     gap: 4px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* 浅色主题灵动岛 */
+.theme-light .dynamic-island {
+    /* 默认纯色保持，展开时切换浅色毛玻璃 */
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1), 0 0 10px rgba(59, 130, 246, 0.25);
+
+    &.query { box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1), 0 0 10px rgba(239, 68, 68, 0.25); }
+    &.summary { box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1), 0 0 10px rgba(245, 158, 11, 0.25); }
+
+    &:hover,
+    &.expanded,
+    &.streaming {
+        background: rgba(255, 255, 255, 0.88);
+        box-shadow:
+            0 2px 12px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    &.expanded {
+        box-shadow:
+            0 0 14px rgba(59, 130, 246, 0.1),
+            0 2px 12px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+    &.query.expanded {
+        box-shadow:
+            0 0 14px rgba(239, 68, 68, 0.12),
+            0 2px 12px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+    &.summary.expanded {
+        box-shadow:
+            0 0 14px rgba(245, 158, 11, 0.12),
+            0 2px 12px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    &.streaming {
+        box-shadow:
+            0 0 16px rgba(0, 180, 240, 0.12),
+            0 2px 12px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .di-label {
+        color: rgba(15, 23, 42, 0.85);
+    }
+
+    .di-chevron {
+        color: rgba(15, 23, 42, 0.3);
+        &.rotated { color: rgba(15, 23, 42, 0.55); }
+    }
+
+    /* ::before 高光对纯色无意义，展开时恢复 */
+    &::before { opacity: 0; }
+    &:hover::before, &.expanded::before { opacity: 1; }
+}
+
+.theme-light .di-dropdown {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: rgba(0, 0, 0, 0.06);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
+    .di-dd-header strong {
+        color: rgba(15, 23, 42, 0.9);
+    }
+    .di-dd-header small { color: #3b82f6; }
+    .di-dd-header .di-dd-logo {
+        background: rgba(59, 130, 246, 0.08);
+        color: rgba(15, 23, 42, 0.7);
+    }
+    .di-dd-actions { border-top-color: rgba(0, 0, 0, 0.06); }
+
+    &.query {
+        .di-dd-header small { color: #ef4444; }
+        .di-dd-header .di-dd-logo { background: rgba(239, 68, 68, 0.08); }
+        .di-dd-actions { border-top-color: rgba(239, 68, 68, 0.08); }
+    }
+    &.summary {
+        .di-dd-header small { color: #f59e0b; }
+        .di-dd-header .di-dd-logo { background: rgba(245, 158, 11, 0.08); }
+        .di-dd-actions { border-top-color: rgba(245, 158, 11, 0.08); }
+    }
+}
+
+/* ===== 手机 Home Indicator ===== */
+.phone-home-indicator {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.35);
+    z-index: 10;
+    pointer-events: none;
+}
+
+.theme-light .phone-home-indicator {
+    background: rgba(0, 0, 0, 0.18);
+}
+
+/* ===== 按钮图标（灵动岛下拉面板 & 历史遗留共用） ===== */
 .chat-btn-icon {
     width: 32px;
     height: 32px;
@@ -3273,9 +3719,14 @@ export default {
 
     .welcome-tips {
         display: block;
-        color: rgba(200, 220, 255, 0.35);
-        font-size: 11px;
-        line-height: 1.5;
+        color: rgba(200, 220, 255, 0.55);
+        font-size: 12px;
+        line-height: 1.6;
+        padding: 10px 14px;
+        background: rgba(59, 130, 246, 0.06);
+        border: 1px solid rgba(59, 130, 246, 0.08);
+        border-radius: 12px;
+        margin-bottom: 4px;
     }
 
     .quick-questions {
@@ -3927,33 +4378,80 @@ export default {
     }
 }
 
-/* 拖拽缩放把手 */
+/* 拖拽缩放把手（四角） */
 .resize-handle {
     position: absolute;
-    right: 0;
-    bottom: 0;
     width: clamp(20px, 1.4vw, 26px);
     height: clamp(20px, 1.4vw, 26px);
+    z-index: 20;
+    opacity: 0.35;
+    transition: opacity 0.2s;
+    border-radius: 4px;
+
+    &:hover {
+        opacity: 0.85;
+    }
+}
+
+.resize-handle-br {
+    right: 1px;
+    bottom: 1px;
     cursor: nwse-resize;
-    z-index: 3;
     background: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.15) 50%),
         linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.15) 50%);
     background-size: 6px 6px, 10px 10px;
     background-position: 100% 100%, calc(100% - 8px) calc(100% - 8px);
     background-repeat: no-repeat;
-    opacity: 0.4;
-    transition: opacity 0.2s;
-
-    &:hover {
-        opacity: 0.9;
-    }
 }
 
-.theme-light .resize-handle {
-    background: linear-gradient(135deg, transparent 50%, rgba(0, 0, 0, 0.12) 50%), linear-gradient(135deg, transparent 50%, rgba(0, 0, 0, 0.12) 50%);
+.resize-handle-bl {
+    left: 1px;
+    bottom: 1px;
+    cursor: nesw-resize;
+    background: linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.15) 50%),
+        linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.15) 50%);
     background-size: 6px 6px, 10px 10px;
-    background-position: 100% 100%, calc(100% - 8px) calc(100% - 8px);
+    background-position: 0% 100%, calc(0% + 8px) calc(100% - 8px);
     background-repeat: no-repeat;
+}
+
+.resize-handle-tr {
+    right: 1px;
+    top: 1px;
+    cursor: nesw-resize;
+    background: linear-gradient(225deg, transparent 50%, rgba(255, 255, 255, 0.15) 50%),
+        linear-gradient(225deg, transparent 50%, rgba(255, 255, 255, 0.15) 50%);
+    background-size: 6px 6px, 10px 10px;
+    background-position: 100% 0%, calc(100% - 8px) calc(0% + 8px);
+    background-repeat: no-repeat;
+}
+
+.resize-handle-tl {
+    left: 1px;
+    top: 1px;
+    cursor: nwse-resize;
+    background: linear-gradient(315deg, transparent 50%, rgba(255, 255, 255, 0.15) 50%),
+        linear-gradient(315deg, transparent 50%, rgba(255, 255, 255, 0.15) 50%);
+    background-size: 6px 6px, 10px 10px;
+    background-position: 0% 0%, calc(0% + 8px) calc(0% + 8px);
+    background-repeat: no-repeat;
+}
+
+.theme-light .resize-handle-br {
+    background-image: linear-gradient(135deg, transparent 50%, rgba(0, 0, 0, 0.12) 50%),
+        linear-gradient(135deg, transparent 50%, rgba(0, 0, 0, 0.12) 50%);
+}
+.theme-light .resize-handle-bl {
+    background-image: linear-gradient(45deg, transparent 50%, rgba(0, 0, 0, 0.12) 50%),
+        linear-gradient(45deg, transparent 50%, rgba(0, 0, 0, 0.12) 50%);
+}
+.theme-light .resize-handle-tr {
+    background-image: linear-gradient(225deg, transparent 50%, rgba(0, 0, 0, 0.12) 50%),
+        linear-gradient(225deg, transparent 50%, rgba(0, 0, 0, 0.12) 50%);
+}
+.theme-light .resize-handle-tl {
+    background-image: linear-gradient(315deg, transparent 50%, rgba(0, 0, 0, 0.12) 50%),
+        linear-gradient(315deg, transparent 50%, rgba(0, 0, 0, 0.12) 50%);
 }
 
 /* 过渡动画 — 由 GSAP JS 钩子驱动 */
@@ -4000,14 +4498,6 @@ export default {
 .theme-light .chat-panel.thinking-glow::after {
     animation: breathe-ring-light 3s ease-in-out infinite;
 }
-.theme-light .chat-header {
-    background: rgba(255, 255, 255, 0.5);
-    border-bottom-color: rgba(0, 0, 0, 0.05);
-
-    &::before {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, transparent 60%);
-    }
-}
 .theme-light .chat-footer {
     background: rgba(255, 255, 255, 0.5);
     border-top-color: rgba(0, 0, 0, 0.05);
@@ -4028,35 +4518,36 @@ export default {
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.06) 40%, rgba(255, 255, 255, 0.08) 100%);
 }
 .theme-light .panel-shell {
-    background: linear-gradient(150deg,
-        rgba(235, 245, 255, 0.88) 0%,
-        rgba(245, 240, 255, 0.82) 50%,
-        rgba(255, 240, 245, 0.78) 100%);
-    border-color: rgba(255, 255, 255, 0.8);
+    background: linear-gradient(160deg,
+        rgba(245, 245, 250, 0.82) 0%,
+        rgba(238, 242, 250, 0.78) 40%,
+        rgba(242, 238, 248, 0.8) 100%);
+    border-color: rgba(180, 200, 230, 0.25);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.45),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.04),
-        0 12px 48px rgba(0, 0, 0, 0.12);
+        0 32px 64px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.08),
+        0 8px 16px rgba(0, 0, 0, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.04);
 
     &::before {
         background: radial-gradient(
-            ellipse at 30% 20%,
-            rgba(120, 170, 255, 0.1) 0%,
-            transparent 60%
+            ellipse at 25% 15%,
+            rgba(140, 180, 240, 0.08) 0%,
+            transparent 55%
         );
+    }
+
+    &::after {
+        background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.3) 0%,
+            transparent 35%,
+            transparent 65%,
+            rgba(255, 255, 255, 0.1) 100%);
     }
 }
 .theme-light .conv-list::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.10);
-}
-.theme-light .chat-header h3 {
-    color: #1e293b;
-}
-.theme-light .chat-header-left strong {
-    color: #1e293b !important;
-}
-.theme-light .chat-header-left small {
-    color: #94a3b8 !important;
 }
 .theme-light .chat-btn-icon {
     color: #94a3b8;
@@ -4093,7 +4584,9 @@ export default {
     border-top-color: rgba(0, 0, 0, 0.06);
 }
 .theme-light .welcome-tips {
-    color: #94a3b8;
+    color: #64748b;
+    background: rgba(37, 99, 235, 0.04);
+    border-color: rgba(37, 99, 235, 0.08);
 }
 .theme-light .quick-questions button {
     background: rgba(0, 0, 0, 0.04);
@@ -4284,10 +4777,8 @@ export default {
     animation: none;
     opacity: 1;
 }
-/* footer/header 过渡加速 */
-.reduce-motion .chat-footer,
-.reduce-motion .chat-header,
-.reduce-motion .chat-header-right .chat-btn-icon {
+/* footer 过渡加速 */
+.reduce-motion .chat-footer {
     transition-duration: 0.1s !important;
     transition-delay: 0s !important;
 }
@@ -4331,33 +4822,58 @@ export default {
 
     .panel-shell {
         min-width: 0;
-        padding: 2px;
-        border-radius: 18px;
+        padding: 4px;
+        border-radius: 36px;
     }
 
     .chat-wrapper.drawer-open .panel-shell {
-        border-radius: 0 18px 18px 0;
+        border-radius: 0 36px 36px 0;
         padding-left: 0;
+        border-left: none;
+    }
+    .chat-wrapper.drawer-open .chat-panel {
+        border-radius: 0 32px 32px 0;
     }
 
     .chat-panel {
+        border-radius: 32px;
+    }
+
+    .phone-home-indicator {
+        width: 100px;
+        bottom: 5px;
+    }
+
+    .dynamic-island {
+        min-width: 28px;
+        max-width: 28px;
+        height: 28px;
+
+        &:hover, &.expanded, &.streaming {
+            min-width: 90px;
+            max-width: 160px;
+            padding: 0 12px 0 14px;
+        }
+    }
+
+    .di-dot {
+        width: 5px;
+        height: 5px;
+    }
+
+    .di-label {
+        font-size: 12px;
+    }
+
+    .di-chevron svg {
+        width: 8px;
+        height: 5px;
+    }
+
+    .di-dropdown {
+        margin: 0 12px;
+        padding: 12px 14px;
         border-radius: 16px;
-    }
-
-    .chat-header {
-        padding: 10px 12px;
-    }
-
-    .chat-header-left strong {
-        font-size: 13px;
-    }
-
-    .chat-header-left small {
-        font-size: 10px;
-    }
-
-    .chat-header-right {
-        gap: 2px;
     }
 
     .chat-btn-icon {
@@ -4466,31 +4982,73 @@ export default {
 
     .panel-shell {
         padding: 1px;
-        border-radius: 14px;
+        border-radius: 28px;
     }
 
     .chat-wrapper.drawer-open .panel-shell {
-        border-radius: 0 14px 14px 0;
+        border-radius: 0 28px 28px 0;
         padding-left: 0;
+        border-left: none;
     }
 
     .chat-panel {
-        border-radius: 12px;
+        border-radius: 24px;
     }
 
-    .chat-header {
-        padding: 8px 10px;
+    .phone-home-indicator {
+        width: 80px;
+        height: 3px;
+        bottom: 4px;
+    }
 
-        &-left {
-            gap: 4px;
+    .dynamic-island {
+        min-width: 24px;
+        max-width: 24px;
+        height: 26px;
 
-            strong { font-size: 12px; }
-            small { font-size: 9px; }
+        &:hover, &.expanded, &.streaming {
+            min-width: 80px;
+            max-width: 140px;
+            padding: 0 10px 0 12px;
         }
+    }
 
-        &-right {
-            gap: 0;
+    .di-dot {
+        width: 5px;
+        height: 5px;
+    }
+
+    .di-label {
+        font-size: 11px;
+    }
+
+    .di-chevron svg {
+        width: 7px;
+        height: 4px;
+    }
+
+    .di-dropdown {
+        margin: 0 10px;
+        padding: 10px 12px;
+        border-radius: 14px;
+    }
+
+    .di-dd-header {
+        gap: 8px;
+        margin-bottom: 8px;
+
+        .di-dd-logo {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            svg { width: 16px; height: 16px; }
         }
+        strong { font-size: 12px; }
+        small { font-size: 10px; }
+    }
+
+    .di-dd-actions {
+        padding-top: 6px;
     }
 
     .chat-btn-icon {
@@ -4501,11 +5059,6 @@ export default {
             width: 13px;
             height: 13px;
         }
-    }
-
-    .chat-logo-icon svg {
-        width: 20px;
-        height: 20px;
     }
 
     .msg-content {

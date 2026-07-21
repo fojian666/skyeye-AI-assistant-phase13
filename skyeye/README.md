@@ -2,7 +2,7 @@
 
 无人机智能监管平台 Django 服务，集成 DeepSeek 大模型 AI 智能助手。
 
-> **Phase 11** — 移除高德 API 依赖，纯本地 GeoJSON 查询
+> **Phase 12** — 移除高德 API 依赖，纯本地 GeoJSON 查询
 
 ## AI 助手 API
 
