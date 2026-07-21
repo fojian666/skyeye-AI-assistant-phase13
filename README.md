@@ -1,6 +1,6 @@
 # 金陵阡陌（SkyEye）— 低空遥感智能巡检平台
 
-> **Phase 10** — 滚动词条 · 氛围光斑 · 滚动触发布局入场 · 页面装饰系统
+> **Phase 11** — 三模式欢迎语 · 停止生成补充 · 地图查询鲁棒性升级 · GeoJSON 本地缓存体系
 
 ## 项目概述
 
@@ -41,7 +41,7 @@ skyeye/
 │   ├── logger.py                      # 日志模块
 │   ├── gen_computerlic.py             # 许可证生成
 │   ├── config.ini                     # API Key / 数据库 配置（gitignore）
-│   ├── district_cache.json            # 江苏省 13 市 95 区县多边形缓存
+│   ├── district_cache.json            # 行政区域缓存（内存+文件双重）
 │   ├── apps/
 │   │   ├── system/                    # 系统管理 + AI Chat API
 │   │   │   ├── views.py              # ★ chat_completions（SSE 流式）+ geocode + district
@@ -182,7 +182,7 @@ skyeye/
 |------|------|
 | 流式输出 | SSE 实时显示处理阶段，打字机逐字渲染 Markdown |
 | 减少动效 | 头部按钮切换，关闭呼吸光晕/WebGL，跳过打字机直接渲染全文 |
-| 停止生成 | 红色胶囊按钮，支持中止请求和打字输出 |
+| 停止生成 | 红色胶囊按钮，中止请求：有部分文本追加 `…[已停止]` + 重试，无文本显示"已停止生成"保持对话完整 |
 | 重试 | 出错/中断后一键重发最后一条消息 |
 | 复制回答 | hover 显示复制按钮，点击后"已复制"提示 |
 | 清空对话 | 确认弹窗防误操作，不可撤销 |
@@ -321,6 +321,20 @@ skyeye/
 | 滚动触发布局入场 | 交互 | `IntersectionObserver` 替代全量一次性幕布揭示，5 张卡片在打字机完成后进入"可触发"状态，滚入视口（threshold 0.1 + rootMargin -8%）时逐个 `curtain-revealed`，one-shot `unobserve`，`reduceMotion` 直接全显示 |
 | 静态资源补全 | 修复 | Leaflet/SuperMap CDN 文件从 `node_modules` 复制到 `public/static/lib/cdn/`，解决 404 加载错误 |
 
+### Phase 11 三模式欢迎语 & 地图查询鲁棒性 & 停止生成补充
+
+| 改进 | 类型 | 说明 |
+|------|------|------|
+| 三模式欢迎语区分 | 交互 | `chatMode` 联动欢迎区：对话模式（导航定位/页面跳转/任务查询/通用问答）、数据查询模式（数据统计/导航/跳转/任务）、摘要模式（综合摘要/风险评估/进度跟踪/决策建议），底部提示语随模式变化 |
+| 手动停止对话补充 | 交互 | 有部分文本时追加 `…[已停止]` 后缀 + 重试按钮，无文本时插入"已停止生成"保持 user/assistant 交替结构，对话逻辑完整 |
+| GeoJSON 本地缓存体系 | 性能 | Shapefile → GeoJSON 批量转换（`convert_to_geojson.py`），覆盖全国 690 地市 + 5651 县区 + 江苏省 22841 村级单位；查询优先级 GeoJSON 本地(一级) → 高德缓存(二级) → 高德 API(三级) |
+| 省级查询跳过缓存 | 修复 | 省级/直辖市（X省/X自治区/京沪津渝）在 `query_district` 入口直接拦截，`use_cache=False`，跳过 GeoJSON 模糊匹配，直通高德 API 获取正确省级边界 |
+| GeoJSON 模糊匹配限制 | 修复 | `keywords in name` 匹配增加 `len(name) - len(keywords) <= 2` 约束，防止"江苏省"(3字) 误匹配"江苏省国营江心沙农场虚拟生活区"(14字) |
+| 乡镇级重心定位 | 修复 | 无 polygon 但有 center 的查询（如"塔里木乡"）新增 `elif` 分支直接用中心坐标定位，不再静默跳过 |
+| geocoding 城市限制兜底 | 修复 | 带 city="南京" geocoding 失败后自动重试全国搜索，解决非南京地区地名无法定位的问题 |
+| 导航消息会话兼容 | 修复 | `_skipContext` 从过滤改为替换"收到"，保持 user/assistant 交替结构，避免 LLM 混淆回第一条历史查询 |
+| 缓存脏数据清理 | 修复 | 删除 `district_cache.json` 中"江苏省|南京"→"江心沙农场"的错误缓存，重启 Django 内存缓存刷新 |
+
 ### 地图导航
 
 - 后端调高德 `geocode` API → 地名 → 经纬度 + 完整地址
@@ -329,15 +343,17 @@ skyeye/
 
 ### 区域圈定
 
-- 后端调高德 `config/district` API → polygon 边界坐标
-- 输入"南京市"自动获取 11 个区的独立边界，各分配不同颜色
-- 前端 `draw-region` 事件：主区域半透明底，子区域彩色填充 + 描边
-- 再次触发自动清除上一轮图层
+- 查询优先级：GeoJSON 本地(一级) → 高德缓存(二级) → 高德 API(三级)
+- 全国 690 地市 + 5651 县区有完整 polygon 边界，江苏省 22841 村级补充
+- 乡镇级（镇/乡/街道）GeoJSON 无覆盖，降级到高德 API 取中心坐标定位
+- 省级/直辖市直接跳过本地查询，走 API 获取正确边界
+- 子区域自动提取（县→村），各分配不同颜色
 
 ### 行政区划缓存
 
-- 预加载江苏省 13 市 95 区县的多边形边界 → `district_cache.json`
-- 模块级内存缓存，首次加载后常驻，后续零磁盘 IO、零 API 调用
+- `geojson/` 目录：`city_2024.geojson`(690 地市) + `county_2024.geojson`(5651 县区) + `village_jiangsu.geojson`(22841 江苏村)
+- `geojson/index.json`：地名 → Feature 索引，支持精确/变体/模糊匹配
+- 模块级内存缓存，首次加载后常驻，后续零磁盘 IO
 - 管理命令：`python manage.py preload_districts`
 
 ---

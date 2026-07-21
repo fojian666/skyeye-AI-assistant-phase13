@@ -1,4 +1,4 @@
-# 金陵阡陌 — AI 助手 (Phase 10)
+# 金陵阡陌 — AI 助手 (Phase 11)
 
 无人机巡检智能平台前端，集成 AI 对话面板与可视化参数设置。
 
@@ -124,6 +124,14 @@ skyeye-ui/src/
 - **氛围光斑**: 4 个固定定位高斯模糊光斑分布于页面四角，`filter: blur(100px)`，三模式颜色联动 1.2s 过渡，亮暗双主题适配
 - **滚动触发布局入场**: `IntersectionObserver` 替代全量一次性幕布揭示，卡片滚入视口时逐个触发 `curtain-revealed` 动画
 - **静态资源补全**: Leaflet/SuperMap 文件复制到 `public/static/lib/cdn/`，解决 404 错误
+
+#### Phase 11 模式欢迎语 & 停止生成补充 & 地图跳转修复
+
+- **三模式欢迎语**: `chatMode` 联动欢迎区能力列表和底部提示，对话/查询/摘要各自展示实际可用功能
+- **手动停止对话补充**: 有部分文本追加 `…[已停止]`，无文本插入"已停止生成"，保持 user/assistant 交替，对话逻辑完整
+- **导航消息兼容**: `_skipContext` 标记消息替换为"收到"而非过滤，保证 user/assistant 交替，LLM 不混淆历史
+- **地图跳转 timer 修复**: ChatModel `_mapDispatchTimer` 设置前清除旧 timer，防止连续查询地名时事件丢失
+- **侧栏动画优化**: softSpring 缓动曲线 (`cubic-bezier(0.25,1.1,0.4,1)`) 应用到折叠/展开逻辑，会话列表抽屉与面板融为一体无间隙
 
 ## 快速开始
 

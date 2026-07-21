@@ -3245,8 +3245,16 @@ def _generate_sse(raw_messages, frontend_tools, request, chat_mode='chat', conte
                                 args['sub_regions'] = district['sub_regions']
                             geo = _geocode_amap(args['location'], city)
                             args['name'] = geo.get('address', args['location']) if geo else district.get('name', args['location'])
+                        elif district and district.get('center'):
+                            # 有行政区信息但没有 polygon（如乡镇级），直接用其中心点定位
+                            args['lat'] = district['center']['lat']
+                            args['lng'] = district['center']['lng']
+                            args['name'] = district.get('name', args['location'])
                         else:
+                            # 先尝试带 city 的 geocoding，失败则不带 city 重试
                             geo = _geocode_amap(args['location'], city)
+                            if not geo and city != '南京':
+                                geo = _geocode_amap(args['location'])
                             if geo:
                                 args['lat'] = geo['lat']
                                 args['lng'] = geo['lng']

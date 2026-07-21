@@ -304,14 +304,35 @@
                                 </svg>
                             </div>
                             <p>你好！我是金陵阡陌 AI 助手</p>
-                            <span class="welcome-intro">我可以帮你：</span>
-                            <ul class="welcome-capabilities">
-                                <li>回答巡检场景中的业务问题</li>
-                                <li>查询和统计分析航线、任务、异常数据</li>
-                                <li>对选中要素自动生成综合摘要报告</li>
+                            <span class="welcome-intro">
+                                <template v-if="chatMode === 'chat'">当前为对话模式，我可以帮你：</template>
+                                <template v-else-if="chatMode === 'query'">当前为数据查询模式，我可以帮你：</template>
+                                <template v-else>当前为智能摘要模式，我可以帮你：</template>
+                            </span>
+                            <ul v-if="chatMode === 'chat'" class="welcome-capabilities">
+                                <li>导航定位：带你去指定地点查看地图</li>
+                                <li>页面跳转：打开航线、任务、全景等页面</li>
+                                <li>任务查询：查找巡检任务和检测数据</li>
+                                <li>通用问答：解答巡检业务相关问题</li>
+                            </ul>
+                            <ul v-else-if="chatMode === 'query'" class="welcome-capabilities">
+                                <li>数据查询：统计分析航线、任务、异常数据</li>
+                                <li>导航定位：带你去指定地点查看地图</li>
+                                <li>页面跳转：打开航线、任务、全景等页面</li>
+                                <li>任务查询：查找当前检测任务详情</li>
+                            </ul>
+                            <ul v-else class="welcome-capabilities">
+                                <li>综合摘要：对选中要素自动生成分析报告</li>
+                                <li>风险评估：识别高风险区域和异常指标</li>
+                                <li>进度跟踪：汇总整体完成情况和瓶颈</li>
+                                <li>决策建议：基于数据提供下一步行动建议</li>
                             </ul>
                             <hr class="welcome-sep" />
-                            <span class="welcome-tips">💡 试试下方快捷提问，或直接输入你的需求；左侧圆点可切换模式和会话</span>
+                            <span class="welcome-tips">
+                                <template v-if="chatMode === 'chat'">💡 试试下方快捷提问，或直接说出你的需求；左侧圆点可切换模式和会话</template>
+                                <template v-else-if="chatMode === 'query'">💡 试试下方快捷提问，或直接输入数据查询需求；左侧圆点可切换模式和会话</template>
+                                <template v-else>💡 先在数据页选中要素，然后试试下方快捷提问；左侧圆点可切换模式和会话</template>
+                            </span>
                             <div class="quick-questions">
                                 <button v-for="q in quickQuestions" :key="q" @click="sendQuick(q)">{{ q }}</button>
                             </div>
@@ -1606,7 +1627,7 @@ export default {
         async chatLoop() {
             const allMessages = this.messages
                 .filter((m) => m.role !== 'tool-info' && m.role !== 'tool' && !m.tool_calls)
-                .map((m) => ({ role: m.role, content: m.content }));
+                .map((m) => ({ role: m.role, content: m._skipContext ? '收到' : m.content }));
 
             this.phase = null;
             this.abortController = new AbortController();
@@ -1695,8 +1716,13 @@ export default {
                 clearTimeout(timeoutId);
                 this.phase = null;
                 if (err.name === 'AbortError') {
-                    if (this.streamingText) {
-                        this.messages.push({ role: 'assistant', content: this.streamingText.replace(/<[^>]*>/g, ''), _interrupted: true });
+                    const partial = this.streamingText.replace(/<[^>]*>/g, '');
+                    if (partial) {
+                        // 有部分内容：保留已生成文本，追加中断标记
+                        this.messages.push({ role: 'assistant', content: partial + '…[已停止]', _interrupted: true });
+                    } else {
+                        // 响应尚未生成文本就被停止：补充提示，保持对话逻辑完整
+                        this.messages.push({ role: 'assistant', content: '已停止生成', _interrupted: true });
                     }
                     this.streamingText = '';
                 } else {
@@ -1747,7 +1773,7 @@ export default {
                         } else {
                             label = args.reason || args.path;
                         }
-                        this.messages.push({ role: 'assistant', content: `已为您跳转到 ${label}` });
+                        this.messages.push({ role: 'assistant', content: `已为您跳转到 ${label}`, _skipContext: true });
                         this.streaming = false;
                         return;
                     }
@@ -1807,6 +1833,10 @@ export default {
                     if (hasPolygon) window.dispatchEvent(new CustomEvent('draw-region', { detail }));
                     if (detail.lat != null) window.dispatchEvent(new CustomEvent('navigate-map', { detail }));
                 };
+                if (this._mapDispatchTimer) {
+                    clearTimeout(this._mapDispatchTimer);
+                    this._mapDispatchTimer = null;
+                }
                 if (this.$route.path !== '/data-management/one-map') {
                     router.push('/data-management/one-map');
                     this._mapDispatchTimer = setTimeout(dispatch, 1500);
@@ -1888,7 +1918,7 @@ export default {
             for (let i = 0; i < chars.length; i++) {
                 if (this._stopRequested || this._typewriterCancelled) {
                     const partial = this.streamingText.replace(/<[^>]*>/g, '');
-                    if (partial) this.messages.push({ role: 'assistant', content: partial, _interrupted: true });
+                    if (partial) this.messages.push({ role: 'assistant', content: partial + '…[已停止]', _interrupted: true });
                     this.streamingText = '';
                     this.streaming = false;
                     return;
