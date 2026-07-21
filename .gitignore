@@ -42,6 +42,12 @@ dev-server.log
 # Binary model files
 *.bin
 
+# Large geodata files (exceeds GitHub 100 MB limit)
+border-resources/
+skyeye/geojson/county_2024.geojson
+skyeye/geojson/village_jiangsu.geojson
+skyeye/geojson/poi/
+
 # Route planning runtime artifacts
 skyeye/static/route_jobs/
 skyeye/static/route_plan/
