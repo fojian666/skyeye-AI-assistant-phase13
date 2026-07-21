@@ -7,9 +7,9 @@
 #   ./push.sh -m "fix: bug修复"      # -m 方式指定 message
 #
 # 推送目标:
-#   1. phase12  — GitHub 独立 Phase 仓库 (新建/复用)
-#   2. gitee    — Gitee 主仓库
-#   3. skyeye-ui-gitee — Gitee 前端仓库
+#   1. phase12  — GitHub Phase 仓库 → regular push main
+#   2. gitee    — Gitee 后端仓库 → subtree push skyeye/ → wuxi-ai
+#   3. skyeye-ui-gitee — Gitee 前端仓库 → subtree push skyeye-ui/ → wuxi-ai
 
 set -euo pipefail
 
@@ -94,26 +94,31 @@ echo ""
 # ============================================================
 # 4. 推送到三个远程
 # ============================================================
-push_remote() {
-    local name="$1"
-    local target_branch="$2"
-    echo "→ 推送 $name ($target_branch)..."
-    if git push "$name" "$BRANCH:$target_branch" 2>&1; then
-        echo "✓ $name 推送成功"
-    else
-        echo "✗ $name 推送失败，尝试 force-with-lease 或检查权限"
-        return 1
-    fi
-}
+GITEE_SUBTREE_PREFIX="skyeye"
+UI_GITEE_SUBTREE_PREFIX="skyeye-ui"
+GITEE_BRANCH="wuxi-ai"
+UI_GITEE_BRANCH="wuxi-ai"
 
-# Phase12 推送到 main
-push_remote "$PHASE_REMOTE" "main" || echo "⚠ 可稍后手动: git push $PHASE_REMOTE $BRANCH:main"
+echo "→ 推送 $PHASE_REMOTE → main (regular)..."
+if git push "$PHASE_REMOTE" "$BRANCH:main" 2>&1; then
+    echo "✓ $PHASE_REMOTE 推送成功"
+else
+    echo "✗ $PHASE_REMOTE 推送失败"
+fi
 
-# Gitee 主仓库推送到 main
-push_remote "$GITEE_REMOTE" "main" || echo "⚠ 可稍后手动: git push $GITEE_REMOTE $BRANCH:main"
+echo "→ 推送 $GITEE_REMOTE → $GITEE_BRANCH (subtree: $GITEE_SUBTREE_PREFIX/)..."
+if git subtree push --prefix="$GITEE_SUBTREE_PREFIX" "$GITEE_REMOTE" "$GITEE_BRANCH" 2>&1; then
+    echo "✓ $GITEE_REMOTE subtree 推送成功"
+else
+    echo "✗ $GITEE_REMOTE subtree 推送失败"
+fi
 
-# Gitee 前端仓库推送到 wuxi-ai
-push_remote "$UI_GITEE_REMOTE" "wuxi-ai" || echo "⚠ 可稍后手动: git push $UI_GITEE_REMOTE $BRANCH:wuxi-ai"
+echo "→ 推送 $UI_GITEE_REMOTE → $UI_GITEE_BRANCH (subtree: $UI_GITEE_SUBTREE_PREFIX/)..."
+if git subtree push --prefix="$UI_GITEE_SUBTREE_PREFIX" "$UI_GITEE_REMOTE" "$UI_GITEE_BRANCH" 2>&1; then
+    echo "✓ $UI_GITEE_REMOTE subtree 推送成功"
+else
+    echo "✗ $UI_GITEE_REMOTE subtree 推送失败"
+fi
 
 echo ""
 echo "========================================"
