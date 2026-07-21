@@ -44,9 +44,7 @@ dev-server.log
 
 # Large geodata files (exceeds GitHub 100 MB limit)
 border-resources/
-skyeye/geojson/county_2024.geojson
-skyeye/geojson/village_jiangsu.geojson
-skyeye/geojson/poi/
+skyeye/geojson/
 
 # Route planning runtime artifacts
 skyeye/static/route_jobs/
