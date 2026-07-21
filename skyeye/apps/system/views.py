@@ -3043,30 +3043,10 @@ def _raw_messages_to_lc(raw_messages):
     return lc_msgs
 
 
-def _geocode_amap(address, city=''):
-    """高德地理编码：地名 → 经纬度"""
-    config = configparser.ConfigParser()
-    config.read(os.path.join(settings.BASE_DIR, 'config.ini'), encoding='utf-8')
-    api_key = config.get('amap', 'api_key')
-    params = {'key': api_key, 'address': address, 'output': 'JSON'}
-    if city:
-        params['city'] = city
-    try:
-        resp = requests.get('https://restapi.amap.com/v3/geocode/geo', params=params, timeout=5)
-        data = resp.json()
-        if data.get('status') == '1' and data.get('geocodes'):
-            loc = data['geocodes'][0]['location']
-            lng, lat = loc.split(',')
-            return {'lat': float(lat), 'lng': float(lng), 'address': data['geocodes'][0].get('formatted_address', address)}
-    except Exception:
-        pass
-    return None
-
-
-def _get_district_amap(keywords, city='', subdistrict=0):
-    """高德行政区划查询（优先缓存，未命中则实时查询并缓存）"""
+def _get_district(keywords, city=''):
+    """本地 GeoJSON 行政区划查询"""
     from utils_tools.district_cache import query_district
-    return query_district(keywords, city=city, use_cache=True)
+    return query_district(keywords, city=city)
 
 
 def _lc_to_result(msg):
@@ -3235,7 +3215,7 @@ def _generate_sse(raw_messages, frontend_tools, request, chat_mode='chat', conte
                         args = {}
                     if args.get('location') and not args.get('lat') and not args.get('polygon'):
                         city = args.get('city', '南京')
-                        district = _get_district_amap(args['location'], city=city, subdistrict=1)
+                        district = _get_district(args['location'], city=city)
                         if district and district.get('polygon'):
                             args['polygon'] = district['polygon']
                             if district.get('center'):
@@ -3243,22 +3223,12 @@ def _generate_sse(raw_messages, frontend_tools, request, chat_mode='chat', conte
                                 args['lng'] = district['center']['lng']
                             if district.get('sub_regions'):
                                 args['sub_regions'] = district['sub_regions']
-                            geo = _geocode_amap(args['location'], city)
-                            args['name'] = geo.get('address', args['location']) if geo else district.get('name', args['location'])
+                            args['name'] = district.get('name', args['location'])
                         elif district and district.get('center'):
                             # 有行政区信息但没有 polygon（如乡镇级），直接用其中心点定位
                             args['lat'] = district['center']['lat']
                             args['lng'] = district['center']['lng']
                             args['name'] = district.get('name', args['location'])
-                        else:
-                            # 先尝试带 city 的 geocoding，失败则不带 city 重试
-                            geo = _geocode_amap(args['location'], city)
-                            if not geo and city != '南京':
-                                geo = _geocode_amap(args['location'])
-                            if geo:
-                                args['lat'] = geo['lat']
-                                args['lng'] = geo['lng']
-                                args['name'] = geo.get('address', args['location'])
                         fn['arguments'] = json.dumps(args, ensure_ascii=False)
                     # map_action 发给前端处理
                     emit_tool_calls.append(tc)

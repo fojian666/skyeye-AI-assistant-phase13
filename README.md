@@ -23,7 +23,7 @@
 | 后端框架 | Django | Python Web 框架 |
 | 大模型 | DeepSeek (LangChain + LangGraph) | AI 对话与工具调用 |
 | 流式输出 | SSE (Server-Sent Events) | real-time 阶段反馈 |
-| 地理编码 | 高德地图 API | 地名 → 坐标 / 行政区边界 |
+| 地理编码 | 本地 GeoJSON | 地名 → 坐标 / 行政区边界（690 地市 + 5651 县区 + 22841 村） |
 | 实时通信 | MQTT + WebSocket | 无人机遥测数据 |
 | 数据库 | PostgreSQL | config.ini 配置连接 |
 
@@ -327,8 +327,8 @@ skyeye/
 |------|------|------|
 | 三模式欢迎语区分 | 交互 | `chatMode` 联动欢迎区：对话模式（导航定位/页面跳转/任务查询/通用问答）、数据查询模式（数据统计/导航/跳转/任务）、摘要模式（综合摘要/风险评估/进度跟踪/决策建议），底部提示语随模式变化 |
 | 手动停止对话补充 | 交互 | 有部分文本时追加 `…[已停止]` 后缀 + 重试按钮，无文本时插入"已停止生成"保持 user/assistant 交替结构，对话逻辑完整 |
-| GeoJSON 本地缓存体系 | 性能 | Shapefile → GeoJSON 批量转换（`convert_to_geojson.py`），覆盖全国 690 地市 + 5651 县区 + 江苏省 22841 村级单位；查询优先级 GeoJSON 本地(一级) → 高德缓存(二级) → 高德 API(三级) |
-| 省级查询跳过缓存 | 修复 | 省级/直辖市（X省/X自治区/京沪津渝）在 `query_district` 入口直接拦截，`use_cache=False`，跳过 GeoJSON 模糊匹配，直通高德 API 获取正确省级边界 |
+| GeoJSON 本地缓存体系 | 性能 | Shapefile → GeoJSON 批量转换（`convert_to_geojson.py`），覆盖全国 690 地市 + 5651 县区 + 江苏省 22841 村级单位，纯本地查询零外部 API 依赖 |
+| 省级查询跳过 | 设计 | 省级/直辖市（X省/X自治区/京沪津渝）GeoJSON 无覆盖，直接返回 None，LLM 文字回复引导 |
 | GeoJSON 模糊匹配限制 | 修复 | `keywords in name` 匹配增加 `len(name) - len(keywords) <= 2` 约束，防止"江苏省"(3字) 误匹配"江苏省国营江心沙农场虚拟生活区"(14字) |
 | 乡镇级重心定位 | 修复 | 无 polygon 但有 center 的查询（如"塔里木乡"）新增 `elif` 分支直接用中心坐标定位，不再静默跳过 |
 | geocoding 城市限制兜底 | 修复 | 带 city="南京" geocoding 失败后自动重试全国搜索，解决非南京地区地名无法定位的问题 |
@@ -337,24 +337,22 @@ skyeye/
 
 ### 地图导航
 
-- 后端调高德 `geocode` API → 地名 → 经纬度 + 完整地址
+- 后端从本地 GeoJSON 查询地名 → 经纬度 + 完整地址
 - 前端 `navigate-map` 事件 → 地图 `flyTo()` 平滑飞行动画
 - 自动缩放适配区域边界，确保完整显示
 
 ### 区域圈定
 
-- 查询优先级：GeoJSON 本地(一级) → 高德缓存(二级) → 高德 API(三级)
-- 全国 690 地市 + 5651 县区有完整 polygon 边界，江苏省 22841 村级补充
-- 乡镇级（镇/乡/街道）GeoJSON 无覆盖，降级到高德 API 取中心坐标定位
-- 省级/直辖市直接跳过本地查询，走 API 获取正确边界
-- 子区域自动提取（县→村），各分配不同颜色
+- 纯本地 GeoJSON 查询，覆盖全国 690 地市 + 5651 县区，江苏省 22841 村级补充
+- 乡镇级和省级 GeoJSON 无覆盖，返回 None 由 LLM 文字回复引导
+- 子区域自动提取（市→县、县→村），各分配不同颜色
 
 ### 行政区划缓存
 
 - `geojson/` 目录：`city_2024.geojson`(690 地市) + `county_2024.geojson`(5651 县区) + `village_jiangsu.geojson`(22841 江苏村)
 - `geojson/index.json`：地名 → Feature 索引，支持精确/变体/模糊匹配
 - 模块级内存缓存，首次加载后常驻，后续零磁盘 IO
-- 管理命令：`python manage.py preload_districts`
+- 管理命令：`python manage.py preload_districts`（验证索引状态）
 
 ---
 
@@ -385,9 +383,6 @@ python manage.py runserver 0.0.0.0:8000
 api_key = your_deepseek_key
 api_url = https://api.deepseek.com/v1
 model = deepseek-chat
-
-[amap]
-api_key = your_amap_key
 ```
 
 ### 运行时配置（前端）
@@ -400,7 +395,7 @@ api_key = your_amap_key
 
 | 类别 | 文件/目录 | 说明 |
 |------|----------|------|
-| 密钥 | `skyeye/config.ini` | DeepSeek / 高德 API Key / 数据库连接 |
+| 密钥 | `skyeye/config.ini` | DeepSeek API Key / 数据库连接 |
 | 依赖 | `node_modules/` | npm 包（`npm install` 安装） |
 | Python 虚拟环境 | `venv/` `.venv/` `env/` `.env/` | Python 虚拟环境目录 |
 | 构建产物 | `dist/` `build/` | 前端打包输出 |
