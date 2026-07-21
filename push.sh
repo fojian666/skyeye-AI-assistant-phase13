@@ -19,9 +19,9 @@ set -euo pipefail
 PHASE_REMOTE="phase12"
 PHASE_URL="https://github.com/fojian666/skyeye-AI-assistant-phase12.git"
 GITEE_REMOTE="gitee"
-GITEE_URL="https://gitee.com/njuptGIS/skyeye.git"
+GITEE_URL="https://gitee.com/njuptGIS/gtus.git"
 UI_GITEE_REMOTE="skyeye-ui-gitee"
-UI_GITEE_URL="https://gitee.com/njuptGIS/skyeye-ui.git"
+UI_GITEE_URL="https://gitee.com/njuptGIS/gtus-ui.git"
 
 # 当前分支
 BRANCH=$(git rev-parse --abbrev-ref HEAD)

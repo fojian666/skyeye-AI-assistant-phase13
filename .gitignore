@@ -22,9 +22,11 @@ __pycache__/
 # Credentials (contains secrets)
 skyeye/config.ini
 
-# IDE
+# IDE / Tools
 .idea/
 .vscode/
+.trae/
+.impeccable/
 *.suo
 *.ntvs*
 *.njsproj
@@ -46,11 +48,24 @@ dev-server.log
 border-resources/
 skyeye/geojson/
 
+
 # Route planning runtime artifacts
 skyeye/static/route_jobs/
 skyeye/static/route_plan/
 skyeye/static/shp/
 skyeye/static/layers/
+
+# Geo/metadata files
+*.shp
+*.dbf
+*.shx
+*.pkl
+*.ckpt
+*.cpg
+*.prj
+*.sbn
+*.sbx
+*.tfw
 
 # Other
 *.swf
@@ -62,6 +77,14 @@ skyeye/static/layers/
 *.th
 *.mp4
 *.sql
+
+# Trae/Skills community imports
+ContraQuest*/
+Liquid Glass*/
+Minimalist sidebar*/
+Shader Reminder*/
+iOS 26 Liquid Glass*/
+scripts/
 
 # Test files
 test*.py
