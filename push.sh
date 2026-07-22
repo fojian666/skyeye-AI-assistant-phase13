@@ -99,26 +99,32 @@ UI_GITEE_SUBTREE_PREFIX="skyeye-ui"
 GITEE_BRANCH="wuxi-ai"
 UI_GITEE_BRANCH="wuxi-ai"
 
-echo "→ 推送 $PHASE_REMOTE → main (regular)..."
-if git push "$PHASE_REMOTE" "$BRANCH:main" 2>&1; then
+echo "→ 推送 $PHASE_REMOTE → main (force)..."
+if git push "$PHASE_REMOTE" "$BRANCH:main" --force 2>&1; then
     echo "✓ $PHASE_REMOTE 推送成功"
 else
     echo "✗ $PHASE_REMOTE 推送失败"
 fi
 
 echo "→ 推送 $GITEE_REMOTE → $GITEE_BRANCH (subtree: $GITEE_SUBTREE_PREFIX/)..."
-if git subtree push --prefix="$GITEE_SUBTREE_PREFIX" "$GITEE_REMOTE" "$GITEE_BRANCH" 2>&1; then
+TEMP_BRANCH="_split_${GITEE_REMOTE}"
+if git subtree split --prefix="$GITEE_SUBTREE_PREFIX" -b "$TEMP_BRANCH" 2>&1 && \
+   git push "$GITEE_REMOTE" "$TEMP_BRANCH:$GITEE_BRANCH" --force 2>&1; then
     echo "✓ $GITEE_REMOTE subtree 推送成功"
 else
     echo "✗ $GITEE_REMOTE subtree 推送失败"
 fi
+git branch -D "$TEMP_BRANCH" 2>/dev/null || true
 
 echo "→ 推送 $UI_GITEE_REMOTE → $UI_GITEE_BRANCH (subtree: $UI_GITEE_SUBTREE_PREFIX/)..."
-if git subtree push --prefix="$UI_GITEE_SUBTREE_PREFIX" "$UI_GITEE_REMOTE" "$UI_GITEE_BRANCH" 2>&1; then
+TEMP_BRANCH="_split_${UI_GITEE_REMOTE}"
+if git subtree split --prefix="$UI_GITEE_SUBTREE_PREFIX" -b "$TEMP_BRANCH" 2>&1 && \
+   git push "$UI_GITEE_REMOTE" "$TEMP_BRANCH:$UI_GITEE_BRANCH" --force 2>&1; then
     echo "✓ $UI_GITEE_REMOTE subtree 推送成功"
 else
     echo "✗ $UI_GITEE_REMOTE subtree 推送失败"
 fi
+git branch -D "$TEMP_BRANCH" 2>/dev/null || true
 
 echo ""
 echo "========================================"
