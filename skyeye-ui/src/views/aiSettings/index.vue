@@ -281,18 +281,6 @@
                                     </button>
                                 </div>
                             </div>
-
-                            <div class="field-group">
-                                <div class="toggle-row" @click="autoSummary = !autoSummary">
-                                    <div>
-                                        <label class="field-label toggle-label">进入页面时自动摘要</label>
-                                        <span class="toggle-hint">有选中对象时触发</span>
-                                    </div>
-                                    <button class="toggle-switch" :class="{ active: autoSummary }" role="switch" :aria-checked="autoSummary">
-                                        <span class="toggle-knob"></span>
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -607,7 +595,6 @@ export default {
             maxTokens: saved.maxTokens ?? 4096,
             reduceMotion: saved.reduceMotion ?? false,
             defaultMode: saved.defaultMode || 'chat',
-            autoSummary: saved.autoSummary ?? false,
             promptTemplates: saved.promptTemplates || this._defaultTemplates(),
             templateTab: 'chat', // 当前编辑的模板模式
             modes: [
@@ -738,7 +725,6 @@ export default {
             }
         },
         defaultMode: { handler: 'savePrefs', deep: false },
-        autoSummary: { handler: 'savePrefs', deep: false },
         promptTemplates: { handler: 'savePrefs', deep: true }
     },
 
@@ -1057,7 +1043,6 @@ export default {
                     maxTokens: this.maxTokens,
                     reduceMotion: this.reduceMotion,
                     defaultMode: this.defaultMode,
-                    autoSummary: this.autoSummary,
                     promptTemplates: this.promptTemplates
                 };
                 try {
@@ -1087,14 +1072,12 @@ export default {
                 maxTokens: 4096,
                 reduceMotion: false,
                 defaultMode: 'chat',
-                autoSummary: false
             };
             this.model = DEFAULTS.model;
             this.temperature = DEFAULTS.temperature;
             this.maxTokens = DEFAULTS.maxTokens;
             this.reduceMotion = DEFAULTS.reduceMotion;
             this.defaultMode = DEFAULTS.defaultMode;
-            this.autoSummary = DEFAULTS.autoSummary;
             this.promptTemplates = this._defaultTemplates();
             this.templateTab = 'chat';
             this.savePrefs();

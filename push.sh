@@ -7,7 +7,7 @@
 #   ./push.sh -m "fix: bug修复"      # -m 方式指定 message
 #
 # 推送目标:
-#   1. phase12  — GitHub Phase 仓库 → regular push main
+#   1. phase13  — GitHub Phase 仓库 → regular push main
 #   2. gitee    — Gitee 后端仓库 → subtree push skyeye/ → wuxi-ai
 #   3. skyeye-ui-gitee — Gitee 前端仓库 → subtree push skyeye-ui/ → wuxi-ai
 
@@ -16,8 +16,8 @@ set -euo pipefail
 # ============================================================
 # 远程仓库配置（按需修改）
 # ============================================================
-PHASE_REMOTE="phase12"
-PHASE_URL="https://github.com/fojian666/skyeye-AI-assistant-phase12.git"
+PHASE_REMOTE="phase13"
+PHASE_URL="https://github.com/fojian666/skyeye-AI-assistant-phase13.git"
 GITEE_REMOTE="gitee"
 GITEE_URL="https://gitee.com/njuptGIS/gtus.git"
 UI_GITEE_REMOTE="skyeye-ui-gitee"
@@ -26,8 +26,8 @@ UI_GITEE_URL="https://gitee.com/njuptGIS/gtus-ui.git"
 # 当前分支
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-# 默认 commit message（Phase 12）
-DEFAULT_MSG="feat: Phase 12 — 灵动岛一体化 + 手机外壳 + 四角缩放 + 会话抽屉无缝融合 + 点击外部收起"
+# 默认 commit message（Phase 13）
+DEFAULT_MSG="feat: Phase 13 — POI点位查询与地图标记 + 移除自动摘要 + 地名模糊匹配修复 + 暗色灵动岛修复 + 时钟冻结修复"
 
 # ============================================================
 # 解析参数
@@ -48,7 +48,7 @@ echo " 提交信息: $COMMIT_MSG"
 echo ""
 
 # ============================================================
-# 1. 确保 phase12 remote 存在
+# 1. 确保 phase13 remote 存在
 # ============================================================
 setup_remote() {
     local name="$1"
@@ -99,32 +99,26 @@ UI_GITEE_SUBTREE_PREFIX="skyeye-ui"
 GITEE_BRANCH="wuxi-ai"
 UI_GITEE_BRANCH="wuxi-ai"
 
-echo "→ 推送 $PHASE_REMOTE → main (force)..."
-if git push "$PHASE_REMOTE" "$BRANCH:main" --force 2>&1; then
+echo "→ 推送 $PHASE_REMOTE → main (regular)..."
+if git push "$PHASE_REMOTE" "$BRANCH:main" 2>&1; then
     echo "✓ $PHASE_REMOTE 推送成功"
 else
     echo "✗ $PHASE_REMOTE 推送失败"
 fi
 
 echo "→ 推送 $GITEE_REMOTE → $GITEE_BRANCH (subtree: $GITEE_SUBTREE_PREFIX/)..."
-TEMP_BRANCH="_split_${GITEE_REMOTE}"
-if git subtree split --prefix="$GITEE_SUBTREE_PREFIX" -b "$TEMP_BRANCH" 2>&1 && \
-   git push "$GITEE_REMOTE" "$TEMP_BRANCH:$GITEE_BRANCH" --force 2>&1; then
+if git subtree push --prefix="$GITEE_SUBTREE_PREFIX" "$GITEE_REMOTE" "$GITEE_BRANCH" 2>&1; then
     echo "✓ $GITEE_REMOTE subtree 推送成功"
 else
     echo "✗ $GITEE_REMOTE subtree 推送失败"
 fi
-git branch -D "$TEMP_BRANCH" 2>/dev/null || true
 
 echo "→ 推送 $UI_GITEE_REMOTE → $UI_GITEE_BRANCH (subtree: $UI_GITEE_SUBTREE_PREFIX/)..."
-TEMP_BRANCH="_split_${UI_GITEE_REMOTE}"
-if git subtree split --prefix="$UI_GITEE_SUBTREE_PREFIX" -b "$TEMP_BRANCH" 2>&1 && \
-   git push "$UI_GITEE_REMOTE" "$TEMP_BRANCH:$UI_GITEE_BRANCH" --force 2>&1; then
+if git subtree push --prefix="$UI_GITEE_SUBTREE_PREFIX" "$UI_GITEE_REMOTE" "$UI_GITEE_BRANCH" 2>&1; then
     echo "✓ $UI_GITEE_REMOTE subtree 推送成功"
 else
     echo "✗ $UI_GITEE_REMOTE subtree 推送失败"
 fi
-git branch -D "$TEMP_BRANCH" 2>/dev/null || true
 
 echo ""
 echo "========================================"

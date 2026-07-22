@@ -24,6 +24,9 @@ SUB_REGION_COLORS = [
 
 _geojson_index = None       # name → [{file, feature_idx}]
 _geojson_file_cache = {}    # file_path → geojson dict
+_poi_index = None           # name → {category, district, coordinates: [lng, lat]}
+
+POI_INDEX_FILE = os.path.join(GEOJSON_DIR, 'poi', 'poi_index.json')
 
 
 def _load_geojson_index():
@@ -156,7 +159,7 @@ def query_district(keywords, city=''):
         for name in index:
             if keywords in name and len(name) - len(keywords) <= 2:
                 matches.extend(index[name])
-            elif name in keywords:
+            elif name in keywords and len(keywords) - len(name) <= 2:
                 matches.extend(index[name])
         if matches:
             candidates = matches
@@ -192,3 +195,70 @@ def query_district(keywords, city=''):
     logger.info(f'GeoJSON 命中: {keywords} → {entry["file"]}#{entry["feature_idx"]}'
                 f' ({len(sub_regions)} 个子区域)')
     return result
+
+
+# ==================== POI 查询 ====================
+
+def _load_poi_index():
+    """懒加载 POI 索引（进程生命周期内单次加载）"""
+    global _poi_index
+    if _poi_index is not None:
+        return _poi_index
+    if os.path.exists(POI_INDEX_FILE):
+        try:
+            with open(POI_INDEX_FILE, 'r', encoding='utf-8') as f:
+                _poi_index = json.load(f)
+                logger.info(f'POI 索引已加载: {len(_poi_index)} 个点位')
+                return _poi_index
+        except (json.JSONDecodeError, IOError) as e:
+            logger.warning(f'POI 索引文件加载失败: {e}')
+    _poi_index = {}
+    return _poi_index
+
+
+def query_poi(keywords):
+    """
+    查询南京 POI 点位数据
+    返回 { name, lat, lng, category, district } 或 None
+    """
+    index = _load_poi_index()
+    if not index:
+        return None
+
+    # 1. 精确匹配
+    if keywords in index:
+        entry = index[keywords]
+        return {
+            'name': keywords,
+            'lat': entry['coordinates'][1],
+            'lng': entry['coordinates'][0],
+            'category': entry['category'],
+            'district': entry['district'],
+        }
+
+    # 2. 模糊匹配（关键词包含在名称中）
+    candidates = []
+    for name, entry in index.items():
+        if keywords in name:
+            candidates.append((name, entry))
+    if not candidates:
+        return None
+
+    # 优选策略: 1) 名称以关键词开头且无括号修饰 > 2) 最短
+    def _score(item):
+        name = item[0]
+        starts_with = 10 if name.startswith(keywords) else 0
+        no_parens = 5 if '(' not in name and '（' not in name else 0
+        return (starts_with + no_parens, -len(name))
+
+    candidates.sort(key=_score, reverse=True)
+    name, entry = candidates[0]
+
+    logger.info(f'POI 模糊匹配: "{keywords}" → "{name}"')
+    return {
+        'name': name,
+        'lat': entry['coordinates'][1],
+        'lng': entry['coordinates'][0],
+        'category': entry['category'],
+        'district': entry['district'],
+    }

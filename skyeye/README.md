@@ -2,7 +2,7 @@
 
 无人机智能监管平台 Django 服务，集成 DeepSeek 大模型 AI 智能助手。
 
-> **Phase 12** — 移除高德 API 依赖，纯本地 GeoJSON 查询
+> **Phase 13** — POI 点位查询（79万条南京 POI）+ 地图 pin 标记 + 移除自动摘要 + 地名模糊匹配修复
 
 ## AI 助手 API
 
@@ -25,7 +25,7 @@
 | 工具 | 功能 |
 |------|------|
 | `navigate_page` | 跳转系统页面（18 条路由映射，含 AI 设置页） |
-| `map_action` | 地图定位 + 区域边界绘制（GeoJSON polygon / 中心点定位） |
+| `map_action` | 地图定位 + 区域边界绘制（GeoJSON polygon / 中心点定位）+ POI 点位查询与 pin 标记 |
 | `query_data` | 查询系统数据（数量/状态/统计/列表/明细） |
 | `lookup_task` | 按任务编号查询并跳转 |
 
@@ -39,6 +39,13 @@
 **数据转换工具**：`scripts/convert_to_geojson.py` — Shapefile → GeoJSON，支持 CGCS2000→WGS-84 坐标转换
 
 **已知限制**：省级和乡镇级 GeoJSON 无覆盖，查询返回 None 由 LLM 文字回复引导。
+
+### POI 点位查询 (Phase 13)
+
+- `geojson/poi/` 目录：24 个分类 GeoJSON（餐饮/购物/交通/科教等）+ `poi_index.json`（91MB 名称→坐标索引）
+- 行政区查询未命中时自动回退 POI 查询，返回精确坐标 + 分类 + 区属信息
+- 查询优先级：精确行政区 → 变体 → 带约束模糊 → POI 查询
+- POI 模糊匹配优先以关键词开头且无括号修饰的结果
 
 ## 安装教程
 

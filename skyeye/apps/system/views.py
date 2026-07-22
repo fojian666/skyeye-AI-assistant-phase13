@@ -3049,6 +3049,12 @@ def _get_district(keywords, city=''):
     return query_district(keywords, city=city)
 
 
+def _get_poi(keywords):
+    """本地 POI 点位查询"""
+    from utils_tools.district_cache import query_poi
+    return query_poi(keywords)
+
+
 def _lc_to_result(msg):
     result = {}
     if msg.content:
@@ -3136,21 +3142,6 @@ def _generate_sse(raw_messages, frontend_tools, request, chat_mode='chat', conte
                     ctx_lines.append('- 【字段映射】此页面选中对象为线索，查询时请使用 clue 表的对应字段筛选。')
                 ctx_lines.append('用户说"这个任务"、"当前页面"、"该线索"等指代词时，请关联到以上上下文中的对象。')
 
-                # 摘要在 summary 模式下启用
-                if chat_mode == 'summary':
-                    has_selection = bool(ctx_labels)
-                    if has_selection:
-                        ctx_lines.append('\n【智能摘要规则】')
-                        ctx_lines.append('如果用户发出模糊询问（如"怎么样""什么情况""帮我看看""分析一下""汇总""总结""报告"），')
-                        ctx_lines.append('你应该自动调用 query_data 多次，收集该对象的进度、异常、待办、状态分布等维度数据，')
-                        ctx_lines.append('然后生成一份结构化摘要，包含：')
-                        ctx_lines.append('1. 📊 数据概况（总量/进度）')
-                        ctx_lines.append('2. ⚠️ 异常/风险项（如有疑似违法线索、检测失败等）')
-                        ctx_lines.append('3. 📋 待办事项')
-                        ctx_lines.append('4. 🟢/🟡/🔴 风险等级评估')
-                        ctx_lines.append('5. 💡 推荐下一步操作')
-                        ctx_lines.append('禁止编造数据，必须基于 query_data 返回的真实结果。若无选中对象则忽略此规则。')
-
                 # 追问生成规则
                 ctx_lines.append('\n【追问生成规则】')
                 ctx_lines.append('每次回复末尾，用 "|||" 分隔符生成 3 个与当前页面和选中对象高度相关的追问。')
@@ -3224,11 +3215,26 @@ def _generate_sse(raw_messages, frontend_tools, request, chat_mode='chat', conte
                             if district.get('sub_regions'):
                                 args['sub_regions'] = district['sub_regions']
                             args['name'] = district.get('name', args['location'])
-                        elif district and district.get('center'):
-                            # 有行政区信息但没有 polygon（如乡镇级），直接用其中心点定位
-                            args['lat'] = district['center']['lat']
-                            args['lng'] = district['center']['lng']
-                            args['name'] = district.get('name', args['location'])
+                        elif district and district.get('center') and not district.get('polygon'):
+                            # 无 polygon 的行政区（如乡镇）→ 优先尝试 POI 点查询，防止大学/商家被地名误匹配
+                            poi = _get_poi(args['location'])
+                            if poi:
+                                args['lat'] = poi['lat']
+                                args['lng'] = poi['lng']
+                                args['name'] = poi['name']
+                                args['_poi'] = {'category': poi['category'], 'district': poi['district']}
+                            else:
+                                args['lat'] = district['center']['lat']
+                                args['lng'] = district['center']['lng']
+                                args['name'] = district.get('name', args['location'])
+                        else:
+                            # 行政区未命中 → 尝试 POI 点位查询
+                            poi = _get_poi(args['location'])
+                            if poi:
+                                args['lat'] = poi['lat']
+                                args['lng'] = poi['lng']
+                                args['name'] = poi['name']
+                                args['_poi'] = {'category': poi['category'], 'district': poi['district']}
                         fn['arguments'] = json.dumps(args, ensure_ascii=False)
                     # map_action 发给前端处理
                     emit_tool_calls.append(tc)

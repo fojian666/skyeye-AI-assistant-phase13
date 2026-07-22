@@ -1,4 +1,4 @@
-# 金陵阡陌 — AI 助手 (Phase 12)
+# 金陵阡陌 — AI 助手 (Phase 13)
 
 无人机巡检智能平台前端，集成 AI 对话面板与可视化参数设置。
 
@@ -167,6 +167,17 @@ skyeye-ui/src/
 - **会话列表一体化**: 与面板无缝融合（统一背景/边框/光效），底部对齐
 - **四角缩放**: 四个角落均可拖拽缩放
 - **点击外部收起**: 点击 ChatModel 外部自动返回 FAB
+
+### Phase 13 POI 点位查询与地图标记 · 去自动化
+
+- **POI 点位查询**: 南京 79 万条 POI 数据集成，`map_action` 行政区未命中自动回退 POI
+- **地图 pin 标记**: POI/区划查询后地图中心落蓝色 pin + popup 信息，2D Leaflet + 3D Cesium 双支持
+- **移除自动摘要**: 不再自动生成摘要，改为用户主动触发；清理 AiSettings `autoSummary` 及 ChatModel 路由/mode watcher 触发
+- **地名匹配修复**: 模糊匹配加长度约束防误匹配；无 polygon 行政区优先 POI
+- **POI 匹配优化**: 优先以关键词开头且无括号修饰的结果
+- **暗色灵动岛修复**: query/summary 模式悬浮态背景正确显示暗色毛玻璃
+- **时钟修复**: `currentTime` 改 data + 定时器，解决冻结问题
+- **GeoJSON 格式化**: 26 个文件 indent=2 可读化
 
 ## 快速开始
 

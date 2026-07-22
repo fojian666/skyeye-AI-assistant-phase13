@@ -933,6 +933,25 @@ export default {
             // 飞到区域中心
             if (lat != null && lng != null) this.map.flyTo([lat, lng], 14, { duration: 1.2 });
             else if (rings[0] && rings[0].length) this.map.fitBounds(mainLayer.getBounds(), { padding: [30, 30], maxZoom: 16 });
+            // 在区域中心放置 pin 标记
+            const center = (lat != null && lng != null) ? { lat, lng }
+                : (rings[0] && rings[0].length) ? (() => { const b = mainLayer.getBounds(); const c = b.getCenter(); return { lat: c.lat, lng: c.lng }; })()
+                : null;
+            if (center) this.drawMarker(center.lat, center.lng, name, null);
+        },
+
+        drawMarker(lat, lng, name, poi) {
+            if (!this.map) return;
+            // 清除上一个标记
+            if (this._markerLayer) {
+                this.map.removeLayer(this._markerLayer);
+                this._markerLayer = null;
+            }
+            const popupContent = `<b>${name || 'POI'}</b>${poi ? `<br>${poi.district} · ${poi.category}` : ''}`;
+            this._markerLayer = L.marker([lat, lng])
+                .addTo(this.map)
+                .bindPopup(popupContent, { closeButton: false })
+                .openPopup();
         },
 
         getZoom() {

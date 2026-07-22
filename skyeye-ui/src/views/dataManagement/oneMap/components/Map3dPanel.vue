@@ -879,6 +879,39 @@ export default {
 
             if (lat != null && lng != null) this.flyTo3D(lat, lng, 12);
             else this.viewer.flyTo(mainEntity, { duration: 1.2 });
+            // 在区域中心放置 pin 标记
+            if (lat != null && lng != null) this.drawMarker(lat, lng, name, null);
+        },
+
+        drawMarker(lat, lng, name, poi) {
+            if (!this.viewer || !this.Cesium) return;
+            const Cesium = this.Cesium;
+            // 清除上一个标记
+            if (this._markerEntity) {
+                this.viewer.entities.remove(this._markerEntity);
+                this._markerEntity = null;
+            }
+            const label = name || 'POI';
+            const desc = poi ? `${poi.district} · ${poi.category}` : '';
+            this._markerEntity = this.viewer.entities.add({
+                name: label,
+                description: desc,
+                position: Cesium.Cartesian3.fromDegrees(lng, lat),
+                billboard: {
+                    image: 'data:image/svg+xml,' + encodeURIComponent(
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">' +
+                        '<path d="M16 0C7.164 0 0 7.164 0 16c0 12 16 24 16 24s16-12 16-24C32 7.164 24.836 0 16 0z" fill="#3b82f6" stroke="#fff" stroke-width="2"/>' +
+                        '<circle cx="16" cy="14" r="6" fill="#fff"/>' +
+                        '</svg>'
+                    ),
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                },
+            });
+            // 选中 entity 以显示 info box（Cesium 原生描述框）
+            if (desc) {
+                this.viewer.selectedEntity = this._markerEntity;
+            }
         },
 
         resizeCesiumAfterLayout() {

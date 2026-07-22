@@ -159,17 +159,16 @@ export default {
             const { lat, lng, polygon, address } = e.detail || {};
             if (lat == null || lng == null) return;
             const panel = this.getActivePanel();
-            if (!panel) return;
-            // 优先用 polygon fitBounds 自适应缩放
-            if (this.currentMode === '3d' && panel.flyToRegion3D) {
-                panel.flyToRegion3D(lat, lng, polygon);
-            } else if (this.currentMode === '3d' && panel.flyTo3D) {
-                panel.flyTo3D(lat, lng, 16);
-            } else if (panel.flyToRegion) {
-                panel.flyToRegion(lat, lng, polygon);
-            } else if (panel.flyTo) {
-                panel.flyTo(lat, lng, 16);
+            if (!panel) {
+                // 地图组件可能尚未初始化完成（如 3D Cesium 加载较慢），延迟重试
+                setTimeout(() => {
+                    const retryPanel = this.getActivePanel();
+                    if (!retryPanel) return;
+                    this._flyToPanel(retryPanel, lat, lng, polygon);
+                }, 800);
+                return;
             }
+            this._flyToPanel(panel, lat, lng, polygon);
         };
         this._onDrawRegion = (e) => {
             const { polygon, name, lat, lng, subRegions } = e.detail || {};
@@ -178,12 +177,21 @@ export default {
             if (!panel || !panel.drawRegion) return;
             panel.drawRegion(polygon, name, lat, lng, subRegions);
         };
+        this._onDrawMarker = (e) => {
+            const { lat, lng, name, poi } = e.detail || {};
+            if (lat == null || lng == null) return;
+            const panel = this.getActivePanel();
+            if (!panel || !panel.drawMarker) return;
+            panel.drawMarker(lat, lng, name, poi);
+        };
         window.addEventListener('navigate-map', this._onNavigateMap);
         window.addEventListener('draw-region', this._onDrawRegion);
+        window.addEventListener('draw-marker', this._onDrawMarker);
     },
     beforeDestroy() {
         window.removeEventListener('navigate-map', this._onNavigateMap);
         window.removeEventListener('draw-region', this._onDrawRegion);
+        window.removeEventListener('draw-marker', this._onDrawMarker);
     },
     methods: {
         filterNode(value, data) {
@@ -220,6 +228,18 @@ export default {
         },
         getActivePanel() {
             return this.currentMode === '3d' ? this.$refs.map3d : this.$refs.map2d;
+        },
+        _flyToPanel(panel, lat, lng, polygon) {
+            // 优先用 polygon fitBounds 自适应缩放
+            if (this.currentMode === '3d' && panel.flyToRegion3D) {
+                panel.flyToRegion3D(lat, lng, polygon);
+            } else if (this.currentMode === '3d' && panel.flyTo3D) {
+                panel.flyTo3D(lat, lng, 16);
+            } else if (panel.flyToRegion) {
+                panel.flyToRegion(lat, lng, polygon);
+            } else if (panel.flyTo) {
+                panel.flyTo(lat, lng, 16);
+            }
         },
         syncZoomFromPanel() {
             const panel = this.getActivePanel();

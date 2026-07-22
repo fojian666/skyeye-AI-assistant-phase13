@@ -1,6 +1,6 @@
 # SkyEye AI 助手 — 设计文档
 
-> Phase 12 · 灵动岛一体化 · 手机外壳 · 一体化会话抽屉
+> Phase 13 · POI 点位查询与地图标记 · 移除自动摘要 · 地名模糊匹配修复
 
 ---
 
@@ -575,3 +575,44 @@ blur(22px)...            ───→   --ai-blur-shell        ───→    .
 | `max-width: calc(100dvw - 64px)` | ChatModel wrapper 硬截断防止溢出 |
 | 窗口 resize | ChatModel 重夹持 `dragPos` 百分比，`_onWindowResize` |
 | drawer open | wrapper `max-width` 减去 `--conv-list-width` |
+
+---
+
+## 6. Phase 13 变更记录
+
+### 6.1 POI 点位查询与地图标记
+
+#### 后端 — POI 数据集成
+
+- **数据源**: `NJPOI_2022` 目录 → `scripts/convert_to_geojson.py` 转换 → `geojson/poi/` 下 24 个分类 GeoJSON + `poi_index.json`（91MB 名称→坐标索引）
+- **查询函数**: `district_cache.query_poi(keywords)` — 精确匹配（O(1)）+ 模糊匹配（取最短名），优先以关键词开头且无括号修饰
+- **调用链**: `views.py map_action` 处理器中，行政区查询失败后自动回退 POI → 返回 `{lat, lng, name, _poi: {category, district}}`
+- **匹配优先级**: 精确行政区 → 变体（+区/县/市） → 带约束模糊 → POI 查询
+
+#### 前端 — pin 标记系统
+
+- **事件流**: `ChatModel.executeTool('map_action')` → `draw-marker` CustomEvent → `oneMap/index.vue` 监听 → `panel.drawMarker()`
+- **2D（Leaflet）**: `L.marker([lat, lng])` + `bindPopup('<b>名称</b><br>区 · 分类')`
+- **3D（Cesium）**: Billboard entity + 蓝色 SVG pin 图标 + `selectedEntity` 显示 info box
+- **区划也加标记**: `drawRegion` 末尾调用 `drawMarker(lat, lng, name, null)`，边界查询后同时显示多边形和中心 pin
+
+### 6.2 移除自动摘要
+
+- **后端**: 移除 system prompt 中 [智能摘要规则] 14 行（自动调用 query_data 生成结构化报告）
+- **前端 ChatModel**: 移除 `$route` watcher 中的 `maybeAutoSummary()` 调用；移除 `chatMode` watcher 中 `mode === 'query' || mode === 'summary'` 触发
+- **前端 AiSettings**: 移除"进入页面时自动摘要"开关 UI + `autoSummary` data/watcher/save/load/defaults 共 6 处
+- `maybeAutoSummary()` 方法保留（未来可选恢复）
+
+### 6.3 地名模糊匹配修复
+
+- `district_cache._get_district` 中 `name in keywords` 分支增加 `len(keywords) - len(name) <= 2` 约束，防止 2 字"南县"匹配 7 字"南京邮电大学"
+- `views.py` 中无 polygon 的行政区结果（`elif district.get('center') and not district.get('polygon')`）优先查 POI，行政区兜底
+
+### 6.4 暗色灵动岛悬浮态修复
+
+- 新增 `&.query:hover, &.summary:hover` 和 `&.query.streaming, &.summary.streaming` 明确覆盖 `background: rgba(3, 12, 32, 0.92)`，特异性 0,3,0 压制折叠态纯色（0,2,0）
+
+### 6.5 时钟冻结修复
+
+- `currentTime` 从 computed 改为 `clockTime` data（IIFE 初始化）+ `_updateClock()` + `setInterval` 30s 定时更新，`mounted` 启动 / `beforeDestroy` 清理
+- Vue 2 不代理 `_` 前缀 data → 改用无前缀 `clockTime`

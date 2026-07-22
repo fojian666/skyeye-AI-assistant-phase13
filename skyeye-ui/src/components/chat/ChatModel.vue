@@ -237,14 +237,22 @@
                                 </svg>
                             </div>
                             <p>你好！我是金陵阡陌 AI 助手</p>
-                            <span class="welcome-intro">点击顶部灵动岛可展开控制面板，如需切换功能模式：</span>
+                            <span class="welcome-intro">我能帮你完成以下操作：</span>
                             <ul class="welcome-capabilities">
-                                <li>对话模式：导航定位、任务查询、通用问答</li>
-                                <li>数据查询：统计分析航线、任务、异常数据</li>
-                                <li>智能摘要：对选中要素自动生成分析报告</li>
+                                <li><b>页面导航：</b>帮你跳转到系统任意页面（一张图、航线规划、报告管理等）</li>
+                                <li><b>地图定位：</b>带你定位到指定城市、区域或地标点</li>
+                                <li><b>任务查询：</b>输入编号即可快速查找具体任务</li>
+                                <li><b>数据问询：</b>统计分析航线、任务、异常等业务数据</li>
+                                <li><b>智能摘要：</b>对选中要素自动生成分析报告</li>
+                            </ul>
+                            <span class="welcome-intro" style="margin-top: 6px;">三种模式随需切换（点击灵动岛）：</span>
+                            <ul class="welcome-capabilities">
+                                <li>💬 对话 — 通用对话，涵盖全部能力</li>
+                                <li>📊 数据查询 — 专注数据统计与分析</li>
+                                <li>📋 智能摘要 — 对页面要素智能总结</li>
                             </ul>
                             <hr class="welcome-sep" />
-                            <span class="welcome-tips">💡 试试下方快捷提问，或点击顶部灵动岛展开更多设置</span>
+                            <span class="welcome-tips">💡 试试下方快捷提问；左侧小圆可展开会话列表，支持多轮对话管理与切换</span>
                             <div class="quick-questions">
                                 <button v-for="q in quickQuestions" :key="q" @click="sendQuick(q)">{{ q }}</button>
                             </div>
@@ -641,13 +649,14 @@ const TOOLS = [
         function: {
             name: 'map_action',
             description:
-                '地图定位操作。仅在用户明确要求打开/查看/定位某个具体地点（如城市名、区名、街道名、地标名）时调用。' +
+                '地图定位操作。仅在用户明确要求打开/查看/定位/导航到某个具体地点时调用。' +
+                '\n支持：城市名、区名、街道名、地标名、POI点位（服务区、收费站、加油站、商场、餐厅、医院、学校、公司等）。' +
                 '\n【禁止调用场景】以下不是地点，不要调用此工具：' +
                 '\n  - "防尘网""线索""图斑""批次""全景图""网格""任务"等业务术语' +
                 '\n  - "数据概览""统计""汇总""有多少""状态"等数据查询词汇 → 应使用 query_data' +
                 '\n  - "一张图""全景检测""航线规划"等页面名称 → 应使用 navigate_page' +
                 '\n  - 即使用户说"打开""查看"，后面跟的不是具体地名，也不调用。' +
-                '\n示例：带我去南京鼓楼区看看 → map_action\n鼓楼区在哪 → map_action\n打开玄武区 → map_action',
+                '\n示例：带我去南京鼓楼区看看 → map_action\n鼓楼区在哪 → map_action\n八卦洲服务区在哪 → map_action\n打开玄武区 → map_action',
             parameters: {
                 type: 'object',
                 properties: {
@@ -765,6 +774,8 @@ export default {
             _animLockTimer: null, // 并发动画锁定时器
             _animating: false, // 并发动画锁（模式切换/dock/开合）
             _sending: false, // 并发发送锁（send/sendQuick）
+            clockTime: (() => { const n = new Date(); return `${n.getHours().toString().padStart(2, '0')}:${n.getMinutes().toString().padStart(2, '0')}`; })(), // iOS 状态栏时钟
+            _timeTimer: null, // 时钟定时器句柄
             model: 'deepseek-chat', // 模型选择（从设置页同步）
             temperature: 0.7, // Temperature 参数
             maxTokens: 4096 // 最大输出 token
@@ -773,10 +784,7 @@ export default {
     computed: {
         ...mapState({ theme: (state) => state.theme }),
         currentTime() {
-            const now = new Date();
-            const h = now.getHours().toString().padStart(2, '0');
-            const m = now.getMinutes().toString().padStart(2, '0');
-            return `${h}:${m}`;
+            return this.clockTime;
         },
         /** side-rail 渐进引导阶段：前 3 次打开面板展示标签，之后永久隐藏 */
         onboardPhase() {
@@ -794,7 +802,7 @@ export default {
             if (this.dragPos.xPct != null) {
                 // 拖拽时：右边界必须限制在视口内，补偿 drawer 宽度
                 const drawerW = this.convListVisible ? this._convListW : 0;
-                const totalW = this.visible ? (this.panelW + drawerW) : 52; // FAB ~52px
+                const totalW = this.visible ? (this.panelW + drawerW) : this._fabWidth; // FAB 宽度
                 const maxLeft = Math.round(window.innerWidth - totalW);
                 const left = Math.min(Math.round(this.dragPos.xPct * window.innerWidth), maxLeft);
                 return {
@@ -813,6 +821,10 @@ export default {
         /** JS 侧 drawer 宽度 — 与 CSS var(--conv-list-width) 同步 */
         _convListW() {
             return Math.min(250, Math.max(195, Math.round(window.innerWidth * 0.12)));
+        },
+        /** JS 侧 FAB 宽度 — 与 CSS clamp(42px, 2.8vw, 52px) 同步 */
+        _fabWidth() {
+            return Math.min(52, Math.max(42, Math.round(window.innerWidth * 0.028)));
         },
         activeTools() {
             if (this.chatMode === 'query' || this.chatMode === 'summary') return TOOLS;
@@ -859,6 +871,8 @@ export default {
         document.addEventListener('mouseup', this._onResizeEnd);
         document.addEventListener('keydown', this._onKeydown);
         document.addEventListener('mousedown', this._onDocMouseDown);
+        this._updateClock();
+        this._timeTimer = setInterval(() => { this._updateClock(); }, 30000);
         window.addEventListener('resize', this._onWindowResize);
         this._onStorage = (e) => {
             if (e.key === 'skyeye_rail_onboard') {
@@ -883,6 +897,7 @@ export default {
         clearTimeout(this._copyTimer);
         clearTimeout(this._saveDebounceTimer);
         clearTimeout(this._animLockTimer);
+        clearInterval(this._timeTimer);
         document.removeEventListener('mousemove', this._onDragMove);
         document.removeEventListener('mouseup', this._onDragEnd);
         document.removeEventListener('mousemove', this._onGlobalMouse);
@@ -902,13 +917,10 @@ export default {
         streaming(val) {
             if (!val) this._sending = false;
         },
-        // 路由变化：进入新页面且有选中对象 → 自动生成摘要
+        // 路由变化
         $route: {
             immediate: true,
             handler() {
-                this.$nextTick(() => {
-                    this.maybeAutoSummary();
-                });
                 // 从设置页返回 → 恢复聊天面板（不在设置页时才触发）
                 if (this.$route.path !== '/ai-settings' && sessionStorage.getItem('skyeye_from_chat') === '1') {
                     sessionStorage.removeItem('skyeye_from_chat');
@@ -918,9 +930,8 @@ export default {
                 }
             }
         },
-        // 切换到数据查询模式或摘要模式且有选中对象 → 自动生成摘要
+        // 模式切换 → 保存默认模式
         chatMode(val) {
-            if (val === 'query' || val === 'summary') this.maybeAutoSummary();
             this._saveSettingsKey('defaultMode', val);
         },
         // 动态效果切换 → 同步到设置页
@@ -1064,9 +1075,9 @@ export default {
             // 窗口缩小时重夹持拖拽位置，防止面板溢出视口
             if (this.dragPos.xPct == null) return;
             const drawerW = this.convListVisible && this.visible ? this._convListW : 0;
-            const totalW = this.visible ? (this.panelW + drawerW) : 52;
+            const totalW = this.visible ? (this.panelW + drawerW) : this._fabWidth;
             const maxX = Math.max(0, window.innerWidth - totalW);
-            const maxY = Math.max(0, window.innerHeight - (this.visible ? this.panelH : 52));
+            const maxY = Math.max(0, window.innerHeight - (this.visible ? this.panelH : this._fabWidth));
             const clampedX = Math.min(Math.round(this.dragPos.xPct * window.innerWidth), maxX);
             const clampedY = Math.min(Math.round(this.dragPos.yPct * window.innerHeight), maxY);
             this.dragPos = {
@@ -1213,17 +1224,19 @@ export default {
 
         closeChat() {
             this.diExpanded = false;
+            this._animateClose(0.2);
+        },
+
+        /** 动画收起面板（closeChat / collapseToFab 公用） */
+        _animateClose(duration) {
             const panel = this.$refs.panel;
             if (panel && this.visible) {
-                const shell = panel.parentElement; // .panel-shell 外壳
+                const shell = panel.parentElement;
+                const opts = { scale: 0.95, opacity: 0, y: 10, duration, ease: 'power3.in' };
                 gsap.to(panel, {
-                    scale: 0.95,
-                    opacity: 0,
-                    y: 10,
+                    ...opts,
                     boxShadow: '0 0 16px rgba(100,180,255,0.25), 0 0 32px rgba(100,180,255,0.08), 0 0 0 1px rgba(255,255,255,0.05) inset',
                     borderColor: 'rgba(100,180,255,0.3)',
-                    duration: 0.2,
-                    ease: 'power3.in',
                     onComplete: () => {
                         this.visible = false;
                         this.docked = false;
@@ -1232,7 +1245,7 @@ export default {
                         gsap.set([panel, shell], { clearProps: 'all' });
                     }
                 });
-                gsap.to(shell, { opacity: 0, duration: 0.2, ease: 'power3.in' });
+                gsap.to(shell, { opacity: 0, duration, ease: 'power3.in' });
             } else {
                 this.visible = false;
                 this.docked = false;
@@ -1245,7 +1258,13 @@ export default {
             this.diExpanded = !this.diExpanded;
         },
 
+        _updateClock() {
+            const now = new Date();
+            this.clockTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        },
+
         _onDocMouseDown(e) {
+            if (!this.visible && !this.diExpanded) return;
             if (this.diExpanded) {
                 const island = this.$el.querySelector('.dynamic-island');
                 const dropdown = this.$el.querySelector('.di-dropdown');
@@ -1261,30 +1280,7 @@ export default {
 
         /** 收起面板回到 FAB（保留对话内容，用于跳转地图等场景） */
         collapseToFab() {
-            const panel = this.$refs.panel;
-            if (panel && this.visible) {
-                const shell = panel.parentElement;
-                gsap.to(panel, {
-                    scale: 0.95,
-                    opacity: 0,
-                    y: 10,
-                    duration: 0.15,
-                    ease: 'power3.in',
-                    onComplete: () => {
-                        this.visible = false;
-                        this.docked = false;
-                        this.convListVisible = false;
-                        this.dragPos = { xPct: null, yPct: null };
-                        gsap.set([panel, shell], { clearProps: 'all' });
-                    }
-                });
-                gsap.to(shell, { opacity: 0, duration: 0.15, ease: 'power3.in' });
-            } else {
-                this.visible = false;
-                this.docked = false;
-                this.convListVisible = false;
-                this.dragPos = { xPct: null, yPct: null };
-            }
+            this._animateClose(0.15);
         },
 
         toggleChatMode() {
@@ -1493,7 +1489,6 @@ export default {
                 if (prefs.maxTokens !== undefined && prefs.maxTokens !== null) this.maxTokens = prefs.maxTokens;
                 if (prefs.reduceMotion !== undefined) this.reduceMotion = prefs.reduceMotion;
                 if (prefs.defaultMode) this.chatMode = prefs.defaultMode;
-                if (prefs.autoSummary !== undefined) this.autoSummary = prefs.autoSummary;
             } catch (e) {
                 console.warn('[ChatModel] localStorage 读取失败', e);
                 this._storageError = true;
@@ -1813,12 +1808,15 @@ export default {
                     subRegions: args.sub_regions || [],
                     lat: args.lat,
                     lng: args.lng,
-                    city: args.city || '南京'
+                    city: args.city || '南京',
+                    poi: args._poi || null,
                 };
                 const hasPolygon = detail.polygon && detail.polygon.length > 0;
+                const isPoi = !hasPolygon && detail.poi;
                 this.messages.push({ role: 'tool-info', content: hasPolygon ? `正在定位并圈定 ${detail.name}...` : `正在定位到 ${detail.name}...` });
                 const dispatch = () => {
                     if (hasPolygon) window.dispatchEvent(new CustomEvent('draw-region', { detail }));
+                    if (isPoi) window.dispatchEvent(new CustomEvent('draw-marker', { detail }));
                     if (detail.lat != null) window.dispatchEvent(new CustomEvent('navigate-map', { detail }));
                 };
                 if (this._mapDispatchTimer) {
@@ -3294,13 +3292,17 @@ export default {
             0 2px 8px rgba(0, 0, 0, 0.3),
             inset 0 1px 0 rgba(255, 255, 255, 0.06);
     }
+    &.query:hover,
     &.query.expanded {
+        background: rgba(3, 12, 32, 0.92);
         box-shadow:
             0 0 14px rgba(239, 68, 68, 0.2),
             0 2px 8px rgba(0, 0, 0, 0.3),
             inset 0 1px 0 rgba(255, 255, 255, 0.06);
     }
+    &.summary:hover,
     &.summary.expanded {
+        background: rgba(3, 12, 32, 0.92);
         box-shadow:
             0 0 14px rgba(245, 158, 11, 0.2),
             0 2px 8px rgba(0, 0, 0, 0.3),
@@ -3309,10 +3311,15 @@ export default {
 
     /* 输出中保持 glow */
     &.streaming {
+        background: rgba(3, 12, 32, 0.92);
         box-shadow:
             0 0 12px rgba(0, 180, 240, 0.2),
             0 2px 8px rgba(0, 0, 0, 0.3),
             inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    &.query.streaming,
+    &.summary.streaming {
+        background: rgba(3, 12, 32, 0.92);
     }
 
     /* 纯色态隐藏 ::before 高光 */
