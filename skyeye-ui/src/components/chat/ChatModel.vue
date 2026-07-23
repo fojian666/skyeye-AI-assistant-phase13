@@ -138,23 +138,11 @@
                                 </svg>
                             </span>
                         </div>
-                        <span class="sb-icons">
-                            <svg class="sb-icon sb-signal" width="20" height="13" viewBox="0 0 20 13" fill="none">
-                                <path fill-rule="evenodd" clip-rule="evenodd" d="M19.2 1.146C19.2 0.513 18.722 0 18.133 0H17.067C16.478 0 16 0.513 16 1.146v9.934c0 .633.478 1.146 1.067 1.146h1.066c.589 0 1.067-.513 1.067-1.146V1.146zM11.766 2.445h1.067c.589 0 1.066.526 1.066 1.174v7.434c0 .648-.477 1.173-1.066 1.173h-1.067c-.589 0-1.066-.525-1.066-1.173V3.619c0-.648.477-1.174 1.066-1.174zM7.434 5.094H6.367c-.589 0-1.066.533-1.066 1.189v4.755c0 .656.477 1.188 1.066 1.188h1.067c.589 0 1.066-.532 1.066-1.188V6.283c0-.656-.477-1.189-1.066-1.189zM2.133 7.54H1.067C.478 7.54 0 8.064 0 8.711v2.344c0 .647.478 1.171 1.067 1.171h1.066c.59 0 1.067-.524 1.067-1.171V8.711c0-.647-.478-1.172-1.067-1.172z" fill="currentColor"/>
-                            </svg>
-                            <svg class="sb-icon sb-wifi" width="18" height="13" viewBox="0 0 18 13" fill="none">
-                                <path fill-rule="evenodd" clip-rule="evenodd" d="M8.571 2.466c2.487 0 4.88.922 6.682 2.576a.305.305 0 0 0 .486-.004l1.298-1.263a.3.3 0 0 0-.003-.494C12.303-1.094 4.839-1.094.108 3.281a.3.3 0 0 0-.003.494l1.298 1.263a.306.306 0 0 0 .486.004c1.803-1.654 4.195-2.576 6.682-2.576zm-.003 4.22c1.357 0 2.666.512 3.672 1.436a.307.307 0 0 0 .483-.006l1.287-1.32a.3.3 0 0 0-.005-.519c-3.064-2.89-7.809-2.89-10.872 0a.3.3 0 0 0-.005.52l1.287 1.319a.307.307 0 0 0 .483.006c1.005-.923 2.313-1.435 3.67-1.436zm2.524 2.794a.278.278 0 0 1-.102.28l-2.177 2.455a.316.316 0 0 1-.483 0l-2.177-2.455a.278.278 0 0 1 .01-.556c1.39-1.314 3.426-1.314 4.817 0a.278.278 0 0 1 .112.276z" fill="currentColor"/>
-                            </svg>
-                            <svg class="sb-icon sb-battery" width="28" height="13" viewBox="0 0 28 13" fill="none">
-                                <rect opacity=".35" x="0.5" y="0.5" width="24" height="12" rx="3.8" stroke="currentColor"/>
-                                <path opacity=".4" d="M26 4.78v4.076c.805-.345 1.328-1.148 1.328-2.038s-.523-1.693-1.328-2.038" fill="currentColor"/>
-                                <rect x="2" y="2" width="21" height="9" rx="2.5" fill="currentColor"/>
-                            </svg>
-                        </span>
+
                     </div>
                     <!-- 灵动岛下拉面板 -->
-                    <div v-if="diExpanded" class="di-dropdown" :class="chatMode" @mousedown.stop>
-                        <div class="di-dd-header">
+                    <div v-if="diExpanded" class="di-dropdown" :class="chatMode">
+                        <div class="di-dd-header" @mousedown.stop>
                             <span class="di-dd-logo">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M12 8V4H8" />
@@ -174,7 +162,7 @@
                                 </small>
                             </div>
                         </div>
-                        <div class="di-dd-actions">
+                        <div class="di-dd-actions" @mousedown.stop>
                             <button class="chat-btn-icon" :title="reduceMotion ? '启用动态效果' : '减少动态效果'" @click="reduceMotion = !reduceMotion" aria-label="切换动态效果">
                                 <svg v-if="reduceMotion" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3" /></svg>
                                 <svg v-else xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
@@ -189,7 +177,7 @@
                             <button class="chat-btn-icon" title="清空对话" @click="clearMessages" aria-label="清空对话">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
                             </button>
-                            <button class="chat-btn-icon" title="关闭" @click="closeChat" aria-label="关闭面板">
+                            <button class="chat-btn-icon" title="关闭菜单" @click="diExpanded = false" aria-label="关闭灵动岛菜单">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                             </button>
                         </div>
@@ -1283,14 +1271,7 @@ export default {
         },
 
         _onDocMouseDown(e) {
-            if (!this.visible && !this.diExpanded) return;
-            if (this.diExpanded) {
-                const island = this.$el.querySelector('.dynamic-island');
-                const dropdown = this.$el.querySelector('.di-dropdown');
-                if (!(island && island.contains(e.target)) && !(dropdown && dropdown.contains(e.target))) {
-                    this.diExpanded = false;
-                }
-            }
+            if (!this.visible) return;
             // 点击组件外部 → 收起至 FAB
             if (this.visible && !this.docked && this.$el && !this.$el.contains(e.target)) {
                 this.closeChat();
@@ -2310,7 +2291,7 @@ export default {
         border: 1.5px solid rgba(59, 130, 246, 0.4);
         color: rgba(200, 220, 255, 0.9);
         transition: transform 0.14s cubic-bezier(0.25, 1.1, 0.4, 1),
-                    background-color 0.16s ease;
+                    background 0.35s ease, border-color 0.35s ease, color 0.35s ease;
         z-index: 1;
 
         /* 纯色自下而上灌满，clip-path 保持圆形不畸变 */
@@ -2818,7 +2799,7 @@ export default {
     --rail-edge: rgba(37, 99, 235, 0.4);
     --rail-cast: rgba(37, 99, 235, 0.3);
     transition: transform 0.14s cubic-bezier(0.2, 0.7, 0.3, 1),
-                background-color 0.16s ease;
+                background 0.35s ease, border-color 0.35s ease, color 0.35s ease;
 
     @media (hover: hover) {
         &:hover {
@@ -3022,11 +3003,11 @@ export default {
 .chat-panel.docked {
     width: clamp(340px, 22vw, 460px);
     max-width: none;
-    height: calc(100% - clamp(40px, 3.5vh, 56px));
+    height: calc(100% - clamp(56px, 5vh, 72px));
     max-height: none;
     border-radius: 12px 0 0 12px;
     border-right: none;
-    margin-top: clamp(40px, 3.5vh, 56px);
+    margin-top: clamp(56px, 5vh, 72px);
 }
 
 /* 数据查询模式 */
@@ -3150,6 +3131,7 @@ export default {
 
 /* ===== 上半部分拖拽区域 ===== */
 .phone-top-section {
+    position: relative;
     flex-shrink: 0;
     cursor: grab;
 
@@ -3160,9 +3142,10 @@ export default {
 
 /* ===== iOS 状态栏 ===== */
 .phone-status-bar {
+    position: relative;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     padding: 14px 16px 6px;
     color: rgba(255, 255, 255, 0.92);
     font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
@@ -3173,46 +3156,15 @@ export default {
 }
 
 .sb-time {
-    flex: 0 0 54px;
+    position: absolute;
+    left: 16px;
     font-size: 15px;
     font-weight: 590;
     line-height: 20px;
-    text-align: left;
-}
-
-.sb-icons {
-    flex: 0 0 74px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 7px;
-}
-
-.sb-icon {
-    flex-shrink: 0;
-    opacity: 1;
-}
-
-.sb-signal {
-    color: rgba(255, 255, 255, 0.85);
-}
-
-.sb-wifi {
-    color: rgba(255, 255, 255, 0.85);
-}
-
-.sb-battery {
-    color: rgba(255, 255, 255, 0.85);
 }
 
 /* 浅色主题 */
 .theme-light .phone-status-bar {
-    color: rgba(15, 23, 42, 0.8);
-}
-
-.theme-light .sb-signal,
-.theme-light .sb-wifi,
-.theme-light .sb-battery {
     color: rgba(15, 23, 42, 0.8);
 }
 
@@ -3222,16 +3174,9 @@ export default {
         padding: 10px 14px 4px;
     }
     .sb-time {
-        flex: 0 0 46px;
+        left: 14px;
         font-size: 13px;
     }
-    .sb-icons {
-        flex: 0 0 62px;
-        gap: 5px;
-    }
-    .sb-signal { width: 14px; height: 10px; }
-    .sb-wifi   { width: 14px; height: 10px; }
-    .sb-battery { width: 22px; height: 11px; }
 }
 
 @media (max-width: 375px) {
@@ -3239,12 +3184,8 @@ export default {
         padding: 8px 10px 2px;
     }
     .sb-time {
-        flex: 0 0 40px;
+        left: 10px;
         font-size: 12px;
-    }
-    .sb-icons {
-        flex: 0 0 56px;
-        gap: 4px;
     }
 }
 
@@ -3255,9 +3196,9 @@ export default {
     align-items: center;
     justify-content: center;
     width: fit-content;
-    min-width: 32px;
-    max-width: 32px;
-    height: 32px;
+    min-width: 26px;
+    max-width: 26px;
+    height: 26px;
     margin: 0;
     padding: 0;
     border-radius: 50%;
@@ -3418,6 +3359,7 @@ export default {
     color: rgba(255, 255, 255, 0.9);
     white-space: nowrap;
     flex-shrink: 0;
+    user-select: none;
     opacity: 0;
     max-width: 0;
     overflow: hidden;
@@ -3460,94 +3402,107 @@ export default {
     }
 }
 
-/* ===== 灵动岛下拉面板 ===== */
+/* ===== 灵动岛下拉面板 — 横向填充上半区 ===== */
 .di-dropdown {
-    position: relative;
-    z-index: 15;
-    margin: 0 16px;
-    padding: 14px 16px;
-    border-radius: 20px;
-    background: rgba(3, 12, 32, 0.95);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: #3b82f6;
     overflow: hidden;
+    transition: background 0.4s ease, box-shadow 0.4s ease;
+    animation: dropdown-expand 0.4s cubic-bezier(0.25, 1.1, 0.4, 1) both;
+    transform-origin: center top;
 
     /* 默认模式 — 蓝 */
-    border-color: rgba(59, 130, 246, 0.15);
     box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.4),
-        0 0 20px rgba(59, 130, 246, 0.06),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        0 4px 24px rgba(0, 0, 0, 0.35),
+        0 0 20px rgba(59, 130, 246, 0.08);
 
-    .di-dd-header small { color: #3b82f6; }
-    .di-dd-logo { background: rgba(59, 130, 246, 0.15); }
-    .di-dd-actions { border-top-color: rgba(59, 130, 246, 0.1); }
+    .di-dd-header small { color: rgba(255, 255, 255, 0.8); }
+    .di-dd-header strong { color: #fff; }
+    .di-dd-logo { background: rgba(255, 255, 255, 0.2); color: #fff; }
 
     &.query {
-        border-color: rgba(239, 68, 68, 0.18);
+        background: #ef4444;
         box-shadow:
-            0 8px 32px rgba(0, 0, 0, 0.4),
-            0 0 20px rgba(239, 68, 68, 0.08),
-            inset 0 1px 0 rgba(255, 255, 255, 0.04);
-        .di-dd-header small { color: #ef4444; }
-        .di-dd-logo { background: rgba(239, 68, 68, 0.15); }
-        .di-dd-actions { border-top-color: rgba(239, 68, 68, 0.1); }
+            0 4px 24px rgba(0, 0, 0, 0.35),
+            0 0 20px rgba(239, 68, 68, 0.1);
+        .di-dd-header small { color: rgba(255, 255, 255, 0.8); }
+        .di-dd-header strong { color: #fff; }
+        .di-dd-logo { background: rgba(255, 255, 255, 0.2); color: #fff; }
     }
 
     &.summary {
-        border-color: rgba(245, 158, 11, 0.18);
+        background: #f59e0b;
         box-shadow:
-            0 8px 32px rgba(0, 0, 0, 0.4),
-            0 0 20px rgba(245, 158, 11, 0.08),
-            inset 0 1px 0 rgba(255, 255, 255, 0.04);
-        .di-dd-header small { color: #f59e0b; }
-        .di-dd-logo { background: rgba(245, 158, 11, 0.15); }
-        .di-dd-actions { border-top-color: rgba(245, 158, 11, 0.1); }
+            0 4px 24px rgba(0, 0, 0, 0.35),
+            0 0 20px rgba(245, 158, 11, 0.1);
+        .di-dd-header small { color: rgba(255, 255, 255, 0.85); }
+        .di-dd-header strong { color: #fff; }
+        .di-dd-logo { background: rgba(255, 255, 255, 0.2); color: #fff; }
+    }
+}
+
+/* 展开动画：从灵动岛位置向外扩展 */
+@keyframes dropdown-expand {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.96);
+        clip-path: inset(0 calc(50% - 22px) round 999px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        clip-path: inset(0 0 round 0);
     }
 }
 
 .di-dd-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 8px;
+    flex-shrink: 0;
+    user-select: none;
 
     .di-dd-logo {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 34px;
-        height: 34px;
-        border-radius: 10px;
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
         color: rgba(255, 255, 255, 0.85);
         flex-shrink: 0;
         transition: background 0.3s;
     }
 
     strong {
-        display: block;
-        font-size: 13px;
+        font-size: 12px;
         color: rgba(255, 255, 255, 0.92);
         line-height: 1.3;
+        white-space: nowrap;
     }
 
     small {
-        font-size: 11px;
+        font-size: 10px;
         color: rgba(140, 182, 214, 0.78);
         transition: color 0.3s;
+        display: block;
     }
 }
 
 .di-dd-actions {
     display: flex;
-    justify-content: center;
-    gap: 4px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
 }
 
 /* 浅色主题灵动岛 */
@@ -3637,31 +3592,24 @@ export default {
 }
 
 .theme-light .di-dropdown {
-    background: rgba(255, 255, 255, 0.92);
-    border-color: rgba(0, 0, 0, 0.06);
+    background: #3b82f6;
     box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        0 4px 24px rgba(0, 0, 0, 0.1);
 
     .di-dd-header strong {
-        color: rgba(15, 23, 42, 0.9);
+        color: #fff;
     }
-    .di-dd-header small { color: #3b82f6; }
+    .di-dd-header small { color: rgba(255, 255, 255, 0.8); }
     .di-dd-header .di-dd-logo {
-        background: rgba(59, 130, 246, 0.08);
-        color: rgba(15, 23, 42, 0.7);
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
     }
-    .di-dd-actions { border-top-color: rgba(0, 0, 0, 0.06); }
 
     &.query {
-        .di-dd-header small { color: #ef4444; }
-        .di-dd-header .di-dd-logo { background: rgba(239, 68, 68, 0.08); }
-        .di-dd-actions { border-top-color: rgba(239, 68, 68, 0.08); }
+        background: #ef4444;
     }
     &.summary {
-        .di-dd-header small { color: #f59e0b; }
-        .di-dd-header .di-dd-logo { background: rgba(245, 158, 11, 0.08); }
-        .di-dd-actions { border-top-color: rgba(245, 158, 11, 0.08); }
+        background: #f59e0b;
     }
 }
 
@@ -4734,24 +4682,30 @@ export default {
 .chat-wrapper.theme-light.query-mode .chat-msg.user .msg-content {
     background: linear-gradient(135deg, #dc2626, #ef4444);
     box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25);
+    transition: background 0.35s, box-shadow 0.35s;
 }
 .chat-wrapper.theme-light.query-mode .chat-msg.user .msg-avatar {
     background: linear-gradient(135deg, #dc2626, #ef4444);
+    transition: background 0.35s;
 }
 .chat-wrapper.theme-light.query-mode .chat-msg.user .msg-name {
     color: #dc2626;
+    transition: color 0.35s;
 }
 
 /* 亮色主题 — 摘要模式用户气泡 */
 .chat-wrapper.theme-light.summary-mode .chat-msg.user .msg-content {
     background: linear-gradient(135deg, #d97706, #f59e0b);
     box-shadow: 0 4px 14px rgba(217, 119, 6, 0.25);
+    transition: background 0.35s, box-shadow 0.35s;
 }
 .chat-wrapper.theme-light.summary-mode .chat-msg.user .msg-avatar {
     background: linear-gradient(135deg, #d97706, #f59e0b);
+    transition: background 0.35s;
 }
 .chat-wrapper.theme-light.summary-mode .chat-msg.user .msg-name {
     color: #b45309;
+    transition: color 0.35s;
 }
 
 .theme-light .chat-footer {
@@ -4945,9 +4899,9 @@ export default {
     }
 
     .dynamic-island {
-        min-width: 28px;
-        max-width: 28px;
-        height: 28px;
+        min-width: 23px;
+        max-width: 23px;
+        height: 23px;
 
         &:hover, &.expanded, &.streaming {
             min-width: 90px;
@@ -4971,9 +4925,7 @@ export default {
     }
 
     .di-dropdown {
-        margin: 0 12px;
-        padding: 12px 14px;
-        border-radius: 16px;
+        padding: 0 12px;
     }
 
     .chat-btn-icon {
@@ -5102,9 +5054,9 @@ export default {
     }
 
     .dynamic-island {
-        min-width: 24px;
-        max-width: 24px;
-        height: 26px;
+        min-width: 20px;
+        max-width: 20px;
+        height: 21px;
 
         &:hover, &.expanded, &.streaming {
             min-width: 80px;
@@ -5128,27 +5080,20 @@ export default {
     }
 
     .di-dropdown {
-        margin: 0 10px;
-        padding: 10px 12px;
-        border-radius: 14px;
+        padding: 0 10px;
     }
 
     .di-dd-header {
-        gap: 8px;
-        margin-bottom: 8px;
+        gap: 6px;
 
         .di-dd-logo {
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
-            svg { width: 16px; height: 16px; }
+            width: 26px;
+            height: 26px;
+            border-radius: 7px;
+            svg { width: 14px; height: 14px; }
         }
-        strong { font-size: 12px; }
-        small { font-size: 10px; }
-    }
-
-    .di-dd-actions {
-        padding-top: 6px;
+        strong { font-size: 11px; }
+        small { font-size: 9px; }
     }
 
     .chat-btn-icon {
