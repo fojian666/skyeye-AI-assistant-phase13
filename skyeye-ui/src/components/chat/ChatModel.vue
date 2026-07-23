@@ -709,6 +709,25 @@ const TOOLS = [
                 required: ['query']
             }
         }
+    },
+    {
+        type: 'function',
+        function: {
+            name: 'switch_mode',
+            description:
+                '切换对话模式。仅在用户明确要求切换模式时调用。' +
+                '\n"数据查询模式""查询模式" → query' +
+                '\n"聊天模式""对话模式" → chat' +
+                '\n"智能摘要""摘要模式" → summary' +
+                '\n【禁止调用场景】不明确说"切换""换成"等意图词时不调用。不确定目标模式时不调用。',
+            parameters: {
+                type: 'object',
+                properties: {
+                    mode: { type: 'string', enum: ['chat', 'query', 'summary'], description: '目标模式' }
+                },
+                required: ['mode']
+            }
+        }
     }
 ];
 
@@ -1785,7 +1804,8 @@ export default {
 
             // 普通文本回复
             const content = result.content || '';
-            await this.typewriter(content);
+            const suggestions = result.suggestions || [];
+            await this.typewriter(content, suggestions);
         },
 
         async executeTool(name, args) {
@@ -1851,31 +1871,44 @@ export default {
                 const result = args._query_result || `关于"${args.query}"的查询暂无结果。`;
                 return { message: result, _display: true };
             }
+            if (name === 'switch_mode') {
+                const mode = args.mode;
+                const labels = { chat: '聊天模式 — 自由对话', query: '数据查询模式 — 检索系统数据', summary: '智能摘要 — 页面数据分析' };
+                if (!labels[mode]) return { error: `未知模式: ${mode}` };
+                this.chatMode = mode;
+                this.$message({ message: `已切换到${labels[mode]}`, type: 'success', duration: 2000, showClose: false });
+                this.messages.push({ role: 'assistant', content: `已为您切换到${labels[mode].split(' —')[0]}` });
+                return { _stop: true };
+            }
             return { error: `未知工具: ${name}` };
         },
 
-        async typewriter(text) {
-            // 解析 ||| 分隔符：前半是正文，后半是 3 个建议问题
+        async typewriter(text, backendSuggestions) {
+            // 优先使用后端独立生成的 suggestions，否则降级解析 ||| 分隔符
             let body = text;
             let suggestions = [];
-            const m = text.match(/[\s\S]*?\n\|\|\|\n([\s\S]*)$/);
-            if (m) {
-                body = text.substring(0, m.index + m[0].indexOf('\n|||')).trimEnd();
-                suggestions = m[1]
-                    .split('\n')
-                    .map((s) => s.replace(/^[\d.\-•\s]+/, '').trim())
-                    .filter(Boolean)
-                    .slice(0, 3);
-            } else if (text.includes('|||')) {
-                // 降级：||| 前可能没换行
-                const idx = text.indexOf('|||');
-                body = text.substring(0, idx).trimEnd();
-                suggestions = text
-                    .substring(idx + 3)
-                    .split('\n')
-                    .map((s) => s.replace(/^[\d.\-•\s]+/, '').trim())
-                    .filter(Boolean)
-                    .slice(0, 3);
+            if (backendSuggestions && backendSuggestions.length) {
+                suggestions = backendSuggestions;
+            } else {
+                // 降级：解析 ||| 分隔符（兼容旧格式）
+                const m = text.match(/[\s\S]*?\n\|\|\|\n([\s\S]*)$/);
+                if (m) {
+                    body = text.substring(0, m.index + m[0].indexOf('\n|||')).trimEnd();
+                    suggestions = m[1]
+                        .split('\n')
+                        .map((s) => s.replace(/^[\d.\-•\s]+/, '').trim())
+                        .filter(Boolean)
+                        .slice(0, 3);
+                } else if (text.includes('|||')) {
+                    const idx = text.indexOf('|||');
+                    body = text.substring(0, idx).trimEnd();
+                    suggestions = text
+                        .substring(idx + 3)
+                        .split('\n')
+                        .map((s) => s.replace(/^[\d.\-•\s]+/, '').trim())
+                        .filter(Boolean)
+                        .slice(0, 3);
+                }
             }
             this.streamingText = '';
             this._stopRequested = false;
@@ -2243,6 +2276,11 @@ export default {
 @keyframes rail-pulse {
     0%, 100% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 0 rgba(59, 130, 246, 0.35); }
     50%      { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 8px rgba(59, 130, 246, 0); }
+}
+
+@keyframes island-pulse {
+    0%   { transform: scale(1);   opacity: 0.5; }
+    100% { transform: scale(2.5); opacity: 0; }
 }
 
 .rail-item {
@@ -3246,10 +3284,9 @@ export default {
         transition: border-radius 0.45s cubic-bezier(0.25, 1.1, 0.4, 1);
     }
 
-    /* 悬浮展开为胶囊 → 恢复毛玻璃背景 */
+    /* 悬浮/点击展开为胶囊 → 恢复毛玻璃背景 */
     &:hover,
-    &.expanded,
-    &.streaming {
+    &.expanded {
         min-width: 100px;
         max-width: 180px;
         padding: 0 14px 0 18px;
@@ -3309,17 +3346,42 @@ export default {
             inset 0 1px 0 rgba(255, 255, 255, 0.06);
     }
 
-    /* 输出中保持 glow */
-    &.streaming {
+    /* 思考态脉冲光环（折叠 + streaming，不悬浮不展开时显示） */
+    &.streaming:not(:hover):not(.expanded) {
+        background: #3b82f6;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 10px rgba(59, 130, 246, 0.35);
+
+        &::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 2px solid rgba(59, 130, 246, 0.45);
+            opacity: 0;
+            animation: island-pulse 1.5s ease-out infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+    }
+    &.query.streaming:not(:hover):not(.expanded) {
+        background: #ef4444;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 10px rgba(239, 68, 68, 0.35);
+        &::after { border-color: rgba(239, 68, 68, 0.45); }
+    }
+    &.summary.streaming:not(:hover):not(.expanded) {
+        background: #f59e0b;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 10px rgba(245, 158, 11, 0.35);
+        &::after { border-color: rgba(245, 158, 11, 0.45); }
+    }
+
+    /* 输出中保持 glow（hover/expanded 时由外层控制背景，此处仅 glow） */
+    &.streaming:hover,
+    &.streaming.expanded {
         background: rgba(3, 12, 32, 0.92);
         box-shadow:
             0 0 12px rgba(0, 180, 240, 0.2),
             0 2px 8px rgba(0, 0, 0, 0.3),
             inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    }
-    &.query.streaming,
-    &.summary.streaming {
-        background: rgba(3, 12, 32, 0.92);
     }
 
     /* 纯色态隐藏 ::before 高光 */
@@ -3387,8 +3449,7 @@ export default {
 
 /* 悬浮/展开/输出中 显示 label 和 chevron */
 .dynamic-island:hover,
-.dynamic-island.expanded,
-.dynamic-island.streaming {
+.dynamic-island.expanded {
     .di-label {
         opacity: 1;
         max-width: 120px;
@@ -3498,8 +3559,7 @@ export default {
     &.summary { box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1), 0 0 10px rgba(245, 158, 11, 0.25); }
 
     &:hover,
-    &.expanded,
-    &.streaming {
+    &.expanded {
         background: rgba(255, 255, 255, 0.88);
         box-shadow:
             0 2px 12px rgba(0, 0, 0, 0.08),
@@ -3525,7 +3585,37 @@ export default {
             inset 0 1px 0 rgba(255, 255, 255, 0.8);
     }
 
-    &.streaming {
+    /* 思考态脉冲光环（亮色主题） */
+    &.streaming:not(:hover):not(.expanded) {
+        background: #3b82f6;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1), 0 0 10px rgba(59, 130, 246, 0.25);
+
+        &::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 2px solid rgba(59, 130, 246, 0.4);
+            opacity: 0;
+            animation: island-pulse 1.5s ease-out infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+    }
+    &.query.streaming:not(:hover):not(.expanded) {
+        background: #ef4444;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1), 0 0 10px rgba(239, 68, 68, 0.25);
+        &::after { border-color: rgba(239, 68, 68, 0.4); }
+    }
+    &.summary.streaming:not(:hover):not(.expanded) {
+        background: #f59e0b;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1), 0 0 10px rgba(245, 158, 11, 0.25);
+        &::after { border-color: rgba(245, 158, 11, 0.4); }
+    }
+
+    /* 输出中 glow（仅 hover/expanded） */
+    &.streaming:hover,
+    &.streaming.expanded {
         box-shadow:
             0 0 16px rgba(0, 180, 240, 0.12),
             0 2px 12px rgba(0, 0, 0, 0.08),
@@ -3644,7 +3734,7 @@ export default {
         width: 5px;
     }
     &::-webkit-scrollbar-thumb {
-        background: transparent;
+        background: rgba(0, 200, 255, 0.2);
         border-radius: 3px;
         transition: background 0.3s;
     }
@@ -3653,7 +3743,7 @@ export default {
     }
 
     &:hover::-webkit-scrollbar-thumb {
-        background: rgba(0, 200, 255, 0.15);
+        background: rgba(0, 200, 255, 0.45);
     }
 }
 
@@ -4566,8 +4656,11 @@ export default {
 .theme-light .chat-body {
     background: transparent;
 }
-.theme-light .chat-body:hover::-webkit-scrollbar-thumb {
+.theme-light .chat-body::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.12);
+}
+.theme-light .chat-body:hover::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
 }
 .theme-light .chat-empty p {
     color: #1e293b;

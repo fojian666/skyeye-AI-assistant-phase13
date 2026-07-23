@@ -166,6 +166,7 @@ import multiComparision from '@/views/dataManagement/oneMap/multiView/index.vue'
 import viewSingle from '@/views/panoramicDetection/mapView/singlePeriodView/viewSingle.vue';
 import timeAxis from '@/views/dataManagement/oneMap/timeAxis/index.vue';
 import axios from 'axios';
+import { gsap } from 'gsap';
 import L from 'leaflet';
 import { getLeafletVectorStyle } from '@/utils/vectorStyle';
 import { create4528LeafletMap, createGeoCrs, createGeoBaseLayer } from '@/utils/map4528Loader';
@@ -952,6 +953,60 @@ export default {
                 .addTo(this.map)
                 .bindPopup(popupContent, { closeButton: false })
                 .openPopup();
+            // pin 落地脉冲
+            this._pulsePin(lat, lng);
+        },
+
+        _pulsePin(lat, lng) {
+            if (!this.map) return;
+            // 清除上一次脉冲
+            if (this._pulseTween) {
+                this._pulseTween.kill();
+                this._pulseTween = null;
+            }
+            if (this._pulseCircles) {
+                this._pulseCircles.forEach(c => this.map.removeLayer(c));
+                this._pulseCircles = null;
+            }
+            // 内圈光环
+            const inner = L.circle([lat, lng], {
+                radius: 1,
+                color: '#3b82f6',
+                fillColor: '#3b82f6',
+                fillOpacity: 0.35,
+                weight: 2,
+                interactive: false,
+            }).addTo(this.map);
+            // 外圈光环
+            const outer = L.circle([lat, lng], {
+                radius: 1,
+                color: '#93c5fd',
+                fillColor: '#93c5fd',
+                fillOpacity: 0.2,
+                weight: 1.5,
+                interactive: false,
+            }).addTo(this.map);
+            this._pulseCircles = [inner, outer];
+            const proxy = { innerR: 1, innerO: 0.35, outerR: 1, outerO: 0.2 };
+            this._pulseTween = gsap.to(proxy, {
+                innerR: 60,
+                innerO: 0,
+                outerR: 100,
+                outerO: 0,
+                duration: 0.8,
+                ease: 'power2.out',
+                repeat: 3,
+                onUpdate: () => {
+                    inner.setRadius(proxy.innerR);
+                    inner.setStyle({ fillOpacity: proxy.innerO });
+                    outer.setRadius(proxy.outerR);
+                    outer.setStyle({ fillOpacity: proxy.outerO });
+                },
+                onComplete: () => {
+                    this._pulseCircles.forEach(c => this.map.removeLayer(c));
+                    this._pulseCircles = null;
+                },
+            });
         },
 
         getZoom() {
@@ -1996,6 +2051,8 @@ export default {
     },
 
     beforeDestroy() {
+        if (this._pulseTween) { this._pulseTween.kill(); this._pulseTween = null; }
+        if (this._pulseCircles) { this._pulseCircles.forEach(c => this.map.removeLayer(c)); this._pulseCircles = null; }
         this.destroyMap();
     }
 };

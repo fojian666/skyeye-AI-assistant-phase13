@@ -2616,6 +2616,12 @@ SYSTEM_PROMPT = (
     '3. 只有用户明确说出具体页面名称（如"一张图""全景检测""航线规划""报告管理"）时，才用 navigate_page\n'
     '4. 用户说"查看数据概览""打开统计页面"——"查看/打开"后面跟的是数据词汇 → query_data\n'
     '5. 用户说"打开全景检测""带我去航线规划"——"打开/带我去"后面跟的是具体页面 → navigate_page\n\n'
+    '【回复风格硬约束】\n'
+    '禁止在回复中暴露内部决策过程或自言自语。以下句式严禁出现：\n'
+    '  - "根据规则..." "根据系统可用的..." "根据页面列表..."（暴露系统规则）\n'
+    '  - "用户询问的是..." "用户想要..." "用户说..."（第三人称自言自语）\n'
+    '  - "我注意到..." "我发现..." "从规则来看..."（暴露分析过程）\n'
+    '正确做法：直接执行操作并简短确认（"好的，已为您打开XX页面"），或直接反问用户。决不要向用户解释你为什么选择某个工具。\n\n'
     '【工具选择规则 — 问题分类后对号入座】\n'
     '━━━ 页面跳转（navigate_page）━━━\n'
     '用户明确要打开/跳转/前往某个页面。仅限以下意图：\n'
@@ -2638,7 +2644,10 @@ SYSTEM_PROMPT = (
     '  "图斑核实/核实任务" → /pattern-verifiy/task_management\n'
     ' 注意：用户问数据/统计/数量/列表时，不属于此类，用 query_data。\n\n'
     '━━━ 地图定位（map_action）━━━\n'
-    '用户明确要求在地图上查看/定位/展示某个具体地点。\n'
+    '用户要求在地图上查看/定位某个具体地点。包括：\n'
+    '  - 明确地名："带我去鼓楼区""玄武区在哪""南京南站"\n'
+    '  - "看下/查看/打开 + 地名/区名" → 优先调用 map_action，不要反问\n'
+    '    （如"帮我看下栖霞区""打开江宁区"→ 直接地图定位，附带简短确认）\n'
     '排除项："防尘网""线索""图斑""批次""全景图"等业务术语不是地点，不要调用。\n\n'
     '━━━ 任务校验（lookup_task）━━━\n'
     '用户提供了明确的批次/任务编号（如 LS320...）并要求查状态。仅编号前缀模糊时不调用。\n\n'
@@ -2650,12 +2659,35 @@ SYSTEM_PROMPT = (
     '  - 概览/摘要：当前页面数据概况\n'
     '支持的数据类型：全景图、线索、图斑、图斑任务、批次、网格、航线、资源、AI模型、\n'
     '  信息解读任务、多源任务、报告、核实任务、核实线索、飞行订单、场景。\n\n'
-    '━━━ 未知/模糊（凭你判断）━━━\n'
-    '以上四类都不匹配时：能直接回答就回答，需要确认的就反问用户，不要强行调用工具。\n\n'
+    '━━━ 切换模式（switch_mode）━━━\n'
+    '用户明确要求切换对话模式时调用。\n'
+    '  "数据查询模式" / "查询模式" → query\n'
+    '  "聊天模式" / "对话模式" → chat\n'
+    '  "智能摘要" / "摘要模式" → summary\n'
+    '禁止：模糊说"帮我切换"而无具体目标时不调用，反问用户要切到哪个模式。\n'
+    '禁止：在用户没有明确要求时自动调用切换模式。\n\n'
+    '━━━ 未知/模糊（禁止强行调用）━━━\n'
+    '以下类型的模糊询问，严禁调用任何工具，必须反问用户澄清意图：\n'
+    '  - 泛进度/状态："整体完成进度""现在什么情况""怎么样了""如何" → 反问"您想了解哪方面的进度/情况？"\n'
+    '  - 泛指分析："帮我看看""分析一下""有什么问题" → 反问"您想让我分析哪个页面/对象？"\n'
+    '  - 纯形容词："好不好""行不行""对不对" → 反问明确上下文\n'
+    '调用每个工具前，你必须确认用户的原始消息中有对应的明确目标：\n'
+    '  - navigate_page → 用户是否说出了具体页面名称？（反例："整体进度"❌，"批次管理页面"✅）\n'
+    '  - map_action → 用户是否说出了具体地点名称？（反例："防尘网"❌，"南京鼓楼区"✅）\n'
+    '  - query_data → 用户是否明确要求查数据？（反例："怎么样"❌，"有多少全景图"✅）\n'
+    '  - lookup_task → 用户是否提供了任务编号？（反例："帮我查一下"❌，"LS3201001"✅）\n'
+    '如果以上检查有一项不通过，则不要调用该工具。宁可反问，不可猜错。\n\n'
     '【回复格式】\n'
-    '纯文字回复时，正文后附加 |||，然后给出 3 个用户可能追问的问题，每行一个，不要编号。\n'
-    '用中文回答，风格灵活自然。'
+    '用中文回答，风格灵活自然。追问建议由系统自动生成，无需在回复中附加。'
 )
+
+# navigate_page 已知页面名称列表（与 SYSTEM_PROMPT 中的页面映射保持同步）
+KNOWN_PAGE_NAMES = [
+    '项目管理', '一张图', '影像管理', '航线规划', '全景规划', '算法规划',
+    '地图总览', '范围管理', '网格管理', '批次管理', '全景检测', '不检测区域',
+    '全景变化', '场景管理', '线索总览', '临时批次', '报告管理', '图斑核实',
+    '核实任务', '任务管理', 'AI设置', 'AI 设置', 'ai设置',
+]
 
 
 QUERY_SCHEMA = {
@@ -3103,8 +3135,72 @@ def _sse_event(data):
     return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
+def _generate_suggestions(messages, last_response=''):
+    """基于最近对话，用轻量 LLM 调用生成 3 个追问建议（独立于主回复，不依赖 ||| 格式）"""
+    try:
+        recent = []
+        for m in messages[-6:]:
+            role = m.get('role', 'user')
+            content = m.get('content', '')
+            if role in ('user', 'assistant') and content:
+                prefix = '用户' if role == 'user' else '助手'
+                recent.append(f"{prefix}: {content[:200]}")
+        if last_response:
+            recent.append(f"助手: {last_response[:200]}")
+        if not recent:
+            return []
+
+        config = configparser.ConfigParser()
+        config.read(os.path.join(settings.BASE_DIR, 'config.ini'), encoding='utf-8')
+        api_key = config.get('deepseek', 'api_key')
+        api_url = config.get('deepseek', 'api_url')
+        model = config.get('deepseek', 'model')
+
+        prompt = (
+            '你是金陵阡陌系统（SkyEye）的 AI 助手，这是一个无人机巡检与 GIS 遥感管理平台。\n'
+            '请基于以下对话，生成 3 个用户可能追问的简短问题（每个不超过12字），仅输出 JSON 数组，不要任何其他内容。\n'
+            '问题必须与无人机巡检/全景图/线索/图斑/批次/航线/GIS 等业务相关，严禁生成旅游、房价、天气、交通等无关话题。\n'
+            + '\n'.join(recent)
+        )
+
+        llm = ChatOpenAI(api_key=api_key, base_url=api_url, model=model, temperature=0.3, max_tokens=256)
+        resp = llm.invoke([HumanMessage(content=prompt)])
+        text = resp.content.strip()
+        # 尝试多种方式提取 JSON 数组
+        suggestions = None
+        if text.startswith('['):
+            suggestions = json.loads(text)
+        elif text.startswith('```'):
+            inner = text.split('```')[1]
+            if inner.startswith('json'):
+                inner = inner[4:]
+            suggestions = json.loads(inner.strip())
+        else:
+            # 正则兜底：提取第一个 [...]
+            import re
+            m = re.search(r'\[.*?\]', text, re.DOTALL)
+            if m:
+                suggestions = json.loads(m.group())
+        if isinstance(suggestions, list):
+            return suggestions[:3]
+        logger = logging.getLogger('skyeye')
+        logger.warning(f'_generate_suggestions 无法解析: {text[:100]}')
+    except Exception as e:
+        logger = logging.getLogger('skyeye')
+        logger.warning(f'_generate_suggestions 失败: {e}')
+    return []
+
+
 def _generate_sse(raw_messages, frontend_tools, request, chat_mode='chat', context=None, model=None, temperature=None, max_tokens=None):
     """SSE 生成器：按阶段流式返回事件"""
+    # 默认工具兜底（测试/API 直接调用时无 tools）
+    if not frontend_tools:
+        frontend_tools = [
+            {"type": "function", "function": {"name": "navigate_page", "description": "跳转到系统页面。可用页面：项目管理(/project-management)、一张图(/one-map)、影像管理(/image-management)、航线规划(/route-planning)、全景规划(/panorama-planning)、算法规划(/algorithm-planning)、地图总览(/panoramic-detection/map-view)、范围管理(/panoramic-detection/grid-management)、批次管理(/panoramic-detection/task-management)、全景检测(/panoramic-detection/main-detection)、不检测区域(/panoramic-detection/frame-area)、全景变化(/panoramic-detection/panorama-change-detection)、场景管理(/panoramic-detection/scene)、线索总览(/panoramic-detection/clue-view)、临时批次(/panoramic-detection/main-detection-temp)、报告管理(/panoramic-detection/report)、任务管理(/pattern-verifiy/task_management)、AI设置(/ai-settings)、网格管理、图斑核实、核实任务。只在用户明确说出页面名称时调用。", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "reason": {"type": "string"}}, "required": ["path", "reason"]}}},
+            {"type": "function", "function": {"name": "map_action", "description": "地图定位", "parameters": {"type": "object", "properties": {"location": {"type": "string"}, "city": {"type": "string"}}, "required": ["location"]}}},
+            {"type": "function", "function": {"name": "lookup_task", "description": "查询任务编号", "parameters": {"type": "object", "properties": {"task_id": {"type": "string"}}, "required": ["task_id"]}}},
+            {"type": "function", "function": {"name": "switch_mode", "description": "切换对话模式 chat/query/summary", "parameters": {"type": "object", "properties": {"mode": {"type": "string", "enum": ["chat", "query", "summary"]}}, "required": ["mode"]}}},
+        ]
     try:
         has_system = any(m.get('role') == 'system' for m in raw_messages)
         if not has_system:
@@ -3260,7 +3356,26 @@ def _generate_sse(raw_messages, frontend_tools, request, chat_mode='chat', conte
                     emit_tool_calls.append(tc)
 
                 elif name == 'navigate_page':
-                    emit_tool_calls.append(tc)
+                    # 硬校验：仅信任用户原始消息，LLM 在 description 里塞页面名不算
+                    # 用户必须明确说出已知页面名称（如"批次管理""全景检测"），否则拦截
+                    last_user_msg = ''
+                    for m in reversed(raw_messages):
+                        if m.get('role') == 'user':
+                            last_user_msg = m.get('content', '')
+                            break
+                    page_in_query = any(pn in last_user_msg for pn in KNOWN_PAGE_NAMES)
+                    if page_in_query:
+                        emit_tool_calls.append(tc)
+                    else:
+                        logger.warning(f'navigate_page 被拦截 — 用户 query 不含已知页面名: {last_user_msg[:80]}')
+                        yield _sse_event({"phase": "done", "result": {
+                            "content": "",
+                            "finish_reason": "stop",
+                            "text": '您的提问比较宽泛，请问您想查看哪个具体页面？比如批次管理、全景检测、航线规划等。',
+                            "skipped_tool": "navigate_page",
+                            "suggestions": _generate_suggestions(raw_messages, '您的提问比较宽泛，请问您想查看哪个具体页面？'),
+                        }})
+                        return
 
                 elif name == 'query_data':
                     yield _sse_event({"phase": "querying", "message": "正在查询数据..."})
@@ -3276,12 +3391,17 @@ def _generate_sse(raw_messages, frontend_tools, request, chat_mode='chat', conte
                     fn['arguments'] = json.dumps(query_args, ensure_ascii=False)
                     query_actions.append(ToolMessage(content=query_args.get('_query_result', ''), tool_call_id=tc_id))
 
-            # 非查询类工具：直接发给前端，结束 Agent 循环
+                else:
+                    # 其他工具（如 switch_mode）直接透传给前端处理
+                    emit_tool_calls.append(tc)
+
+            # 非查询类工具：发给前端时保留 LLM 文本回复，并独立生成追问建议
             if emit_tool_calls:
                 yield _sse_event({"phase": "done", "result": {
-                    "content": "",
+                    "content": result.get('content', ''),
                     "finish_reason": "tool_calls",
                     "tool_calls": emit_tool_calls,
+                    "suggestions": _generate_suggestions(raw_messages, result.get('content', '')),
                 }})
                 return
 
@@ -3302,13 +3422,13 @@ def _generate_sse(raw_messages, frontend_tools, request, chat_mode='chat', conte
         config = configparser.ConfigParser()
         config.read(os.path.join(settings.BASE_DIR, 'config.ini'), encoding='utf-8')
         result['model'] = config.get('deepseek', 'model')
+        result['suggestions'] = _generate_suggestions(raw_messages, result.get('content', ''))
 
         yield _sse_event({"phase": "done", "result": result})
 
     except Exception as e:
         import traceback
-        logger = logging.getLogger('skyeye')
-        logger.error(f"chat_completions SSE error: {e}\n{traceback.format_exc()}")
+        logging.getLogger('skyeye').error(f"chat_completions SSE error: {e}\n{traceback.format_exc()}")
         yield _sse_event({"phase": "error", "message": str(e)})
         yield _sse_event({"phase": "done", "result": {
             "content": f"抱歉，处理请求时出错：{str(e)[:200]}",

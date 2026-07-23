@@ -63,6 +63,7 @@ import multiComparision from '@/views/dataManagement/oneMap/multiView/index.vue'
 import SceneLayerManager from '@/components/sceneLayer/SceneLayerManager.vue';
 import panoramaViewer from '@/components/panoramaViewer';
 import axios from 'axios';
+import { gsap } from 'gsap';
 import * as Cesium from 'cesium';
 import { getCesiumVectorStyle } from '@/utils/vectorStyle';
 import { toCesiumLonLat, toMapLatLng } from '@/views/dataManagement/oneMap/oneMapCoords';
@@ -211,6 +212,8 @@ export default {
         this.preloadCesium();
     },
     beforeDestroy() {
+        if (this._pulseTween) { this._pulseTween.kill(); this._pulseTween = null; }
+        if (this._pulseEntity) { this.viewer.entities.remove(this._pulseEntity); this._pulseEntity = null; }
         this.destroyMap();
     },
     methods: {
@@ -912,6 +915,53 @@ export default {
             if (desc) {
                 this.viewer.selectedEntity = this._markerEntity;
             }
+            // pin 落地脉冲
+            this._pulsePin(lat, lng);
+        },
+
+        _pulsePin(lat, lng) {
+            if (!this.viewer || !this.Cesium) return;
+            const Cesium = this.Cesium;
+            const viewer = this.viewer;
+            // 清除上一次脉冲
+            if (this._pulseTween) {
+                this._pulseTween.kill();
+                this._pulseTween = null;
+            }
+            if (this._pulseEntity) {
+                viewer.entities.remove(this._pulseEntity);
+                this._pulseEntity = null;
+            }
+            this._pulseEntity = viewer.entities.add({
+                position: Cesium.Cartesian3.fromDegrees(lng, lat),
+                ellipse: {
+                    semiMajorAxis: 1,
+                    semiMinorAxis: 1,
+                    material: Cesium.Color.BLUE.withAlpha(0.35),
+                    height: 0,
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                },
+            });
+            const entity = this._pulseEntity;
+            const proxy = { radius: 1, opacity: 0.35 };
+            this._pulseTween = gsap.to(proxy, {
+                radius: 500,
+                opacity: 0,
+                duration: 1.2,
+                ease: 'power2.out',
+                repeat: 3,
+                onUpdate: () => {
+                    entity.ellipse.semiMajorAxis = proxy.radius;
+                    entity.ellipse.semiMinorAxis = proxy.radius;
+                    entity.ellipse.material = Cesium.Color.BLUE.withAlpha(proxy.opacity);
+                },
+                onComplete: () => {
+                    if (this._pulseEntity) {
+                        viewer.entities.remove(this._pulseEntity);
+                        this._pulseEntity = null;
+                    }
+                },
+            });
         },
 
         resizeCesiumAfterLayout() {
