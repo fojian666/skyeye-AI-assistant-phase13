@@ -1,0 +1,214 @@
+{
+  "test_info": {
+    "total_questions": 100,
+    "categories": 26,
+    "timestamp": "2026-07-23 17:33:33",
+    "avg_response_time": 3.34
+  },
+  "summary": {
+    "overall_pass_rate_pct": 100.0,
+    "grade_distribution": {
+      "A": 75,
+      "B": 2,
+      "C": 23,
+      "D": 0,
+      "F": 0
+    },
+    "avg_score": 4.52,
+    "total_errors": 0,
+    "max_response_time": 41.34,
+    "min_response_time": 1.44
+  },
+  "category_breakdown": {
+    "DeepSeek模型-参数": {
+      "count": 3,
+      "avg_score": 4.33,
+      "avg_time": 2.29,
+      "A_rate": "1/3",
+      "F_rate": "0/3"
+    },
+    "DeepSeek模型-能力": {
+      "count": 7,
+      "avg_score": 4.43,
+      "avg_time": 2.92,
+      "A_rate": "5/7",
+      "F_rate": "0/7"
+    },
+    "SSE流-内容": {
+      "count": 5,
+      "avg_score": 5.0,
+      "avg_time": 2.37,
+      "A_rate": "5/5",
+      "F_rate": "0/5"
+    },
+    "SSE流-连接": {
+      "count": 3,
+      "avg_score": 5.0,
+      "avg_time": 3.14,
+      "A_rate": "3/3",
+      "F_rate": "0/3"
+    },
+    "UI交互-动画": {
+      "count": 3,
+      "avg_score": 5.0,
+      "avg_time": 9.4,
+      "A_rate": "3/3",
+      "F_rate": "0/3"
+    },
+    "UI交互-响应式": {
+      "count": 3,
+      "avg_score": 5.0,
+      "avg_time": 2.9,
+      "A_rate": "3/3",
+      "F_rate": "0/3"
+    },
+    "UI交互-文本溢出": {
+      "count": 3,
+      "avg_score": 4.33,
+      "avg_time": 16.04,
+      "A_rate": "2/3",
+      "F_rate": "0/3"
+    },
+    "UI交互-灵动岛": {
+      "count": 5,
+      "avg_score": 5.0,
+      "avg_time": 2.81,
+      "A_rate": "5/5",
+      "F_rate": "0/5"
+    },
+    "UI交互-面板拖拽": {
+      "count": 4,
+      "avg_score": 4.5,
+      "avg_time": 3.74,
+      "A_rate": "3/4",
+      "F_rate": "0/4"
+    },
+    "上下文-多轮矛盾": {
+      "count": 3,
+      "avg_score": 3.67,
+      "avg_time": 4.81,
+      "A_rate": "1/3",
+      "F_rate": "0/3"
+    },
+    "上下文-多轮记忆": {
+      "count": 6,
+      "avg_score": 5.0,
+      "avg_time": 2.26,
+      "A_rate": "6/6",
+      "F_rate": "0/6"
+    },
+    "上下文-截断": {
+      "count": 3,
+      "avg_score": 4.33,
+      "avg_time": 2.19,
+      "A_rate": "2/3",
+      "F_rate": "0/3"
+    },
+    "上下文-窗口溢出": {
+      "count": 2,
+      "avg_score": 5.0,
+      "avg_time": 3.69,
+      "A_rate": "2/2",
+      "F_rate": "0/2"
+    },
+    "上下文-页面Context": {
+      "count": 3,
+      "avg_score": 4.33,
+      "avg_time": 2.37,
+      "A_rate": "2/3",
+      "F_rate": "0/3"
+    },
+    "工具调用-lookup_task": {
+      "count": 5,
+      "avg_score": 4.2,
+      "avg_time": 2.16,
+      "A_rate": "3/5",
+      "F_rate": "0/5"
+    },
+    "工具调用-map_action": {
+      "count": 5,
+      "avg_score": 5.0,
+      "avg_time": 2.4,
+      "A_rate": "5/5",
+      "F_rate": "0/5"
+    },
+    "工具调用-navigate_page": {
+      "count": 5,
+      "avg_score": 3.4,
+      "avg_time": 2.01,
+      "A_rate": "1/5",
+      "F_rate": "0/5"
+    },
+    "工具调用-switch_mode": {
+      "count": 5,
+      "avg_score": 4.6,
+      "avg_time": 2.16,
+      "A_rate": "4/5",
+      "F_rate": "0/5"
+    },
+    "工具调用-参数注入": {
+      "count": 2,
+      "avg_score": 3.0,
+      "avg_time": 2.06,
+      "A_rate": "0/2",
+      "F_rate": "0/2"
+    },
+    "工具调用-参数边界": {
+      "count": 5,
+      "avg_score": 3.8,
+      "avg_time": 2.15,
+      "A_rate": "2/5",
+      "F_rate": "0/5"
+    },
+    "工具调用-多工具编排": {
+      "count": 3,
+      "avg_score": 5.0,
+      "avg_time": 3.2,
+      "A_rate": "3/3",
+      "F_rate": "0/3"
+    },
+    "模式切换-边界": {
+      "count": 5,
+      "avg_score": 5.0,
+      "avg_time": 3.21,
+      "A_rate": "5/5",
+      "F_rate": "0/5"
+    },
+    "系统提示词-工具优先级": {
+      "count": 2,
+      "avg_score": 5.0,
+      "avg_time": 3.11,
+      "A_rate": "2/2",
+      "F_rate": "0/2"
+    },
+    "系统提示词-约束": {
+      "count": 4,
+      "avg_score": 4.5,
+      "avg_time": 2.8,
+      "A_rate": "3/4",
+      "F_rate": "0/4"
+    },
+    "系统提示词-角色": {
+      "count": 4,
+      "avg_score": 4.5,
+      "avg_time": 3.02,
+      "A_rate": "3/4",
+      "F_rate": "0/4"
+    },
+    "错误恢复-网络": {
+      "count": 2,
+      "avg_score": 4.0,
+      "avg_time": 4.29,
+      "A_rate": "1/2",
+      "F_rate": "0/2"
+    }
+  },
+  "failing_cases": [],
+  "recommendations": [
+    "性能: 整体响应速度可接受",
+    "薄弱类目: '工具调用-navigate_page' 平均分 3.4, F率 0/5, 需针对性优化提示词或能力",
+    "薄弱类目: '工具调用-参数注入' 平均分 3.0, F率 0/2, 需针对性优化提示词或能力",
+    "模式过渡: 已为所有模式相关元素添加 CSS transition, 但需确保前端模式切换后正确传递 chat_mode 参数",
+    "对话连续性: 连续追问类问题依赖多轮对话上下文, 当前测试仅为单轮, 建议增加多轮测试"
+  ]
+}
