@@ -1,4 +1,4 @@
-    <template>
+<template>
     <div class="settings-root" :class="[`theme-${theme}`, { 'reduce-motion': reduceMotion }]">
         <!-- Canvas: 动态极光 + 粒子连接网 -->
         <canvas ref="auroraCanvas" class="aurora-canvas" aria-hidden="true"></canvas>
@@ -9,23 +9,15 @@
         <!-- 滚动词条装饰 -->
         <div class="marquee-strip" :class="'marquee--' + defaultMode" aria-hidden="true">
             <div class="marquee-track">
-                <span>DeepSeek-V3</span> <span class="marquee-dot">·</span>
-                <span>DeepSeek-R1</span> <span class="marquee-dot">·</span>
-                <span>智能推理</span> <span class="marquee-dot">·</span>
-                <span>数据查询</span> <span class="marquee-dot">·</span>
-                <span>AI 摘要</span> <span class="marquee-dot">·</span>
-                <span>变化检测</span> <span class="marquee-dot">·</span>
-                <span>图像分割</span> <span class="marquee-dot">·</span>
-                <span>航线规划</span> <span class="marquee-dot">·</span>
+                <span>DeepSeek-V3</span> <span class="marquee-dot">·</span> <span>DeepSeek-R1</span> <span class="marquee-dot">·</span>
+                <span>智能推理</span> <span class="marquee-dot">·</span> <span>数据查询</span> <span class="marquee-dot">·</span>
+                <span>AI 摘要</span> <span class="marquee-dot">·</span> <span>变化检测</span> <span class="marquee-dot">·</span>
+                <span>图像分割</span> <span class="marquee-dot">·</span> <span>航线规划</span> <span class="marquee-dot">·</span>
                 <!-- 第二份副本实现无缝循环 -->
-                <span>DeepSeek-V3</span> <span class="marquee-dot">·</span>
-                <span>DeepSeek-R1</span> <span class="marquee-dot">·</span>
-                <span>智能推理</span> <span class="marquee-dot">·</span>
-                <span>数据查询</span> <span class="marquee-dot">·</span>
-                <span>AI 摘要</span> <span class="marquee-dot">·</span>
-                <span>变化检测</span> <span class="marquee-dot">·</span>
-                <span>图像分割</span> <span class="marquee-dot">·</span>
-                <span>航线规划</span> <span class="marquee-dot">·</span>
+                <span>DeepSeek-V3</span> <span class="marquee-dot">·</span> <span>DeepSeek-R1</span> <span class="marquee-dot">·</span>
+                <span>智能推理</span> <span class="marquee-dot">·</span> <span>数据查询</span> <span class="marquee-dot">·</span>
+                <span>AI 摘要</span> <span class="marquee-dot">·</span> <span>变化检测</span> <span class="marquee-dot">·</span>
+                <span>图像分割</span> <span class="marquee-dot">·</span> <span>航线规划</span> <span class="marquee-dot">·</span>
             </div>
         </div>
 
@@ -102,8 +94,7 @@
                                 </label>
                                 <div class="select-wrap">
                                     <select v-model="model" class="field-select">
-                                        <option value="deepseek-chat">DeepSeek-V3 (通用对话)</option>
-                                        <option value="deepseek-reasoner">DeepSeek-R1 (深度推理)</option>
+                                        <option v-for="m in enabledModels" :key="m.id" :value="m.id">{{ m.name }} ({{ m.description }})</option>
                                     </select>
                                     <svg
                                         class="select-chevron"
@@ -131,15 +122,24 @@
                                             >?</span
                                         >
                                     </label>
-                                    <span class="field-val temp-val" :class="tempClass" :key="temperature.toFixed(1)">{{
-                                        temperature.toFixed(1)
-                                    }}</span>
+                                    <div class="field-val-wrap">
+                                        <span class="field-val temp-val" :class="tempClass" :key="temperature.toFixed(1)">{{
+                                            temperature.toFixed(1)
+                                        }}</span>
+                                        <span class="temp-scenario-badge" :class="tempClass">{{ temperatureScenario.label }}</span>
+                                    </div>
                                 </div>
                                 <input type="range" class="field-slider" min="0" max="2" step="0.1" v-model.number="temperature" />
-                                <div class="slider-hints">
-                                    <span>精确</span>
-                                    <span>平衡</span>
-                                    <span>创造</span>
+                                <div class="slider-hints scenario-hints">
+                                    <button
+                                        v-for="s in temperatureScenarios"
+                                        :key="s.key"
+                                        type="button"
+                                        class="scenario-hint"
+                                        :class="{ active: temperatureScenario.key === s.key }"
+                                        @click="setTemperatureScenario(s)">
+                                        {{ s.label }}({{ s.value }})
+                                    </button>
                                 </div>
                             </div>
 
@@ -168,6 +168,101 @@
                                     </span>
                                     <span class="token-label">详尽分析</span>
                                 </div>
+                            </div>
+
+                            <!-- 模型配置 -->
+                            <div class="field-group model-config-group">
+                                <button
+                                    type="button"
+                                    class="model-config-toggle"
+                                    :class="{ open: modelConfigOpen }"
+                                    @click="modelConfigOpen = !modelConfigOpen">
+                                    <span>模型配置</span>
+                                    <span class="model-config-count">{{ models.length }}/10</span>
+                                    <svg
+                                        class="model-config-chevron"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="m6 9 6 6 6-6" />
+                                    </svg>
+                                </button>
+                                <transition name="model-config">
+                                    <div v-show="modelConfigOpen" class="model-config-panel">
+                                        <div v-for="(m, idx) in models" :key="m.id + '-' + idx" class="model-config-row">
+                                            <div class="model-config-field model-config-field--name">
+                                                <label class="model-config-label">名称</label>
+                                                <input v-model="m.name" type="text" class="field-input" placeholder="模型名称" maxlength="30" />
+                                            </div>
+                                            <div class="model-config-field model-config-field--id">
+                                                <label class="model-config-label">模型 ID</label>
+                                                <input v-model="m.id" type="text" class="field-input" placeholder="model-id" maxlength="60" />
+                                            </div>
+                                            <div class="model-config-field model-config-field--desc">
+                                                <label class="model-config-label">描述</label>
+                                                <input
+                                                    v-model="m.description"
+                                                    type="text"
+                                                    class="field-input"
+                                                    placeholder="用途描述"
+                                                    maxlength="40" />
+                                            </div>
+                                            <div class="model-config-field model-config-field--url">
+                                                <label class="model-config-label">Base URL</label>
+                                                <input v-model="m.baseUrl" type="text" class="field-input" placeholder="可选" maxlength="200" />
+                                            </div>
+                                            <div class="model-config-field model-config-field--key">
+                                                <label class="model-config-label">API Key</label>
+                                                <input v-model="m.apiKey" type="password" class="field-input" placeholder="可选" maxlength="200" />
+                                            </div>
+                                            <div class="model-config-actions">
+                                                <label class="model-toggle" title="启用">
+                                                    <input v-model="m.enabled" type="checkbox" />
+                                                    <span class="model-toggle-knob"></span>
+                                                    <span class="model-toggle-label">{{ m.enabled ? '启用' : '禁用' }}</span>
+                                                </label>
+                                                <button type="button" class="model-del-btn" @click="removeModel(idx)" aria-label="删除模型">
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        width="14"
+                                                        height="14"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        stroke-width="2"
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round">
+                                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="model-add-btn" :disabled="models.length >= 10" @click="addModel">
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                width="14"
+                                                height="14"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <line x1="12" y1="5" x2="12" y2="19" />
+                                                <line x1="5" y1="12" x2="19" y2="12" />
+                                            </svg>
+                                            添加模型
+                                        </button>
+                                        <p v-if="models.length >= 10" class="model-limit-hint">已达模型上限（10 个）</p>
+                                    </div>
+                                </transition>
                             </div>
                         </div>
                     </div>
@@ -290,7 +385,17 @@
                     <div class="pod-shell">
                         <div class="pod-core">
                             <div class="pod-icon-wrap pod-icon-wrap--amber">
-                                <svg class="pod-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg
+                                    class="pod-icon"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round">
                                     <rect x="3" y="3" width="7" height="7" rx="1.5" />
                                     <rect x="14" y="3" width="7" height="7" rx="1.5" />
                                     <rect x="14" y="14" width="7" height="7" rx="1.5" />
@@ -306,11 +411,12 @@
                                 <div class="heatmap-body">
                                     <div v-for="(row, ri) in heatmapData" :key="ri" class="heatmap-row">
                                         <span class="heatmap-hour-label">{{ heatmapHours[ri] }}</span>
-                                        <div v-for="(val, ci) in row" :key="ci"
+                                        <div
+                                            v-for="(val, ci) in row"
+                                            :key="ci"
                                             class="heatmap-cell"
                                             :class="'heatmap-cell--' + heatmapLevel(val)"
-                                            :title="`${heatmapDays[ci]} ${heatmapHours[ri]}: ${val} 次`">
-                                        </div>
+                                            :title="`${heatmapDays[ci]} ${heatmapHours[ri]}: ${val} 次`"></div>
                                     </div>
                                 </div>
                                 <div class="heatmap-legend">
@@ -379,21 +485,38 @@
                             <!-- 模板列表 -->
                             <transition name="template-fade" mode="out-in">
                                 <div class="template-list" :key="templateTab">
-                                <div v-for="(item, idx) in currentTemplates" :key="idx" class="template-row">
-                                    <span class="template-num">{{ idx + 1 }}</span>
-                                    <input
-                                        class="template-input"
-                                        :value="item"
-                                        :placeholder="placeholderForMode[templateTab][idx]"
-                                        maxlength="80"
-                                        :aria-label="`模板 ${idx + 1}`"
-                                        @input="updateTemplate(idx, $event.target.value)" />
-                                    <button
-                                        v-if="currentTemplates.length > 1"
-                                        class="template-del-btn"
-                                        @click="removeTemplate(idx)"
-                                        tabindex="-1"
-                                        aria-label="删除此模板">
+                                    <div v-for="(item, idx) in currentTemplates" :key="idx" class="template-row">
+                                        <span class="template-num">{{ idx + 1 }}</span>
+                                        <input
+                                            class="template-input"
+                                            :value="item"
+                                            :placeholder="placeholderForMode[templateTab][idx]"
+                                            maxlength="80"
+                                            :aria-label="`模板 ${idx + 1}`"
+                                            @input="updateTemplate(idx, $event.target.value)" />
+                                        <button
+                                            v-if="currentTemplates.length > 1"
+                                            class="template-del-btn"
+                                            @click="removeTemplate(idx)"
+                                            tabindex="-1"
+                                            aria-label="删除此模板">
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                width="14"
+                                                height="14"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <line x1="18" y1="6" x2="6" y2="18" />
+                                                <line x1="6" y1="6" x2="18" y2="18" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <button v-if="currentTemplates.length < 5" class="template-add-btn" @click="addTemplate">
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             width="14"
@@ -404,30 +527,13 @@
                                             stroke-width="2"
                                             stroke-linecap="round"
                                             stroke-linejoin="round">
-                                            <line x1="18" y1="6" x2="6" y2="18" />
-                                            <line x1="6" y1="6" x2="18" y2="18" />
+                                            <line x1="12" y1="5" x2="12" y2="19" />
+                                            <line x1="5" y1="12" x2="19" y2="12" />
                                         </svg>
+                                        添加模板
                                     </button>
+                                    <p v-else class="template-limit-hint">已达上限（5 条）</p>
                                 </div>
-
-                                <button v-if="currentTemplates.length < 5" class="template-add-btn" @click="addTemplate">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="14"
-                                        height="14"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <line x1="12" y1="5" x2="12" y2="19" />
-                                        <line x1="5" y1="12" x2="19" y2="12" />
-                                    </svg>
-                                    添加模板
-                                </button>
-                                <p v-else class="template-limit-hint">已达上限（5 条）</p>
-                            </div>
                             </transition>
                         </div>
                     </div>
@@ -557,10 +663,32 @@
         <!-- 保存确认 Toast -->
         <transition name="toast">
             <div v-if="toastVisible" class="save-toast" :class="{ 'save-toast--error': _storageError }">
-                <svg v-if="!_storageError" class="toast-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg
+                    v-if="!_storageError"
+                    class="toast-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round">
                     <polyline points="20 6 9 17 4 12" />
                 </svg>
-                <svg v-else class="toast-icon toast-icon--warn" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg
+                    v-else
+                    class="toast-icon toast-icon--warn"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -596,6 +724,14 @@ export default {
             reduceMotion: saved.reduceMotion ?? false,
             defaultMode: saved.defaultMode || 'chat',
             promptTemplates: saved.promptTemplates || this._defaultTemplates(),
+            models: this._loadModels(),
+            modelConfigOpen: false, // 模型配置折叠状态
+            temperatureScenarios: [
+                { key: 'precise', label: '精确', value: 0.2, min: 0.0, max: 0.4 },
+                { key: 'balanced', label: '平衡', value: 0.7, min: 0.5, max: 0.9 },
+                { key: 'creative', label: '创造', value: 1.2, min: 1.0, max: 1.4 },
+                { key: 'divergent', label: '发散', value: 1.8, min: 1.5, max: 2.0 }
+            ],
             templateTab: 'chat', // 当前编辑的模板模式
             modes: [
                 {
@@ -640,6 +776,7 @@ export default {
             toastMessage: '设置已保存',
             _toastTimer: null,
             _saveTimer: null, // savePrefs 防抖定时器
+            _modelSaveTimer: null, // saveModels 防抖定时器
             _storageError: false, // localStorage 读写异常标志
             _themeWasLight: false // 追踪主题切换，重启 WebGL
         };
@@ -666,6 +803,16 @@ export default {
                 query: ['例：当前页面数据概览', '例：最近有哪些异常情况？', '例：按类型分类统计', '例：输入自定义提问', '例：输入自定义提问'],
                 summary: ['例：有哪些高风险项？', '例：整体完成进度如何？', '例：下一步建议怎么做？', '例：输入自定义提问', '例：输入自定义提问']
             };
+        },
+        enabledModels() {
+            return this.models.filter((m) => m.enabled);
+        },
+        temperatureScenario() {
+            const t = this.temperature;
+            for (const s of this.temperatureScenarios) {
+                if (t >= s.min && t <= s.max) return s;
+            }
+            return this.temperatureScenarios[1]; // fallback 平衡
         }
     },
 
@@ -679,6 +826,8 @@ export default {
             dur: Math.random() * 4 + 4,
             delay: Math.random() * 5
         }));
+        // 初始校验：防止已保存的 model 不在启用列表中
+        this.ensureValidModel();
     },
 
     mounted() {
@@ -692,6 +841,7 @@ export default {
         this._typewriterCancelled = true;
         clearTimeout(this._toastTimer);
         clearTimeout(this._saveTimer);
+        clearTimeout(this._modelSaveTimer);
         this._destroyAurora();
         this._destroyScrollReveal();
     },
@@ -713,7 +863,13 @@ export default {
                 }
             }
         },
-        model: { handler: 'savePrefs', deep: false },
+        model: {
+            handler() {
+                this.ensureValidModel();
+                this.savePrefs();
+            },
+            deep: false
+        },
         temperature: { handler: 'savePrefs', deep: false },
         maxTokens: { handler: 'savePrefs', deep: false },
         reduceMotion(v) {
@@ -725,7 +881,14 @@ export default {
             }
         },
         defaultMode: { handler: 'savePrefs', deep: false },
-        promptTemplates: { handler: 'savePrefs', deep: true }
+        promptTemplates: { handler: 'savePrefs', deep: true },
+        models: {
+            handler() {
+                this.ensureValidModel();
+                this.saveModels();
+            },
+            deep: true
+        }
     },
 
     methods: {
@@ -1056,6 +1219,76 @@ export default {
             }, 300);
         },
 
+        // ==================== 模型列表持久化 ====================
+
+        _modelKey() {
+            return 'skyeye_ai_models';
+        },
+
+        _defaultModels() {
+            return [
+                { id: 'deepseek-chat', name: 'DeepSeek-V3', description: '通用对话', baseUrl: '', apiKey: '', enabled: true },
+                { id: 'deepseek-reasoner', name: 'DeepSeek-R1', description: '深度推理', baseUrl: '', apiKey: '', enabled: true }
+            ];
+        },
+
+        _loadModels() {
+            try {
+                const raw = localStorage.getItem(this._modelKey());
+                if (!raw) return this._defaultModels();
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                return this._defaultModels();
+            } catch (e) {
+                console.warn('[aiSettings] 模型配置读取失败', e);
+                return this._defaultModels();
+            }
+        },
+
+        saveModels() {
+            clearTimeout(this._modelSaveTimer);
+            this._modelSaveTimer = setTimeout(() => {
+                try {
+                    localStorage.setItem(this._modelKey(), JSON.stringify(this.models));
+                    this._storageError = false;
+                } catch (e) {
+                    console.warn('[aiSettings] 模型配置写入失败', e);
+                    this._storageError = true;
+                }
+            }, 300);
+        },
+
+        ensureValidModel() {
+            const enabled = this.enabledModels;
+            const exists = enabled.some((m) => m.id === this.model);
+            if (!exists) {
+                const fallback = enabled.find((m) => m.id === 'deepseek-chat') || enabled[0];
+                this.model = fallback ? fallback.id : '';
+            }
+        },
+
+        setTemperatureScenario(scenario) {
+            this.temperature = scenario.value;
+        },
+
+        addModel() {
+            if (this.models.length >= 10) return;
+            const n = this.models.filter((m) => /^model-\d+$/.test(m.id)).length + 1;
+            this.models.push({
+                id: `model-${n}`,
+                name: `模型 ${n}`,
+                description: '',
+                baseUrl: '',
+                apiKey: '',
+                enabled: true
+            });
+        },
+
+        removeModel(idx) {
+            if (idx < 0 || idx >= this.models.length) return;
+            this.models.splice(idx, 1);
+        },
+
         _showToast(msg) {
             clearTimeout(this._toastTimer);
             this.toastMessage = msg;
@@ -1071,7 +1304,7 @@ export default {
                 temperature: 0.7,
                 maxTokens: 4096,
                 reduceMotion: false,
-                defaultMode: 'chat',
+                defaultMode: 'chat'
             };
             this.model = DEFAULTS.model;
             this.temperature = DEFAULTS.temperature;
@@ -1080,13 +1313,17 @@ export default {
             this.defaultMode = DEFAULTS.defaultMode;
             this.promptTemplates = this._defaultTemplates();
             this.templateTab = 'chat';
+            this.models = this._defaultModels();
             this.savePrefs();
+            this.saveModels();
             this._showToast('已恢复默认设置');
         },
 
         /** 重置侧栏引导计数：下次打开面板重新展示引导动画 */
         resetRailOnboard() {
-            try { localStorage.setItem('skyeye_rail_onboard', '0'); } catch (_) {}
+            try {
+                localStorage.setItem('skyeye_rail_onboard', '0');
+            } catch (_) {}
             this._showToast('下次打开 AI 助手时将重新展示侧栏引导');
         },
 
@@ -1266,20 +1503,14 @@ void main(){
     opacity: 0;
     transition: opacity 0.5s ease;
     background:
-        /* C: 右上自然光源 — 淡蓝白扩散，模拟窗户侧光 */
-        radial-gradient(
+        /* C: 右上自然光源 — 淡蓝白扩散，模拟窗户侧光 */ radial-gradient(
             ellipse 60% 40% at 75% 0%,
             rgba(147, 197, 253, 0.07) 0%,
             rgba(191, 219, 254, 0.03) 35%,
             transparent 65%
         ),
         /* A: 页面温度 — 顶部微暖，底部收束为冷灰 */
-        linear-gradient(
-            180deg,
-            rgba(248, 250, 252, 0) 0%,
-            rgba(241, 245, 249, 0.35) 50%,
-            rgba(226, 232, 240, 0.15) 100%
-        );
+            linear-gradient(180deg, rgba(248, 250, 252, 0) 0%, rgba(241, 245, 249, 0.35) 50%, rgba(226, 232, 240, 0.15) 100%);
 }
 
 /* 仅亮色模式可见 */
@@ -1340,8 +1571,12 @@ void main(){
 }
 
 @keyframes marquee-scroll {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
 }
 
 /* 减少动效：冻结滚动 */
@@ -1437,8 +1672,7 @@ void main(){
     border-radius: 50%;
     filter: blur(100px);
     opacity: 0.12;
-    transition: background 1.2s cubic-bezier(0.32, 0.72, 0, 1),
-        opacity 1.2s cubic-bezier(0.32, 0.72, 0, 1);
+    transition: background 1.2s cubic-bezier(0.32, 0.72, 0, 1), opacity 1.2s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .orb--tl {
@@ -1839,7 +2073,7 @@ void main(){
         backdrop-filter: blur(18px);
         -webkit-backdrop-filter: blur(18px);
         border: 1px solid rgba(99, 102, 241, 0.18);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.40), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
         color: rgba(220, 225, 240, 0.92);
         font-size: 12px;
         font-weight: 400;
@@ -1894,8 +2128,8 @@ void main(){
 /* 亮色模式 — tooltip */
 .theme-light .field-help {
     background: rgba(0, 0, 0, 0.05);
-    border-color: rgba(0, 0, 0, 0.10);
-    color: rgba(0, 0, 0, 0.30);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: rgba(0, 0, 0, 0.3);
 
     &:hover {
         background: rgba(99, 102, 241, 0.12);
@@ -1904,10 +2138,10 @@ void main(){
     }
 
     &::after {
-        background: rgba(255, 255, 255, 0.90);
+        background: rgba(255, 255, 255, 0.9);
         backdrop-filter: blur(18px);
         -webkit-backdrop-filter: blur(18px);
-        border-color: rgba(0, 0, 0, 0.10);
+        border-color: rgba(0, 0, 0, 0.1);
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
         color: #334155;
     }
@@ -2192,9 +2426,15 @@ void main(){
 }
 
 /* 模式色水位 */
-.mode-chip[data-mode='chat']    { --chip-fill: rgba(99, 102, 241, 0.35); }
-.mode-chip[data-mode='query']   { --chip-fill: rgba(239, 68, 68, 0.35); }
-.mode-chip[data-mode='summary'] { --chip-fill: rgba(245, 158, 11, 0.35); }
+.mode-chip[data-mode='chat'] {
+    --chip-fill: rgba(99, 102, 241, 0.35);
+}
+.mode-chip[data-mode='query'] {
+    --chip-fill: rgba(239, 68, 68, 0.35);
+}
+.mode-chip[data-mode='summary'] {
+    --chip-fill: rgba(245, 158, 11, 0.35);
+}
 
 .pod-shell:hover {
     transform: translateY(-2px);
@@ -2505,9 +2745,15 @@ void main(){
     }
 }
 
-[data-theme='light'] .mode-chip[data-mode='chat']    { --chip-fill: rgba(99, 102, 241, 0.25); }
-[data-theme='light'] .mode-chip[data-mode='query']   { --chip-fill: rgba(239, 68, 68, 0.25); }
-[data-theme='light'] .mode-chip[data-mode='summary'] { --chip-fill: rgba(245, 158, 11, 0.25); }
+[data-theme='light'] .mode-chip[data-mode='chat'] {
+    --chip-fill: rgba(99, 102, 241, 0.25);
+}
+[data-theme='light'] .mode-chip[data-mode='query'] {
+    --chip-fill: rgba(239, 68, 68, 0.25);
+}
+[data-theme='light'] .mode-chip[data-mode='summary'] {
+    --chip-fill: rgba(245, 158, 11, 0.25);
+}
 
 [data-theme='light'] .kbd-row kbd {
     background: rgba(0, 0, 0, 0.04);
@@ -2620,6 +2866,553 @@ void main(){
     color: #dc2626 !important;
 }
 
+/* ========================= Temperature 场景标签 ========================= */
+.field-val-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.temp-scenario-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(165, 180, 252, 0.9);
+    line-height: 1.4;
+}
+
+.scenario-hints {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    padding-top: 6px;
+}
+
+.scenario-hint {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 4px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--ai-glass-01);
+    color: var(--ai-text-tertiary);
+    font-size: 11px;
+    font-weight: 550;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+        border-color: rgba(99, 102, 241, 0.35);
+        color: rgba(255, 255, 255, 0.85);
+        background: rgba(99, 102, 241, 0.12);
+    }
+
+    &.active {
+        border-color: rgba(99, 102, 241, 0.5);
+        background: rgba(99, 102, 241, 0.2);
+        color: #fff;
+        box-shadow: 0 0 16px rgba(99, 102, 241, 0.12);
+    }
+
+    &:focus-visible {
+        outline: 2px solid rgba(99, 102, 241, 0.5);
+        outline-offset: 2px;
+    }
+}
+
+/* ========================= 模型配置 ========================= */
+.model-config-group {
+    margin-top: 4px;
+}
+
+.model-config-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--ai-border-default);
+    background: var(--ai-glass-01);
+    color: var(--ai-text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+
+    &:hover {
+        background: var(--ai-glass-02);
+        border-color: var(--ai-border-active);
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    &.open .model-config-chevron {
+        transform: rotate(180deg);
+    }
+
+    &:focus-visible {
+        outline: 2px solid rgba(99, 102, 241, 0.5);
+        outline-offset: 2px;
+    }
+}
+
+.model-config-count {
+    margin-left: auto;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.18);
+    color: rgba(165, 180, 252, 0.8);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.model-config-chevron {
+    color: var(--ai-text-placeholder);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), color 0.25s ease;
+}
+
+.model-config-panel {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.model-config-row {
+    display: grid;
+    grid-template-columns: 1.2fr 1.4fr 1fr 1.4fr 1.4fr auto;
+    gap: 10px;
+    align-items: end;
+    padding: 14px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.model-config-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.model-config-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ai-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.field-input {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--ai-border-default);
+    background: var(--ai-glass-01);
+    color: var(--ai-text-primary);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+
+    &::placeholder {
+        color: var(--ai-text-placeholder);
+    }
+
+    &:focus {
+        border-color: rgba(99, 102, 241, 0.45);
+        background: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    }
+}
+
+.model-config-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 1px;
+}
+
+.model-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--ai-text-tertiary);
+
+    input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+}
+
+.model-toggle-knob {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: var(--ai-glass-03);
+    transition: background 0.25s ease, border-color 0.25s ease;
+    flex-shrink: 0;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+        transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+}
+
+.model-toggle input:checked + .model-toggle-knob {
+    background: rgba(99, 102, 241, 0.45);
+    border-color: rgba(99, 102, 241, 0.55);
+
+    &::after {
+        transform: translateX(16px);
+    }
+}
+
+.model-toggle input:focus-visible + .model-toggle-knob {
+    outline: 2px solid rgba(99, 102, 241, 0.5);
+    outline-offset: 2px;
+}
+
+.model-toggle-label {
+    font-size: 11px;
+    font-weight: 550;
+    white-space: nowrap;
+}
+
+.model-del-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ai-text-placeholder);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+
+    &:hover {
+        background: rgba(239, 68, 68, 0.12);
+        border-color: rgba(239, 68, 68, 0.25);
+        color: #f87171;
+    }
+
+    &:focus-visible {
+        outline: 2px solid rgba(239, 68, 68, 0.4);
+        outline-offset: 2px;
+    }
+}
+
+.model-add-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 10px 0;
+    border-radius: 12px;
+    border: 1px dashed rgba(99, 102, 241, 0.25);
+    background: transparent;
+    color: rgba(165, 180, 252, 0.6);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.25s ease;
+
+    &:hover:not(:disabled) {
+        border-color: rgba(99, 102, 241, 0.45);
+        background: rgba(99, 102, 241, 0.08);
+        color: rgba(165, 180, 252, 0.9);
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    &:focus-visible {
+        outline: 2px solid rgba(99, 102, 241, 0.5);
+        outline-offset: 2px;
+    }
+}
+
+.model-limit-hint {
+    text-align: center;
+    color: var(--ai-text-placeholder);
+    font-size: 12px;
+    margin: 0;
+}
+
+/* 模型配置展开/收起过渡 */
+.model-config-enter-active,
+.model-config-leave-active {
+    transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    transform-origin: top center;
+}
+.model-config-enter,
+.model-config-leave-to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+}
+
+/* ========================= 模型配置 · 亮色主题 ========================= */
+[data-theme='light'] .temp-scenario-badge {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.15);
+    color: #4f46e5;
+}
+
+[data-theme='light'] .scenario-hint {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #64748b;
+
+    &:hover {
+        background: rgba(99, 102, 241, 0.08);
+        border-color: rgba(99, 102, 241, 0.25);
+        color: #4f46e5;
+    }
+
+    &.active {
+        background: rgba(99, 102, 241, 0.12);
+        border-color: rgba(99, 102, 241, 0.35);
+        color: #1e293b;
+        box-shadow: 0 0 12px rgba(99, 102, 241, 0.1);
+    }
+}
+
+[data-theme='light'] .model-config-toggle {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #475569;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.06);
+        border-color: rgba(0, 0, 0, 0.14);
+        color: #1e293b;
+    }
+}
+
+[data-theme='light'] .model-config-count {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.15);
+    color: #4f46e5;
+}
+
+[data-theme='light'] .model-config-chevron {
+    color: #94a3b8;
+}
+
+[data-theme='light'] .model-config-row {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme='light'] .model-config-label {
+    color: #94a3b8;
+}
+
+[data-theme='light'] .field-input {
+    background: rgba(255, 255, 255, 0.5);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #1e293b;
+
+    &::placeholder {
+        color: rgba(0, 0, 0, 0.25);
+    }
+
+    &:focus {
+        border-color: rgba(37, 99, 235, 0.4);
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+    }
+}
+
+[data-theme='light'] .model-toggle {
+    color: #64748b;
+}
+
+[data-theme='light'] .model-toggle-knob {
+    background: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme='light'] .model-toggle input:checked + .model-toggle-knob {
+    background: rgba(99, 102, 241, 0.55);
+    border-color: rgba(99, 102, 241, 0.6);
+}
+
+[data-theme='light'] .model-toggle-label {
+    color: #475569;
+}
+
+[data-theme='light'] .model-del-btn {
+    color: rgba(0, 0, 0, 0.25);
+
+    &:hover {
+        background: rgba(239, 68, 68, 0.08);
+        color: #dc2626;
+    }
+}
+
+[data-theme='light'] .model-add-btn {
+    border-color: rgba(37, 99, 235, 0.2);
+    color: rgba(37, 99, 235, 0.55);
+
+    &:hover:not(:disabled) {
+        border-color: rgba(37, 99, 235, 0.4);
+        background: rgba(37, 99, 235, 0.06);
+        color: #2563eb;
+    }
+}
+
+[data-theme='light'] .model-limit-hint {
+    color: rgba(0, 0, 0, 0.25);
+}
+
+/* `.theme-light` 类覆盖（与 data-theme 保持同步） */
+.theme-light .temp-scenario-badge {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.15);
+    color: #4f46e5;
+}
+
+.theme-light .scenario-hint {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #64748b;
+
+    &:hover {
+        background: rgba(99, 102, 241, 0.08);
+        border-color: rgba(99, 102, 241, 0.25);
+        color: #4f46e5;
+    }
+
+    &.active {
+        background: rgba(99, 102, 241, 0.12);
+        border-color: rgba(99, 102, 241, 0.35);
+        color: #1e293b;
+        box-shadow: 0 0 12px rgba(99, 102, 241, 0.1);
+    }
+}
+
+.theme-light .model-config-toggle {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #475569;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.06);
+        border-color: rgba(0, 0, 0, 0.14);
+        color: #1e293b;
+    }
+}
+
+.theme-light .model-config-count {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.15);
+    color: #4f46e5;
+}
+
+.theme-light .model-config-chevron {
+    color: #94a3b8;
+}
+
+.theme-light .model-config-row {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+.theme-light .model-config-label {
+    color: #94a3b8;
+}
+
+.theme-light .field-input {
+    background: rgba(255, 255, 255, 0.5);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #1e293b;
+
+    &::placeholder {
+        color: rgba(0, 0, 0, 0.25);
+    }
+
+    &:focus {
+        border-color: rgba(37, 99, 235, 0.4);
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+    }
+}
+
+.theme-light .model-toggle {
+    color: #64748b;
+}
+
+.theme-light .model-toggle-knob {
+    background: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+.theme-light .model-toggle input:checked + .model-toggle-knob {
+    background: rgba(99, 102, 241, 0.55);
+    border-color: rgba(99, 102, 241, 0.6);
+}
+
+.theme-light .model-toggle-label {
+    color: #475569;
+}
+
+.theme-light .model-del-btn {
+    color: rgba(0, 0, 0, 0.25);
+
+    &:hover {
+        background: rgba(239, 68, 68, 0.08);
+        color: #dc2626;
+    }
+}
+
+.theme-light .model-add-btn {
+    border-color: rgba(37, 99, 235, 0.2);
+    color: rgba(37, 99, 235, 0.55);
+
+    &:hover:not(:disabled) {
+        border-color: rgba(37, 99, 235, 0.4);
+        background: rgba(37, 99, 235, 0.06);
+        color: #2563eb;
+    }
+}
+
+.theme-light .model-limit-hint {
+    color: rgba(0, 0, 0, 0.25);
+}
+
 /* ========================= 响应式 ========================= */
 @media (max-width: 768px) {
     .settings-main {
@@ -2642,6 +3435,17 @@ void main(){
 
     .pod-core {
         padding: 20px 18px 24px;
+    }
+
+    .model-config-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 14px;
+    }
+
+    .model-config-actions {
+        justify-content: flex-end;
+        padding-bottom: 0;
     }
 }
 
@@ -2760,9 +3564,15 @@ void main(){
 }
 
 /* 提示词标签水位色 */
-.template-mode-tab[data-mode='chat']    { --chip-fill: rgba(99, 102, 241, 0.35); }
-.template-mode-tab[data-mode='query']   { --chip-fill: rgba(239, 68, 68, 0.35); }
-.template-mode-tab[data-mode='summary'] { --chip-fill: rgba(245, 158, 11, 0.35); }
+.template-mode-tab[data-mode='chat'] {
+    --chip-fill: rgba(99, 102, 241, 0.35);
+}
+.template-mode-tab[data-mode='query'] {
+    --chip-fill: rgba(239, 68, 68, 0.35);
+}
+.template-mode-tab[data-mode='summary'] {
+    --chip-fill: rgba(245, 158, 11, 0.35);
+}
 
 /* 亮色主题 */
 .theme-light .template-mode-tab {
@@ -2783,9 +3593,15 @@ void main(){
     }
 }
 
-.theme-light .template-mode-tab[data-mode='chat']    { --chip-fill: rgba(99, 102, 241, 0.25); }
-.theme-light .template-mode-tab[data-mode='query']   { --chip-fill: rgba(239, 68, 68, 0.25); }
-.theme-light .template-mode-tab[data-mode='summary'] { --chip-fill: rgba(245, 158, 11, 0.25); }
+.theme-light .template-mode-tab[data-mode='chat'] {
+    --chip-fill: rgba(99, 102, 241, 0.25);
+}
+.theme-light .template-mode-tab[data-mode='query'] {
+    --chip-fill: rgba(239, 68, 68, 0.25);
+}
+.theme-light .template-mode-tab[data-mode='summary'] {
+    --chip-fill: rgba(245, 158, 11, 0.25);
+}
 
 /* 模板列表 */
 .template-list {
@@ -3039,10 +3855,19 @@ void main(){
 }
 
 /* 强度色阶 — 从几乎透明到琥珀色 */
-.heatmap-cell--low { background: rgba(251, 191, 36, 0.08); }
-.heatmap-cell--mid { background: rgba(251, 191, 36, 0.28); }
-.heatmap-cell--high { background: rgba(251, 191, 36, 0.55); }
-.heatmap-cell--peak { background: rgba(251, 191, 36, 0.85); box-shadow: 0 0 4px rgba(251, 191, 36, 0.3); }
+.heatmap-cell--low {
+    background: rgba(251, 191, 36, 0.08);
+}
+.heatmap-cell--mid {
+    background: rgba(251, 191, 36, 0.28);
+}
+.heatmap-cell--high {
+    background: rgba(251, 191, 36, 0.55);
+}
+.heatmap-cell--peak {
+    background: rgba(251, 191, 36, 0.85);
+    box-shadow: 0 0 4px rgba(251, 191, 36, 0.3);
+}
 
 .heatmap-legend {
     display: flex;
@@ -3081,21 +3906,55 @@ void main(){
 }
 
 @keyframes particle-drift {
-    0% { opacity: 0; transform: translate(0, 0); }
-    30% { opacity: 0.25; }
-    70% { opacity: 0.2; }
-    100% { opacity: 0; transform: translate(var(--particle-drift-x, 8px), var(--particle-drift-y, -6px)); }
+    0% {
+        opacity: 0;
+        transform: translate(0, 0);
+    }
+    30% {
+        opacity: 0.25;
+    }
+    70% {
+        opacity: 0.2;
+    }
+    100% {
+        opacity: 0;
+        transform: translate(var(--particle-drift-x, 8px), var(--particle-drift-y, -6px));
+    }
 }
 
 /* 每个粒子不同的漂移方向 */
-.bento-particle:nth-child(1) { --particle-drift-x: 10px; --particle-drift-y: -8px; }
-.bento-particle:nth-child(2) { --particle-drift-x: -6px; --particle-drift-y: -12px; }
-.bento-particle:nth-child(3) { --particle-drift-x: 15px; --particle-drift-y: 5px; }
-.bento-particle:nth-child(4) { --particle-drift-x: -10px; --particle-drift-y: 10px; }
-.bento-particle:nth-child(5) { --particle-drift-x: 8px; --particle-drift-y: 14px; }
-.bento-particle:nth-child(6) { --particle-drift-x: -14px; --particle-drift-y: -4px; }
-.bento-particle:nth-child(7) { --particle-drift-x: 4px; --particle-drift-y: -16px; }
-.bento-particle:nth-child(8) { --particle-drift-x: -8px; --particle-drift-y: 8px; }
+.bento-particle:nth-child(1) {
+    --particle-drift-x: 10px;
+    --particle-drift-y: -8px;
+}
+.bento-particle:nth-child(2) {
+    --particle-drift-x: -6px;
+    --particle-drift-y: -12px;
+}
+.bento-particle:nth-child(3) {
+    --particle-drift-x: 15px;
+    --particle-drift-y: 5px;
+}
+.bento-particle:nth-child(4) {
+    --particle-drift-x: -10px;
+    --particle-drift-y: 10px;
+}
+.bento-particle:nth-child(5) {
+    --particle-drift-x: 8px;
+    --particle-drift-y: 14px;
+}
+.bento-particle:nth-child(6) {
+    --particle-drift-x: -14px;
+    --particle-drift-y: -4px;
+}
+.bento-particle:nth-child(7) {
+    --particle-drift-x: 4px;
+    --particle-drift-y: -16px;
+}
+.bento-particle:nth-child(8) {
+    --particle-drift-x: -8px;
+    --particle-drift-y: 8px;
+}
 
 /* 减少动效：冻结粒子 */
 .reduce-motion .bento-particle {

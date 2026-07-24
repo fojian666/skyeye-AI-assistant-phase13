@@ -132,6 +132,7 @@
                             aria-label="展开面板菜单">
                             <span class="di-dot"></span>
                             <span class="di-label">金陵阡陌</span>
+                            <span class="di-model-pill">{{ currentModelLabel }}</span>
                             <span class="di-chevron" :class="{ rotated: diExpanded }">
                                 <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
                                     <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -171,6 +172,9 @@
                                 <svg v-if="docked" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>
                                 <svg v-else xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 5 7 7-7 7" /><path d="M5 12h14" /></svg>
                             </button>
+                            <button class="chat-btn-icon" title="模型与参数" @click.stop="paramsPopoverVisible = !paramsPopoverVisible" :class="{ active: paramsPopoverVisible }" aria-label="模型与参数">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="9" y1="14" x2="15" y2="14"/><line x1="17" y1="8" x2="7" y2="8"/><line x1="3" y1="10" x2="7" y2="10"/><line x1="17" y1="16" x2="21" y2="16"/></svg>
+                            </button>
                             <button class="chat-btn-icon" title="AI 助手设置" @click="openSettings" aria-label="AI 助手设置">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>
                             </button>
@@ -182,6 +186,34 @@
                             </button>
                         </div>
                     </div>
+                    <!-- 模型与参数浮层 -->
+                    <transition name="params-popover">
+                    <div v-if="paramsPopoverVisible" class="di-params-popover" @mousedown.stop @click.stop>
+                        <div class="di-params-header">
+                            <strong>模型与参数</strong>
+                            <button class="chat-btn-icon" title="关闭" @click.stop="paramsPopoverVisible = false" aria-label="关闭参数面板">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            </button>
+                        </div>
+                        <div class="di-params-row">
+                            <label>模型</label>
+                            <select v-model="model" class="di-params-select">
+                                <option v-for="m in availableModels" :key="m.id" :value="m.id">{{ m.name }}</option>
+                            </select>
+                        </div>
+                        <div class="di-params-row">
+                            <label>Temperature <span class="di-params-value">{{ temperature.toFixed(1) }}</span></label>
+                            <input type="range" min="0" max="2" step="0.1" v-model.number="temperature" class="di-params-range" />
+                        </div>
+                        <div class="di-params-row">
+                            <label>最大输出长度 <span class="di-params-value">{{ maxTokens }}</span></label>
+                            <input type="range" min="512" max="8192" step="512" v-model.number="maxTokens" class="di-params-range" />
+                        </div>
+                    </div>
+                    </transition>
+
+                    <!-- 设置更新提示 -->
+                    <div v-if="settingsToastVisible" class="settings-toast">{{ settingsToastMessage }}</div>
                     </div>
 
                     <!-- 消息列表 -->
@@ -246,13 +278,16 @@
                             </div>
                         </div>
 
-                        <div v-for="(msg, idx) in messages" :key="idx">
-                            <div v-show="msg.role !== 'tool'" class="chat-msg" :class="msg.role" :style="{ '--msg-i': idx }">
-                                <span class="msg-name">{{ msg.role === 'user' ? username : msg.role === 'tool-info' ? '系统' : modelName }}</span>
+                        <!-- 虚拟滚动：顶部占位 -->
+                        <div :style="{ height: virtualScroll.offsetTop + 'px', flexShrink: 0 }"></div>
+
+                        <div v-for="item in visibleMessages" :key="'vmsg-' + item.idx">
+                            <div v-show="item.msg.role !== 'tool'" class="chat-msg" :class="item.msg.role" :style="{ '--msg-i': item.idx }">
+                                <span class="msg-name">{{ item.msg.role === 'user' ? username : item.msg.role === 'tool-info' ? '系统' : modelName }}</span>
                                 <div class="msg-row">
                                     <div class="msg-avatar">
                                         <svg
-                                            v-if="msg.role === 'user'"
+                                            v-if="item.msg.role === 'user'"
                                             xmlns="http://www.w3.org/2000/svg"
                                             width="16"
                                             height="16"
@@ -266,7 +301,7 @@
                                             <circle cx="12" cy="7" r="4" />
                                         </svg>
                                         <svg
-                                            v-else-if="msg.role === 'tool-info'"
+                                            v-else-if="item.msg.role === 'tool-info'"
                                             xmlns="http://www.w3.org/2000/svg"
                                             width="16"
                                             height="16"
@@ -300,22 +335,29 @@
                                     </div>
                                     <div
                                         class="msg-content"
-                                        v-if="msg.role === 'tool-info'"
+                                        v-if="item.msg.role === 'tool-info'"
                                         style="background: rgba(0, 243, 255, 0.08); font-style: italic">
-                                        {{ msg.content }}
+                                        {{ item.msg.content }}
                                     </div>
-                                    <div class="msg-content" v-else-if="msg.role === 'tool'">
+                                    <div class="msg-content" v-else-if="item.msg.role === 'tool'">
                                         <!-- tool messages are hidden -->
                                     </div>
-                                    <div class="msg-content" v-else v-html="renderContent(msg.content)"></div>
+                                    <div class="msg-content" v-else v-html="renderContent(item.msg.content)"></div>
                                 </div>
-                                <div v-if="msg.role === 'assistant'" class="msg-actions">
+                                <div v-if="item.msg.role === 'assistant' && item.msg.reasoning" class="msg-reasoning" :class="{ expanded: item.msg._reasoningExpanded }">
+                                    <button class="msg-reasoning-toggle" @click="toggleReasoning(item.msg)">
+                                        <span>思考过程</span>
+                                        <svg class="reasoning-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                                    </button>
+                                    <div class="msg-reasoning-body">{{ item.msg.reasoning }}</div>
+                                </div>
+                                <div v-if="item.msg.role === 'assistant'" class="msg-actions">
                                     <button
                                         class="msg-action-btn"
-                                        @click="copyMessage(msg.content, idx)"
-                                        :title="copiedMsgIdx === idx ? '已复制' : '复制回答'">
+                                        @click="copyMessage(item.msg.content, item.idx)"
+                                        :title="copiedMsgIdx === item.idx ? '已复制' : '复制回答'">
                                         <svg
-                                            v-if="copiedMsgIdx === idx"
+                                            v-if="copiedMsgIdx === item.idx"
                                             xmlns="http://www.w3.org/2000/svg"
                                             width="12"
                                             height="12"
@@ -342,8 +384,23 @@
                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                                         </svg>
                                     </button>
-                                    <span v-if="copiedMsgIdx === idx" class="copy-toast">已复制</span>
-                                    <button v-if="msg._error || msg._interrupted" class="msg-action-btn retry" @click="retry(idx)" title="重试">
+                                    <span v-if="copiedMsgIdx === item.idx" class="copy-toast">已复制</span>
+                                    <button class="msg-action-btn regenerate" @click="retry(item.idx)" title="重新生成">
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="12"
+                                            height="12"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="23 4 23 10 17 10" />
+                                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                                        </svg>
+                                    </button>
+                                    <button v-if="item.msg._error || item.msg._interrupted" class="msg-action-btn retry" @click="retry(item.idx)" title="重试">
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             width="12"
@@ -360,9 +417,9 @@
                                     </button>
                                 </div>
                             </div>
-                            <div v-if="msg.role === 'assistant' && msg.suggestions && msg.suggestions.length" class="msg-suggestions">
+                            <div v-if="item.msg.role === 'assistant' && item.msg.suggestions && item.msg.suggestions.length" class="msg-suggestions">
                                 <button
-                                    v-for="(q, qi) in msg.suggestions"
+                                    v-for="(q, qi) in item.msg.suggestions"
                                     :key="qi"
                                     :style="{ transitionDelay: 0.08 * (qi + 1) + 's' }"
                                     @click="sendQuick(q)">
@@ -370,6 +427,9 @@
                                 </button>
                             </div>
                         </div>
+
+                        <!-- 虚拟滚动：底部占位 -->
+                        <div :style="{ height: virtualScroll.offsetBottom + 'px', flexShrink: 0 }"></div>
 
                         <!-- 打字中 / 思考中 -->
                         <div v-if="streaming" class="chat-msg assistant">
@@ -781,11 +841,29 @@ export default {
             _animLockTimer: null, // 并发动画锁定时器
             _animating: false, // 并发动画锁（模式切换/dock/开合）
             _sending: false, // 并发发送锁（send/sendQuick）
+            // 虚拟滚动
+            virtualScroll: {
+                startIndex: 0,
+                endIndex: 0,
+                offsetTop: 0,
+                offsetBottom: 0,
+                itemHeights: [],      // 每条消息的实际高度（按原始索引）
+                estItemHeight: 120,   // 默认预估高度
+                gap: 14               // 与 chat-msg 的 margin-bottom 对齐
+            },
+            _virtualRenderPending: false,
+            _virtualMeasureTimer: null,
             clockTime: (() => { const n = new Date(); return `${n.getHours().toString().padStart(2, '0')}:${n.getMinutes().toString().padStart(2, '0')}`; })(), // iOS 状态栏时钟
             _timeTimer: null, // 时钟定时器句柄
             model: 'deepseek-chat', // 模型选择（从设置页同步）
             temperature: 0.7, // Temperature 参数
-            maxTokens: 4096 // 最大输出 token
+            maxTokens: 4096, // 最大输出 token
+            _modelsVersion: 0, // 模型列表版本号，触发 availableModels 重新计算
+            paramsPopoverVisible: false, // 模型与参数浮层
+            settingsToastVisible: false, // 设置更新提示
+            settingsToastMessage: '',
+            _settingsToastTimer: null,
+            _settingsRestoring: false // 初始化加载设置时跳过大模型参数保存提示
         };
     },
     computed: {
@@ -796,6 +874,15 @@ export default {
         /** side-rail 渐进引导阶段：前 3 次打开面板展示标签，之后永久隐藏 */
         onboardPhase() {
             return this.railOnboardCount < 3 ? 'onboard' : '';
+        },
+        /** 虚拟滚动：当前可见的消息切片 */
+        visibleMessages() {
+            const msgs = this.messages;
+            if (!msgs.length) return [];
+            const vs = this.virtualScroll;
+            const end = Math.min(vs.endIndex + 1, msgs.length);
+            const start = Math.max(0, vs.startIndex);
+            return msgs.slice(start, end).map((msg, i) => ({ msg, idx: start + i }));
         },
         panelStyle() {
             if (this.docked) return {};
@@ -841,6 +928,28 @@ export default {
             // 最新更新的排前面
             return [...this.conversations].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
         },
+        /** 可用模型列表：优先从设置页读取（仅 enabled），fallback 到默认 */
+        availableModels() {
+            void this._modelsVersion; // 响应式依赖，触发重新计算
+            try {
+                const models = JSON.parse(localStorage.getItem('skyeye_ai_models'));
+                if (Array.isArray(models) && models.length) {
+                    const enabled = models.filter((m) => m.enabled !== false);
+                    return enabled.length ? enabled : models;
+                }
+            } catch (e) {
+                /* ignore */
+            }
+            return [
+                { id: 'deepseek-chat', name: 'DeepSeek-V3' },
+                { id: 'deepseek-reasoner', name: 'DeepSeek-R1' }
+            ];
+        },
+        /** 当前模型展示名称 */
+        currentModelLabel() {
+            const found = this.availableModels.find((m) => m.id === this.model);
+            return found ? found.name : this.model;
+        },
         quickQuestions() {
             // 优先从设置页读取自定义模板，fallback 到默认
             try {
@@ -884,6 +993,8 @@ export default {
         this._onStorage = (e) => {
             if (e.key === 'skyeye_rail_onboard') {
                 try { this.railOnboardCount = parseInt(e.newValue || '0', 10); } catch (_) {}
+            } else if (e.key === 'skyeye_ai_settings' || e.key === 'skyeye_ai_models') {
+                this._loadSettings(); // 跨标签页同步模型与参数
             }
         };
         window.addEventListener('storage', this._onStorage);
@@ -904,6 +1015,7 @@ export default {
         clearTimeout(this._copyTimer);
         clearTimeout(this._saveDebounceTimer);
         clearTimeout(this._animLockTimer);
+        clearTimeout(this._virtualMeasureTimer);
         clearInterval(this._timeTimer);
         document.removeEventListener('mousemove', this._onDragMove);
         document.removeEventListener('mouseup', this._onDragEnd);
@@ -916,9 +1028,22 @@ export default {
         window.removeEventListener('storage', this._onStorage);
     },
     watch: {
-        // 打开面板时将当前消息标记为已读
+        // 打开面板时将当前消息标记为已读，并初始化虚拟滚动
         visible(val) {
-            if (val) this.lastReadMsgCount = this.messages.length;
+            if (val) {
+                this.lastReadMsgCount = this.messages.length;
+                // 面板打开时重置虚拟滚动范围并滚动到底部
+                this.$nextTick(() => {
+                    this._resetVirtualHeights();
+                    this.$nextTick(() => {
+                        const el = this.$refs.chatBody;
+                        if (el) {
+                            el.scrollTop = el.scrollHeight;
+                            this._updateVirtualRange(el);
+                        }
+                    });
+                });
+            }
         },
         // streaming 结束时释放发送锁
         streaming(val) {
@@ -945,6 +1070,26 @@ export default {
         reduceMotion(val) {
             this._saveSettingsKey('reduceMotion', val);
         },
+        // 大模型参数变更 → 回写设置并提示
+        model(val) {
+            if (this._settingsRestoring) return;
+            this._saveSettingsKey('model', val);
+            this._showSettingsToast('设置已更新');
+        },
+        temperature(val) {
+            if (this._settingsRestoring) return;
+            this._saveSettingsKey('temperature', val);
+            this._showSettingsToast('设置已更新');
+        },
+        maxTokens(val) {
+            if (this._settingsRestoring) return;
+            this._saveSettingsKey('maxTokens', val);
+            this._showSettingsToast('设置已更新');
+        },
+        // 灵动岛菜单关闭时收起参数浮层
+        diExpanded(val) {
+            if (!val) this.paramsPopoverVisible = false;
+        },
         // 对话历史 → localStorage 持久化（deep watch + 1s 防抖，独立异常标志）
         conversations: {
             deep: true,
@@ -959,9 +1104,16 @@ export default {
         // messages 变化 → 同步到 active conversation
         messages: {
             deep: true,
-            handler() {
+            handler(newMsgs, oldMsgs) {
                 if (this._restoring || this._syncingConv) return;
                 this._syncMessagesToConv();
+                // 消息数量变化时重置虚拟滚动高度缓存
+                if (!oldMsgs || newMsgs.length !== oldMsgs.length) {
+                    this._resetVirtualHeights();
+                    if (this.visible) {
+                        this.$nextTick(() => this.scrollToBottom());
+                    }
+                }
             }
         }
     },
@@ -1263,6 +1415,9 @@ export default {
 
         toggleDynamicIsland() {
             this.diExpanded = !this.diExpanded;
+            if (this.diExpanded) {
+                this._loadSettings(); // 展开时重新加载，确保与设置页同步
+            }
         },
 
         _updateClock() {
@@ -1484,14 +1639,20 @@ export default {
             try {
                 const prefs = JSON.parse(localStorage.getItem('skyeye_ai_settings')) || {};
                 this._storageError = false;
+                this._settingsRestoring = true;
                 if (prefs.model) this.model = prefs.model;
                 if (prefs.temperature !== undefined && prefs.temperature !== null) this.temperature = prefs.temperature;
                 if (prefs.maxTokens !== undefined && prefs.maxTokens !== null) this.maxTokens = prefs.maxTokens;
                 if (prefs.reduceMotion !== undefined) this.reduceMotion = prefs.reduceMotion;
                 if (prefs.defaultMode) this.chatMode = prefs.defaultMode;
+                this._modelsVersion++; // 触发 availableModels 重新计算
+                this.$nextTick(() => {
+                    this._settingsRestoring = false;
+                });
             } catch (e) {
                 console.warn('[ChatModel] localStorage 读取失败', e);
                 this._storageError = true;
+                this._settingsRestoring = false;
             }
         },
 
@@ -1506,6 +1667,21 @@ export default {
                 console.warn('[ChatModel] localStorage 回写失败', e);
                 this._storageError = true;
             }
+        },
+
+        /** 设置更新提示 */
+        _showSettingsToast(message) {
+            this.settingsToastMessage = message;
+            this.settingsToastVisible = true;
+            clearTimeout(this._settingsToastTimer);
+            this._settingsToastTimer = setTimeout(() => {
+                this.settingsToastVisible = false;
+            }, 1500);
+        },
+
+        /** 切换 reasoning 展开状态（Vue 2 响应式兼容） */
+        toggleReasoning(msg) {
+            this.$set(msg, '_reasoningExpanded', !msg._reasoningExpanded);
         },
 
         collectContext() {
@@ -1786,7 +1962,8 @@ export default {
             // 普通文本回复
             const content = result.content || '';
             const suggestions = result.suggestions || [];
-            await this.typewriter(content, suggestions);
+            const reasoning = result.reasoning_content || '';
+            await this.typewriter(content, suggestions, reasoning);
         },
 
         async executeTool(name, args) {
@@ -1864,7 +2041,7 @@ export default {
             return { error: `未知工具: ${name}` };
         },
 
-        async typewriter(text, backendSuggestions) {
+        async typewriter(text, backendSuggestions, reasoning) {
             // 优先使用后端独立生成的 suggestions，否则降级解析 ||| 分隔符
             let body = text;
             let suggestions = [];
@@ -1909,7 +2086,7 @@ export default {
             if (this.reduceMotion) {
                 // 减少动效模式：跳过打字机，直接渲染全文
                 this.streamingText = renderInline(chars.join(''));
-                this.messages.push({ role: 'assistant', content: body, suggestions });
+                this.messages.push({ role: 'assistant', content: body, suggestions, reasoning: reasoning || '', _reasoningExpanded: false });
                 this.streamingText = '';
                 this.streaming = false;
                 this.scrollToBottom();
@@ -1927,7 +2104,7 @@ export default {
                 await new Promise((r) => setTimeout(r, 25));
                 this.scrollToBottom();
             }
-            this.messages.push({ role: 'assistant', content: body, suggestions });
+            this.messages.push({ role: 'assistant', content: body, suggestions, reasoning: reasoning || '', _reasoningExpanded: false });
             this.streamingText = '';
             this.streaming = false;
         },
@@ -2008,6 +2185,8 @@ export default {
                     this._userScrolledUp = false;
                     this.showScrollBtn = false;
                 }
+                // 虚拟滚动：滚动到底部后更新可见范围
+                this._updateVirtualRange(el);
             });
         },
 
@@ -2017,6 +2196,111 @@ export default {
             const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
             this._userScrolledUp = distFromBottom > 60;
             this.showScrollBtn = distFromBottom > el.clientHeight * 0.5;
+            // 虚拟滚动：更新可见范围
+            this._updateVirtualRange(el);
+        },
+
+        /** 虚拟滚动：根据滚动位置计算可见范围 */
+        _updateVirtualRange(el) {
+            const vs = this.virtualScroll;
+            const msgs = this.messages;
+            const len = msgs.length;
+            if (!len || !el) return;
+
+            const scrollTop = el.scrollTop;
+            const clientH = el.clientHeight;
+            const buffer = clientH * 0.5; // 上下各缓冲半屏
+            const gap = vs.gap;
+            const heights = vs.itemHeights;
+            const est = vs.estItemHeight;
+
+            // 计算累计高度，找到 startIndex
+            let cumTop = 0;
+            let start = 0;
+            for (let i = 0; i < len; i++) {
+                const h = heights[i] != null ? heights[i] : est;
+                if (cumTop + h + gap > scrollTop - buffer) { start = i; break; }
+                cumTop += h + gap;
+                start = i + 1;
+            }
+            start = Math.max(0, start);
+
+            // 计算累计高度，找到 endIndex
+            let cumBot = cumTop;
+            let end = start;
+            for (let i = start; i < len; i++) {
+                const h = heights[i] != null ? heights[i] : est;
+                if (cumBot > scrollTop + clientH + buffer) { break; }
+                cumBot += h + gap;
+                end = i;
+            }
+            end = Math.min(len - 1, end);
+
+            // 更新 offsets
+            vs.offsetTop = cumTop;
+            let afterHeight = 0;
+            for (let i = end + 1; i < len; i++) {
+                afterHeight += (heights[i] != null ? heights[i] : est) + gap;
+            }
+            vs.offsetBottom = Math.max(0, afterHeight - gap);
+
+            // 只在范围变化时触发重渲染
+            if (vs.startIndex !== start || vs.endIndex !== end) {
+                vs.startIndex = start;
+                vs.endIndex = end;
+                this._virtualRenderPending = true;
+                // 渲染完成后测量实际高度
+                this._scheduleMeasure();
+            }
+        },
+
+        /** 测量可见消息的实际高度 */
+        _scheduleMeasure() {
+            if (this._virtualMeasureTimer) return;
+            this._virtualMeasureTimer = setTimeout(() => {
+                this._virtualMeasureTimer = null;
+                this.$nextTick(() => {
+                    this._measureHeights();
+                });
+            }, 100);
+        },
+
+        _measureHeights() {
+            const el = this.$refs.chatBody;
+            if (!el) return;
+            const items = el.querySelectorAll('.chat-msg');
+            const vs = this.virtualScroll;
+            const heights = vs.itemHeights;
+            let changed = false;
+
+            items.forEach((node) => {
+                const styleIdx = node.style.getPropertyValue('--msg-i');
+                if (!styleIdx) return;
+                const idx = parseInt(styleIdx, 10);
+                if (isNaN(idx)) return;
+
+                const h = Math.ceil(node.getBoundingClientRect().height);
+                if (h > 0 && heights[idx] !== h) {
+                    heights[idx] = h;
+                    changed = true;
+                }
+            });
+
+            if (changed) {
+                vs.startIndex = -1; // 强制下次更新
+                this.$nextTick(() => this._updateVirtualRange(this.$refs.chatBody));
+            }
+            this._virtualRenderPending = false;
+        },
+
+        /** 重置虚拟滚动高度缓存（消息变化时调用） */
+        _resetVirtualHeights() {
+            const vs = this.virtualScroll;
+            vs.itemHeights = new Array(this.messages.length).fill(null);
+            vs.startIndex = 0;
+            vs.endIndex = 0;
+            vs.offsetTop = 0;
+            vs.offsetBottom = 0;
         },
 
         autoResize() {
@@ -3132,6 +3416,7 @@ export default {
 /* ===== 上半部分拖拽区域 ===== */
 .phone-top-section {
     position: relative;
+    z-index: 15; /* 高于 .chat-panel > * 的 z-index:1，确保参数浮层不被 .chat-body 遮挡 */
     flex-shrink: 0;
     cursor: grab;
 
@@ -3229,7 +3514,7 @@ export default {
     &:hover,
     &.expanded {
         min-width: 100px;
-        max-width: 180px;
+        max-width: 240px;
         padding: 0 14px 0 18px;
         border-radius: 999px;
         gap: 6px;
@@ -3389,6 +3674,30 @@ export default {
     }
 }
 
+/* 当前模型 pill */
+.di-model-pill {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(0, 180, 240, 0.15);
+    color: rgba(200, 240, 255, 0.92);
+    border: 1px solid rgba(0, 180, 240, 0.25);
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    transition: opacity 0.3s 0.15s, max-width 0.45s cubic-bezier(0.25, 1.1, 0.4, 1);
+}
+
+.dynamic-island:hover .di-model-pill,
+.dynamic-island.expanded .di-model-pill {
+    opacity: 1;
+    max-width: 110px;
+}
+
 /* 悬浮/展开/输出中 显示 label 和 chevron */
 .dynamic-island:hover,
 .dynamic-island.expanded {
@@ -3503,6 +3812,198 @@ export default {
     align-items: center;
     gap: 2px;
     flex-shrink: 0;
+    position: relative;
+}
+
+/* 模型与参数浮层 */
+.di-params-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 220px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(8, 22, 46, 0.95);
+    border: 1px solid rgba(0, 180, 240, 0.12);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    z-index: 25;
+
+    /* 箭头指示器 — 指向"模型与参数"按钮 */
+    &::before {
+        content: '';
+        position: absolute;
+        top: -5px;
+        right: 28px;
+        width: 10px;
+        height: 10px;
+        border-top: 1px solid rgba(0, 180, 240, 0.12);
+        border-left: 1px solid rgba(0, 180, 240, 0.12);
+        background: rgba(8, 22, 46, 0.95);
+        transform: rotate(45deg);
+        border-radius: 2px 0 0 0;
+    }
+}
+
+/* 入场/出场过渡 — 由 <transition name="params-popover"> 驱动 */
+.params-popover-enter-active {
+    animation: popover-in 0.25s cubic-bezier(0.25, 1.1, 0.4, 1) both;
+}
+.params-popover-leave-active {
+    animation: popover-out 0.2s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes popover-in {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes popover-out {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.98);
+    }
+}
+
+.di-params-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0, 180, 240, 0.08);
+
+    strong {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.92);
+    }
+}
+
+.di-params-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+
+    &:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    /* 行间分隔线 — 最后一行不显示 */
+    & + & {
+        border-top: 1px solid rgba(0, 180, 240, 0.08);
+        padding-top: 10px;
+    }
+
+    label {
+        font-size: 11px;
+        color: rgba(200, 220, 255, 0.75);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+.di-params-value {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(0, 240, 255, 0.9);
+    font-variant-numeric: tabular-nums;
+}
+
+.di-params-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(0, 180, 240, 0.18);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 12px;
+    padding: 6px 10px;
+    width: 100%;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(200,220,255,0.6)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+
+    &:hover {
+        border-color: rgba(0, 180, 240, 0.35);
+    }
+
+    &:focus {
+        outline: none;
+        border-color: rgba(0, 240, 255, 0.45);
+        box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.08);
+    }
+}
+
+.di-params-range {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    cursor: pointer;
+
+    &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--accent, #00f0ff);
+        box-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
+        border: 2px solid rgba(255, 255, 255, 0.9);
+        cursor: pointer;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    &::-webkit-slider-thumb:hover {
+        transform: scale(1.15);
+        box-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+    }
+
+    &::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--accent, #00f0ff);
+        box-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
+        border: 2px solid rgba(255, 255, 255, 0.9);
+        cursor: pointer;
+    }
+}
+
+/* 设置更新提示 toast */
+.settings-toast {
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 25;
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    background: rgba(8, 22, 46, 0.92);
+    border: 1px solid rgba(0, 180, 240, 0.12);
+    color: rgba(0, 240, 255, 0.95);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    animation: toast-in 0.25s ease-out both;
+    pointer-events: none;
 }
 
 /* 浅色主题灵动岛 */
@@ -3613,6 +4114,55 @@ export default {
     }
 }
 
+.theme-light .di-model-pill {
+    background: rgba(37, 99, 235, 0.12);
+    color: rgba(15, 23, 42, 0.75);
+    border-color: rgba(37, 99, 235, 0.22);
+}
+
+.theme-light .di-params-popover {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+    /* 浅色箭头 */
+    &::before {
+        border-top-color: rgba(0, 0, 0, 0.08);
+        border-left-color: rgba(0, 0, 0, 0.08);
+        background: rgba(255, 255, 255, 0.96);
+    }
+
+    .di-params-header {
+        border-bottom-color: rgba(0, 0, 0, 0.06);
+        strong { color: #0f172a; }
+    }
+    .di-params-row {
+        label { color: #64748b; }
+        & + & { border-top-color: rgba(0, 0, 0, 0.06); }
+    }
+    .di-params-value { color: #2563eb; }
+    .di-params-select {
+        background-color: rgba(0, 0, 0, 0.04);
+        border-color: rgba(0, 0, 0, 0.1);
+        color: #1e293b;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(100,116,139,1)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        &:hover { border-color: rgba(37, 99, 235, 0.35); }
+        &:focus { border-color: rgba(37, 99, 235, 0.5); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+    }
+    .di-params-range {
+        background: rgba(0, 0, 0, 0.08);
+        &::-webkit-slider-thumb { background: var(--accent, #2563eb); box-shadow: 0 0 8px rgba(37, 99, 235, 0.3); border-color: #fff; }
+        &::-moz-range-thumb { background: var(--accent, #2563eb); box-shadow: 0 0 8px rgba(37, 99, 235, 0.3); border-color: #fff; }
+    }
+}
+
+.theme-light .settings-toast {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #2563eb;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
 /* ===== 手机 Home Indicator ===== */
 .phone-home-indicator {
     position: absolute;
@@ -3674,7 +4224,6 @@ export default {
     padding: 18px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
     scroll-behavior: smooth;
     min-height: 0;
 
@@ -3886,6 +4435,7 @@ export default {
     flex-direction: column;
     gap: 3px;
     max-width: 100%;
+    margin-bottom: 14px;
     animation: msgSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
     animation-delay: calc(var(--msg-i, 0) * 60ms);
 
@@ -4023,6 +4573,53 @@ export default {
         transparent
     );
     pointer-events: none;
+}
+
+/* R1 推理过程折叠块 */
+.msg-reasoning {
+    margin-left: 42px;
+    margin-bottom: 8px;
+    max-width: 85%;
+    border-radius: 10px;
+    background: rgba(6, 182, 212, 0.06);
+    border: 1px solid rgba(6, 182, 212, 0.12);
+    overflow: hidden;
+
+    .msg-reasoning-toggle {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        background: transparent;
+        border: none;
+        color: rgba(103, 232, 249, 0.9);
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s;
+
+        &:hover { background: rgba(6, 182, 212, 0.1); }
+        .reasoning-chevron { transition: transform 0.25s; }
+    }
+
+    .msg-reasoning-body {
+        display: none;
+        padding: 0 12px 12px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        line-height: 1.6;
+        color: rgba(165, 243, 252, 0.85);
+        white-space: pre-wrap;
+        word-break: break-word;
+        border-left: 3px solid rgba(6, 182, 212, 0.5);
+        margin: 0 12px 12px;
+    }
+
+    &.expanded {
+        .msg-reasoning-body { display: block; }
+        .reasoning-chevron { transform: rotate(180deg); }
+    }
 }
 
 .msg-suggestions {
@@ -4403,6 +5000,14 @@ export default {
             color: #fbbf24;
         }
     }
+
+    &.regenerate {
+        color: rgba(52, 211, 153, 0.7);
+        &:hover {
+            background: rgba(52, 211, 153, 0.15);
+            color: #34d399;
+        }
+    }
 }
 
 .copy-toast {
@@ -4760,9 +5365,30 @@ export default {
             color: #b45309;
         }
     }
+    &.regenerate {
+        color: #059669;
+        &:hover {
+            background: rgba(16, 185, 129, 0.12);
+            color: #047857;
+        }
+    }
 }
 .theme-light .copy-toast {
     color: #059669;
+}
+.theme-light .msg-reasoning {
+    background: rgba(6, 182, 212, 0.06);
+    border-color: rgba(6, 182, 212, 0.18);
+
+    .msg-reasoning-toggle {
+        color: #0891b2;
+        &:hover { background: rgba(6, 182, 212, 0.1); }
+    }
+
+    .msg-reasoning-body {
+        color: #0e7490;
+        border-left-color: #22d3ee;
+    }
 }
 .theme-light .streaming-cursor::after {
     color: #2563eb;
@@ -4840,6 +5466,11 @@ export default {
 .reduce-motion .quick-item {
     transition-duration: 0.1s !important;
 }
+/* 参数浮层动画降级 */
+.reduce-motion .params-popover-enter-active,
+.reduce-motion .params-popover-leave-active {
+    animation-duration: 0.01s !important;
+}
 
 /* ========================= 响应式 ========================= */
 
@@ -4905,7 +5536,7 @@ export default {
 
         &:hover, &.expanded, &.streaming {
             min-width: 90px;
-            max-width: 160px;
+            max-width: 190px;
             padding: 0 12px 0 14px;
         }
     }
@@ -4926,6 +5557,13 @@ export default {
 
     .di-dropdown {
         padding: 0 12px;
+    }
+
+    .di-params-popover {
+        left: 12px;
+        right: 12px;
+        width: auto;
+        max-width: none;
     }
 
     .chat-btn-icon {
@@ -5060,7 +5698,7 @@ export default {
 
         &:hover, &.expanded, &.streaming {
             min-width: 80px;
-            max-width: 140px;
+            max-width: 170px;
             padding: 0 10px 0 12px;
         }
     }
