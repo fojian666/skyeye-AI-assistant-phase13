@@ -184,16 +184,69 @@ export default {
             if (!panel || !panel.drawMarker) return;
             panel.drawMarker(lat, lng, name, poi);
         };
+        this._onToggleMapLayers = (e) => {
+            const { layers } = e.detail || {};
+            if (!layers || !layers.length) return;
+            if (!this.oneMapReady || !this.$refs.tree) {
+                this._pendingLayers = layers.slice();
+                return;
+            }
+            this._applyToggleLayers(layers);
+        };
         window.addEventListener('navigate-map', this._onNavigateMap);
         window.addEventListener('draw-region', this._onDrawRegion);
         window.addEventListener('draw-marker', this._onDrawMarker);
+        window.addEventListener('toggle-map-layers', this._onToggleMapLayers);
     },
     beforeDestroy() {
         window.removeEventListener('navigate-map', this._onNavigateMap);
         window.removeEventListener('draw-region', this._onDrawRegion);
         window.removeEventListener('draw-marker', this._onDrawMarker);
+        window.removeEventListener('toggle-map-layers', this._onToggleMapLayers);
     },
     methods: {
+        _applyToggleLayers(layers) {
+            if (!this.$refs.tree) return;
+            const targetNodes = [];
+            (layers || []).forEach((label) => {
+                this._collectLeafNodes(this.data, label, targetNodes);
+            });
+            if (!targetNodes.length) return;
+            const existingNodes = this.$refs.tree.getCheckedNodes(true) || [];
+            const merged = [...existingNodes];
+            targetNodes.forEach((node) => {
+                if (!merged.some((n) => n.label === node.label)) {
+                    merged.push(node);
+                }
+            });
+            this.$refs.tree.setCheckedNodes(merged);
+        },
+        _collectLeafNodes(nodes, targetLabel, result) {
+            /** 递归在树形数据中查找 targetLabel，收集其下所有叶子节点对象 */
+            for (const node of nodes) {
+                if (node.label === targetLabel) {
+                    if (!node.children || !node.children.length) {
+                        result.push(node);
+                    } else {
+                        this._collectAllLeafNodes(node.children, result);
+                    }
+                    return true;
+                }
+                if (node.children && node.children.length) {
+                    if (this._collectLeafNodes(node.children, targetLabel, result)) return true;
+                }
+            }
+            return false;
+        },
+        _collectAllLeafNodes(nodes, result) {
+            for (const node of nodes) {
+                if (!node.children || !node.children.length) {
+                    result.push(node);
+                } else {
+                    this._collectAllLeafNodes(node.children, result);
+                }
+            }
+        },
         filterNode(value, data) {
             if (!value) return true;
             return data.label.indexOf(value) !== -1;
@@ -530,6 +583,12 @@ export default {
                         await this.applyTreeCheck(this.selectNodes, 'restore');
                     }
                 } else {
+                }
+                // 应用之前因数据未就绪而暂存的图层勾选请求
+                if (this._pendingLayers && this._pendingLayers.length) {
+                    const pending = this._pendingLayers;
+                    this._pendingLayers = null;
+                    this._applyToggleLayers(pending);
                 }
             } catch (err) {
                 this.$message.error('获取一张图数据失败！');

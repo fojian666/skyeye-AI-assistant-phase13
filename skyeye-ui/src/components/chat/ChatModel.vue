@@ -776,6 +776,35 @@ const TOOLS = [
                 required: ['mode']
             }
         }
+    },
+    {
+        type: 'function',
+        function: {
+            name: 'toggle_map_layers',
+            description:
+                '在一张图上勾选指定的地图图层。仅在用户明确说"勾选""勾上""打勾""选中"等词汇时才调用。' +
+                '\n【触发词】勾选、勾上、打勾、选中、把XX勾上' +
+                '\n【禁止触发】"打开""显示""查看""帮我看看"+ 图层名 → 不调用此工具' +
+                '\n图层按树形层级组织，父级节点包含若干子图层。调用时会自动处理父子关系：' +
+                '\n  - 传入父级节点如"低空业务数据"，会自动勾选其下所有子图层' +
+                '\n  - 传入子图层如"全景点位"，仅勾选该图层' +
+                '\n图层列表（按层级）：' +
+                '\n  基础地理数据 → geoserver地图服务' +
+                '\n  资源调查数据 → 龙袍耕地4528、龙潭耕地数据' +
+                '\n  低空业务数据 → 试点街道范围、机巢点位、机巢覆盖范围、全景点位、全景覆盖范围、无人机俯视图、监测线索点' +
+                '\n示例：勾选全景点位 → toggle_map_layers\n勾选低空业务数据 → toggle_map_layers\n帮我把机巢点位和无人机俯视图勾上 → toggle_map_layers',
+            parameters: {
+                type: 'object',
+                properties: {
+                    layers: {
+                        type: 'array',
+                        items: { type: 'string' },
+                        description: '要勾选的图层名称列表，必须从上方的图层列表中选择。支持父级节点（如"低空业务数据"）和子节点（如"全景点位"）。'
+                    }
+                },
+                required: ['layers']
+            }
+        }
     }
 ];
 
@@ -1937,7 +1966,15 @@ export default {
                         return;
                     }
                     if (toolResult._stop) {
-                        // 非导航类 stop：错误消息已由 executeTool 直接推入 messages，直接退出
+                        if (fn.name === 'toggle_map_layers') {
+                            const layerNames = (toolResult.layers || []).join('、');
+                            assistantMsg.content = `已为您在一张图上勾选图层：${layerNames}`;
+                            delete assistantMsg.tool_calls;
+                            this.$nextTick(() => {
+                                this._resetVirtualHeights();
+                                this.scrollToBottom(true);
+                            });
+                        }
                         this.streaming = false;
                         return;
                     }
@@ -2037,6 +2074,19 @@ export default {
                 this.$message({ message: `已切换到${labels[mode]}`, type: 'success', duration: 2000, showClose: false });
                 this.messages.push({ role: 'assistant', content: `已为您切换到${labels[mode].split(' —')[0]}` });
                 return { _stop: true };
+            }
+            if (name === 'toggle_map_layers') {
+                const layers = args.layers || [];
+                const dispatch = () => {
+                    window.dispatchEvent(new CustomEvent('toggle-map-layers', { detail: { layers } }));
+                };
+                if (this.$route.path !== '/data-management/one-map') {
+                    router.push('/data-management/one-map');
+                    setTimeout(dispatch, 1500);
+                } else {
+                    dispatch();
+                }
+                return { _stop: true, success: true, layers };
             }
             return { error: `未知工具: ${name}` };
         },

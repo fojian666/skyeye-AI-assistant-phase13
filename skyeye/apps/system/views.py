@@ -2609,13 +2609,27 @@ def _get_llm(tools=None, model=None, temperature=None, max_tokens=None):
 SYSTEM_PROMPT = (
     '你是金陵阡陌系统（SkyEye）的 AI 智能助手，具备无人机巡检、全景图分析、'
     '目标检测、航线规划、GIS 遥感等领域的专业知识。\n\n'
+    '【最高优先级 — 勾选命令】\n'
+    '当用户消息中包含"勾选""勾上""打勾""选中"等词汇 + 以下任一图层名称时，'
+    '你必须无条件调用 toggle_map_layers 工具，不得用文字回复替代。\n'
+    '图层名称：全景点位、机巢点位、机巢覆盖范围、试点街道范围、全景覆盖范围、\n'
+    '无人机俯视图、监测线索点、geoserver地图服务、龙袍耕地4528、龙潭耕地数据、\n'
+    '基础地理数据、资源调查数据、低空业务数据。\n'
+    '示例：用户说"勾选全景点位" → 调用 toggle_map_layers({layers: ["全景点位"]})\n'
+    '示例：用户说"帮我把机巢点位和无人机俯视图勾上" → 调用 toggle_map_layers({layers: ["机巢点位", "无人机俯视图"]})\n'
+    '本规则优先级高于下方所有工具选择规则。\n\n'
+    '【最高优先级 — 独立判断】\n'
+    '每条用户消息都是独立的请求。对话历史中之前的问题和你的回复，\n'
+    '绝对不能影响你对当前消息的工具选择判断。每次都要基于当前消息内容，\n'
+    '重新独立评估应该使用哪个工具（或不使用工具）。\n\n'
     '【核心规则 — 工具冲突裁决】\n'
     '当用户的一句话同时可能触发 navigate_page 和 query_data 时，按以下优先级裁决：\n'
     '1. 如果用户提到"数据"、"统计"、"概览"、"汇总"、"有多少"、"状态"、"列表"、"明细"等数据词汇 → 用 query_data\n'
     '2. "当前页面" / "这个页面" 开头的请求 → 用 query_data，不走 navigate_page\n'
     '3. 只有用户明确说出具体页面名称（如"一张图""全景检测""航线规划""报告管理"）时，才用 navigate_page\n'
     '4. 用户说"查看数据概览""打开统计页面"——"查看/打开"后面跟的是数据词汇 → query_data\n'
-    '5. 用户说"打开全景检测""带我去航线规划"——"打开/带我去"后面跟的是具体页面 → navigate_page\n\n'
+    '5. 用户说"打开全景检测""带我去航线规划"——"打开/带我去"后面跟的是具体页面 → navigate_page\n'
+    '注意：toggle_map_layers 仅在用户明确说"勾选/勾上/打勾/选中"时使用，不与上述工具冲突。\n\n'
     '【回复风格硬约束】\n'
     '禁止在回复中暴露内部决策过程或自言自语。以下句式严禁出现：\n'
     '  - "根据规则..." "根据系统可用的..." "根据页面列表..."（暴露系统规则）\n'
@@ -2666,6 +2680,24 @@ SYSTEM_PROMPT = (
     '  "智能摘要" / "摘要模式" → summary\n'
     '禁止：模糊说"帮我切换"而无具体目标时不调用，反问用户要切到哪个模式。\n'
     '禁止：在用户没有明确要求时自动调用切换模式。\n\n'
+    '━━━ 一张图图层勾选（toggle_map_layers）━━━\n'
+    '【强制规则 — 仅"勾选"触发】用户必须明确说"勾选""勾上""打勾""选中"等词汇，才调用此工具。\n'
+    '  - 用户说"勾选全景点位""把机巢点位勾上""选中XX图层"→ 调用此工具\n'
+    '  - 用户说"打开""显示""查看""帮我看看"+ 图层名 → 这些是其他工具的触发词，不调用此工具\n'
+    '  - 即使用户在"一张图"页面上，如果没说"勾选/勾上/打勾/选中"，也不调用\n'
+    '图层列表（按层级）：\n'
+    '  基础地理数据 → geoserver地图服务\n'
+    '  资源调查数据 → 龙袍耕地4528、龙潭耕地数据\n'
+    '  低空业务数据 → 试点街道范围、机巢点位、机巢覆盖范围、\n'
+    '                   全景点位、全景覆盖范围、无人机俯视图、监测线索点\n'
+    '调用规则：\n'
+    '  - layers 传入要勾选的图层名，支持父级节点（自动勾选所有子图层）\n'
+    '  - 示例："勾选低空业务数据"→ layers: ["低空业务数据"]\n'
+    '  - "帮我把全景点位和机巢点位勾上"→ layers: ["全景点位", "机巢点位"]\n'
+    '排除项：\n'
+    '  - "打开/显示/查看"+ 任何内容 → 不是本工具，按内容判断用 navigate_page 或 map_action\n'
+    '  - 数据统计（如"有多少全景图"）→ 用 query_data\n'
+    '  - 用户只说了图层名但没带"勾选/勾上/打勾/选中"→ 不调用，正常文字回复即可\n\n'
     '━━━ 未知/模糊（禁止强行调用）━━━\n'
     '以下类型的模糊询问，严禁调用任何工具，必须反问用户澄清意图：\n'
     '  - 泛进度/状态："整体完成进度""现在什么情况""怎么样了""如何" → 反问"您想了解哪方面的进度/情况？"\n'
@@ -2676,6 +2708,7 @@ SYSTEM_PROMPT = (
     '  - map_action → 用户是否说出了具体地点名称？（反例："防尘网"❌，"南京鼓楼区"✅）\n'
     '  - query_data → 用户是否明确要求查数据？（反例："怎么样"❌，"有多少全景图"✅）\n'
     '  - lookup_task → 用户是否提供了任务编号？（反例："帮我查一下"❌，"LS3201001"✅）\n'
+    '  - toggle_map_layers → 用户是否说出了具体图层名称？（反例："打开图"❌，"全景点位"✅）\n'
     '如果以上检查有一项不通过，则不要调用该工具。宁可反问，不可猜错。\n\n'
     '【回复格式】\n'
     '用中文回答，风格灵活自然。追问建议由系统自动生成，无需在回复中附加。'
@@ -3200,6 +3233,7 @@ def _generate_sse(raw_messages, frontend_tools, request, chat_mode='chat', conte
             {"type": "function", "function": {"name": "map_action", "description": "地图定位", "parameters": {"type": "object", "properties": {"location": {"type": "string"}, "city": {"type": "string"}}, "required": ["location"]}}},
             {"type": "function", "function": {"name": "lookup_task", "description": "查询任务编号", "parameters": {"type": "object", "properties": {"task_id": {"type": "string"}}, "required": ["task_id"]}}},
             {"type": "function", "function": {"name": "switch_mode", "description": "切换对话模式 chat/query/summary", "parameters": {"type": "object", "properties": {"mode": {"type": "string", "enum": ["chat", "query", "summary"]}}, "required": ["mode"]}}},
+            {"type": "function", "function": {"name": "toggle_map_layers", "description": "在一张图上勾选指定地图图层。仅用户说'勾选/勾上/打勾/选中'时调用。图层：基础地理数据(geoserver地图服务)、资源调查数据(龙袍耕地4528、龙潭耕地数据)、低空业务数据(试点街道范围、机巢点位、机巢覆盖范围、全景点位、全景覆盖范围、无人机俯视图、监测线索点)。传入父级自动勾选所有子图层。", "parameters": {"type": "object", "properties": {"layers": {"type": "array", "items": {"type": "string"}, "description": "要勾选的图层名称列表"}}, "required": ["layers"]}}},
         ]
     try:
         has_system = any(m.get('role') == 'system' for m in raw_messages)
@@ -3257,6 +3291,30 @@ def _generate_sse(raw_messages, frontend_tools, request, chat_mode='chat', conte
             else:
                 query_context = {}
             raw_messages.insert(0, {'role': 'system', 'content': prompt})
+        logger = logging.getLogger('skyeye')
+        logger.info(f'SYSTEM_PROMPT 已注入, 含 toggle_map_layers: {"toggle_map_layers" in (raw_messages[0].get("content","") if raw_messages else "")}, tools 数量: {len(frontend_tools) if frontend_tools else 0}')
+
+        # 独立判断强制干预
+        # 命令式触发词：检测到则丢弃历史，只发系统提示词 + 当前消息
+        LAYER_TRIGGER_WORDS = ['勾选', '勾上', '打勾', '选中']
+        TOOL_CMD_WORDS = ['带我去', '打开', '跳转到', '前往', '帮我打开', '导航到']
+        last_user_idx = None
+        for i in range(len(raw_messages) - 1, -1, -1):
+            if raw_messages[i].get('role') == 'user':
+                last_user_idx = i
+                break
+        if last_user_idx is not None:
+            content = raw_messages[last_user_idx].get('content', '')
+            is_layer_cmd = any(kw in content for kw in LAYER_TRIGGER_WORDS)
+            is_tool_cmd = any(kw in content for kw in TOOL_CMD_WORDS)
+            if is_layer_cmd or is_tool_cmd:
+                # 命令式消息：丢弃对话历史，仅保留 system prompt + 当前消息
+                system_msgs = [m for m in raw_messages if m.get('role') == 'system']
+                raw_messages = system_msgs + [raw_messages[last_user_idx]]
+            elif len(raw_messages) > 3:
+                raw_messages[last_user_idx]['content'] = (
+                    '【注意：请独立判断本条消息，不受前面对话影响】\n' + content
+                )
 
         lc_msgs = _raw_messages_to_lc(raw_messages)
         llm = _get_llm(tools=frontend_tools, model=model, temperature=temperature, max_tokens=max_tokens)
@@ -3390,6 +3448,27 @@ def _generate_sse(raw_messages, frontend_tools, request, chat_mode='chat', conte
                         query_args['_query_result'] = f'查询失败：{str(qe)[:200]}'
                     fn['arguments'] = json.dumps(query_args, ensure_ascii=False)
                     query_actions.append(ToolMessage(content=query_args.get('_query_result', ''), tool_call_id=tc_id))
+
+                elif name == 'toggle_map_layers':
+                    # 过滤图层：只保留当前用户消息中明确提到的图层，防止 LLM 带入前轮历史的图层
+                    try:
+                        layer_args = json.loads(fn['arguments']) if isinstance(fn.get('arguments'), str) else fn.get('arguments', {})
+                    except (json.JSONDecodeError, TypeError):
+                        layer_args = {}
+                    layers = layer_args.get('layers', [])
+                    # 提取最后一条用户消息的内容
+                    last_user_content = ''
+                    for m in reversed(raw_messages):
+                        if m.get('role') == 'user':
+                            last_user_content = m.get('content', '')
+                            break
+                    if layers and last_user_content:
+                        filtered = [l for l in layers if l and l in last_user_content]
+                        if filtered and len(filtered) != len(layers):
+                            logger.info(f'toggle_map_layers 图层过滤: {layers} → {filtered}（当前消息中未提到的被剔除）')
+                        layer_args['layers'] = filtered if filtered else layers
+                        fn['arguments'] = json.dumps(layer_args, ensure_ascii=False)
+                    emit_tool_calls.append(tc)
 
                 else:
                     # 其他工具（如 switch_mode）直接透传给前端处理
